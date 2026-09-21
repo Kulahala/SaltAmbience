@@ -65,4 +65,31 @@ class PresetTest {
         val stoppedTrack = playingTrack.copy(isPlaying = false)
         assertEquals(0.0f, stoppedTrack.effectiveTrackVolume, 0.001f)
     }
+
+    @Test
+    fun testTrackSaveStateSerializationRoundTrip() {
+        val saveMap = mapOf(
+            "rain" to com.whitenoise.app.data.datastore.PreferencesManager.TrackSaveState(
+                volume = 0.85f,
+                isPlaying = true,
+                isMuted = false
+            ),
+            "wind" to com.whitenoise.app.data.datastore.PreferencesManager.TrackSaveState(
+                volume = 0.40f,
+                isPlaying = false,
+                isMuted = true
+            )
+        )
+
+        val encoded = json.encodeToString(saveMap)
+        val decoded = json.decodeFromString<Map<String, com.whitenoise.app.data.datastore.PreferencesManager.TrackSaveState>>(encoded)
+
+        assertEquals(2, decoded.size)
+        assertEquals(0.85f, decoded["rain"]!!.volume, 0.001f)
+        assertEquals(true, decoded["rain"]!!.isPlaying)
+        assertEquals(false, decoded["rain"]!!.isMuted)
+        assertEquals(0.40f, decoded["wind"]!!.volume, 0.001f)
+        assertEquals(false, decoded["wind"]!!.isPlaying)
+        assertEquals(true, decoded["wind"]!!.isMuted)
+    }
 }

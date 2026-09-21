@@ -8,12 +8,14 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ServiceInfo
 import android.media.AudioManager
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -21,8 +23,10 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import androidx.media3.session.MediaStyleNotificationHelper
 import com.whitenoise.app.MainActivity
 import com.whitenoise.app.core.audio.AudioMixerEngine
+import com.whitenoise.app.core.model.PlaybackState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -37,7 +41,10 @@ class WhiteNoiseMediaService : MediaSessionService() {
         const val CHANNEL_ID = "whitenoise_playback_channel"
         const val NOTIFICATION_ID = 1001
 
-        // Singleton reference for in-process binding / communication
+        const val ACTION_PLAY = "com.whitenoise.app.action.PLAY"
+        const val ACTION_PAUSE = "com.whitenoise.app.action.PAUSE"
+        const val ACTION_STOP = "com.whitenoise.app.action.STOP"
+
         var instance: WhiteNoiseMediaService? = null
             private set
     }
@@ -72,7 +79,7 @@ class WhiteNoiseMediaService : MediaSessionService() {
         super.onCreate()
         Log.i(TAG, "WhiteNoiseMediaService onCreate")
         instance = this
-        audioEngine = AudioMixerEngine(applicationContext)
+        audioEngine = AudioMixerEngine.getInstance(applicationContext)
 
         createNotificationChannel()
         setupMediaSession()
@@ -82,37 +89,53 @@ class WhiteNoiseMediaService : MediaSessionService() {
         audioEngine.onSleepTimerCompleted = {
             Log.i(TAG, "Sleep timer finished in service. Stopping foreground and service.")
             stopForeground(STOP_FOREGROUND_REMOVE)
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager?.cancel(NOTIFICATION_ID)
             stopSelf()
         }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
+        when (intent?.action) {
+            ACTION_PLAY -> audioEngine.setMasterPlaying(true)
+            ACTION_PAUSE -> audioEngine.setMasterPlaying(false)
+            ACTION_STOP -> audioEngine.stopAll()
+        }
+        return START_STICKY
     }
 
     private fun setupMediaSession() {
         // Coordinator player proxies playback commands to AudioMixerEngine
         val basePlayer = ExoPlayer.Builder(applicationContext).build().apply {
-            // Keep a virtual dummy item with metadata so system notification displays title and controls
             val metadata = MediaMetadata.Builder()
                 .setTitle("SaltAmbience 自然混音")
-                .setArtist("SaltAmbience")
+                .setArtist("椒盐美学 · 多轨自然声")
                 .build()
             val dummyItem = MediaItem.Builder()
-                .setMediaId("master_stream")
+                .setUri("asset:///sounds/white_noise.ogg")
                 .setMediaMetadata(metadata)
                 .build()
             setMediaItem(dummyItem)
+            volume = 0f
             repeatMode = Player.REPEAT_MODE_ONE
+            prepare()
         }
         coordinatorExoPlayer = basePlayer
 
         val forwardingPlayer = object : ForwardingPlayer(basePlayer) {
             override fun play() {
+                super.play()
                 audioEngine.setMasterPlaying(true)
             }
 
             override fun pause() {
+                super.pause()
                 audioEngine.setMasterPlaying(false)
             }
 
             override fun stop() {
+                super.stop()
                 audioEngine.stopAll()
             }
         }
@@ -135,13 +158,31 @@ class WhiteNoiseMediaService : MediaSessionService() {
     private fun observeEngineState() {
         serviceScope.launch {
             audioEngine.playbackState.collectLatest { state ->
-                coordinatorExoPlayer?.playWhenReady = state.isMasterPlaying
+                val player = coordinatorExoPlayer
+                if (player != null && player.playWhenReady != state.isMasterPlaying) {
+                    player.playWhenReady = state.isMasterPlaying
+                }
+
+                val notificationManager = getSystemService(NotificationManager::class.java)
                 if (state.isMasterPlaying) {
-                    startForeground(NOTIFICATION_ID, buildForegroundNotification(state.activeTrackCount))
+                    val notification = buildForegroundNotification(state)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        startForeground(
+                            NOTIFICATION_ID,
+                            notification,
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+                        )
+                    } else {
+                        startForeground(NOTIFICATION_ID, notification)
+                    }
                 } else {
-                    // Update notification or allow dismiss if stopped
-                    val notificationManager = getSystemService(NotificationManager::class.java)
-                    notificationManager?.notify(NOTIFICATION_ID, buildForegroundNotification(state.activeTrackCount))
+                    if (state.activeTrackCount > 0) {
+                        stopForeground(STOP_FOREGROUND_DETACH)
+                        notificationManager?.notify(NOTIFICATION_ID, buildForegroundNotification(state))
+                    } else {
+                        stopForeground(STOP_FOREGROUND_REMOVE)
+                        notificationManager?.cancel(NOTIFICATION_ID)
+                    }
                 }
             }
         }
@@ -160,7 +201,7 @@ class WhiteNoiseMediaService : MediaSessionService() {
         manager?.createNotificationChannel(channel)
     }
 
-    private fun buildForegroundNotification(activeCount: Int): Notification {
+    private fun buildForegroundNotification(state: PlaybackState): Notification {
         val contentIntent = PendingIntent.getActivity(
             this,
             0,
@@ -168,31 +209,67 @@ class WhiteNoiseMediaService : MediaSessionService() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val isPlaying = state.isMasterPlaying
+        val activeCount = state.activeTrackCount
         val subtext = if (activeCount > 0) {
             "正在混音播放 $activeCount 种自然声"
         } else {
             "已暂停"
         }
 
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        val playPauseIntent = Intent(this, WhiteNoiseMediaService::class.java).apply {
+            action = if (isPlaying) ACTION_PAUSE else ACTION_PLAY
+        }
+        val playPausePendingIntent = PendingIntent.getService(
+            this,
+            1,
+            playPauseIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val stopIntent = Intent(this, WhiteNoiseMediaService::class.java).apply {
+            action = ACTION_STOP
+        }
+        val stopPendingIntent = PendingIntent.getService(
+            this,
+            2,
+            stopIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val playPauseIcon = if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
+        val playPauseTitle = if (isPlaying) "暂停" else "播放"
+
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_media_play)
-            .setContentTitle("SaltAmbience")
+            .setContentTitle("SaltAmbience 自然混音")
             .setContentText(subtext)
             .setContentIntent(contentIntent)
-            .setOngoing(audioEngine.playbackState.value.isMasterPlaying)
-            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setOngoing(isPlaying)
+            .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .build()
+            .addAction(playPauseIcon, playPauseTitle, playPausePendingIntent)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "全停", stopPendingIntent)
+
+        mediaSession?.let { session ->
+            builder.setStyle(
+                MediaStyleNotificationHelper.MediaStyle(session)
+                    .setShowActionsInCompactView(0, 1)
+            )
+        }
+
+        return builder.build()
     }
 
     private fun registerNoisyReceiver() {
         if (!isNoisyReceiverRegistered) {
             val filter = IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(noisyReceiver, filter, RECEIVER_NOT_EXPORTED)
-            } else {
-                registerReceiver(noisyReceiver, filter)
-            }
+            ContextCompat.registerReceiver(
+                this,
+                noisyReceiver,
+                filter,
+                ContextCompat.RECEIVER_EXPORTED
+            )
             isNoisyReceiverRegistered = true
         }
     }
@@ -231,7 +308,7 @@ class WhiteNoiseMediaService : MediaSessionService() {
         coordinatorExoPlayer?.release()
         coordinatorExoPlayer = null
 
-        audioEngine.release()
+        audioEngine.releasePlayers()
         super.onDestroy()
     }
 }

@@ -27,10 +27,19 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-class AudioMixerEngine(private val context: Context) {
+class AudioMixerEngine private constructor(private val context: Context) {
 
     companion object {
         private const val TAG = "AudioMixerEngine"
+
+        @Volatile
+        private var instance: AudioMixerEngine? = null
+
+        fun getInstance(context: Context): AudioMixerEngine {
+            return instance ?: synchronized(this) {
+                instance ?: AudioMixerEngine(context.applicationContext).also { instance = it }
+            }
+        }
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -134,6 +143,9 @@ class AudioMixerEngine(private val context: Context) {
         }
 
         if (play) {
+            if (!_playbackState.value.isSleepTimerRunning) {
+                _playbackState.update { it.copy(sleepFadeFraction = 1.0f) }
+            }
             requestAudioFocus()
             resumeAllActiveInternal()
         } else {
@@ -168,9 +180,11 @@ class AudioMixerEngine(private val context: Context) {
 
         if (isPlaying) {
             val player = getOrCreatePlayer(track)
-            val actualVolume = calculateVolumeForTrack(track)
-            player.volume = actualVolume
-            if (_playbackState.value.isMasterPlaying) {
+            if (!_playbackState.value.isMasterPlaying) {
+                setMasterPlaying(true)
+            } else {
+                val actualVolume = calculateVolumeForTrack(track)
+                player.volume = actualVolume
                 requestAudioFocus()
                 player.playWhenReady = true
             }
@@ -260,6 +274,7 @@ class AudioMixerEngine(private val context: Context) {
      * Stop all tracks and pause master
      */
     fun stopAll() {
+        cancelSleepTimer()
         _tracksState.update { list ->
             list.map { it.copy(isPlaying = false) }
         }
@@ -309,15 +324,17 @@ class AudioMixerEngine(private val context: Context) {
 
             if (isActive && remaining <= 0L) {
                 Log.i(TAG, "Sleep timer expired. Pausing playback and releasing resources.")
+                stopAll()
                 _playbackState.update {
                     it.copy(
                         sleepTimerRemainingSeconds = null,
                         isSleepTimerRunning = false,
-                        sleepFadeFraction = 0f,
+                        sleepFadeFraction = 1.0f,
                         isMasterPlaying = false
                     )
                 }
-                stopAll()
+                updateAllVolumes()
+                releasePlayers()
                 onSleepTimerCompleted?.invoke()
             }
         }
@@ -366,17 +383,24 @@ class AudioMixerEngine(private val context: Context) {
 
     private fun getOrCreatePlayer(track: SoundTrack): ExoPlayer {
         return playerPool.getOrPut(track.id) {
-            ExoPlayer.Builder(context).build().apply {
-                val uri = "asset:///sounds/${track.assetFileName}"
-                setMediaItem(MediaItem.fromUri(uri))
-                repeatMode = Player.REPEAT_MODE_ONE
-                addListener(object : Player.Listener {
-                    override fun onPlayerError(error: PlaybackException) {
-                        Log.e(TAG, "Playback error for ${track.id}: ${error.message}", error)
-                    }
-                })
-                prepare()
-            }
+            val audioAttributes = androidx.media3.common.AudioAttributes.Builder()
+                .setContentType(androidx.media3.common.C.AUDIO_CONTENT_TYPE_MUSIC)
+                .setUsage(androidx.media3.common.C.USAGE_MEDIA)
+                .build()
+
+            ExoPlayer.Builder(context)
+                .setAudioAttributes(audioAttributes, /* handleAudioFocus = */ false)
+                .build().apply {
+                    val uri = "asset:///sounds/${track.assetFileName}"
+                    setMediaItem(MediaItem.fromUri(uri))
+                    repeatMode = Player.REPEAT_MODE_ONE
+                    addListener(object : Player.Listener {
+                        override fun onPlayerError(error: PlaybackException) {
+                            Log.e(TAG, "Playback error for ${track.id}: ${error.message}", error)
+                        }
+                    })
+                    prepare()
+                }
         }
     }
 
@@ -417,9 +441,7 @@ class AudioMixerEngine(private val context: Context) {
         playerPool.values.forEach { it.playWhenReady = false }
     }
 
-    fun release() {
-        cancelSleepTimer()
-        abandonAudioFocus()
+    fun releasePlayers() {
         playerPool.values.forEach { player ->
             try {
                 player.stop()
@@ -429,6 +451,12 @@ class AudioMixerEngine(private val context: Context) {
             }
         }
         playerPool.clear()
+    }
+
+    fun release() {
+        cancelSleepTimer()
+        abandonAudioFocus()
+        releasePlayers()
         scope.cancel()
     }
 }

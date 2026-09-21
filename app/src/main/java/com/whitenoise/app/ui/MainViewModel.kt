@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -32,12 +31,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val preferencesManager = PreferencesManager(application)
     private val presetRepository = PresetRepository(preferencesManager)
 
-    // In-process fallback or bound engine
-    private var boundEngine: AudioMixerEngine? = null
-    private val fallbackEngine = AudioMixerEngine(application)
-
-    private val activeEngine: AudioMixerEngine
-        get() = boundEngine ?: WhiteNoiseMediaService.instance?.audioEngine ?: fallbackEngine
+    // Unified AudioMixerEngine singleton
+    val engine: AudioMixerEngine = AudioMixerEngine.getInstance(application)
 
     private val _tracks = MutableStateFlow(SoundRepository.ALL_TRACKS)
     val tracks: StateFlow<List<SoundTrack>> = _tracks.asStateFlow()
@@ -61,23 +56,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _showSavePresetDialog = MutableStateFlow(false)
     val showSavePresetDialog: StateFlow<Boolean> = _showSavePresetDialog.asStateFlow()
 
+    private var isPreferencesRestored = false
     private var isServiceBound = false
+
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val binder = service as? WhiteNoiseMediaService.LocalBinder
-            boundEngine = binder?.engine
-            observeActiveEngine()
+            // Service connected and running
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
-            boundEngine = null
         }
     }
 
     init {
         bindMediaService()
-        restorePreferences()
-        observeActiveEngine()
+        restorePreferencesAndObserve()
     }
 
     private fun bindMediaService() {
@@ -91,63 +84,67 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun restorePreferences() {
+    private fun restorePreferencesAndObserve() {
         viewModelScope.launch {
             val savedTracks = preferencesManager.savedTracksStateFlow.first()
             val savedMasterVol = preferencesManager.masterVolumeFlow.first()
-            activeEngine.restoreTracksState(savedTracks, savedMasterVol)
+            engine.restoreTracksState(savedTracks, savedMasterVol)
+            isPreferencesRestored = true
         }
-    }
 
-    private fun observeActiveEngine() {
         viewModelScope.launch {
-            activeEngine.tracksState.collectLatest { list ->
+            engine.tracksState.collectLatest { list ->
                 _tracks.value = list
-                preferencesManager.saveTracksState(list)
+                if (isPreferencesRestored) {
+                    preferencesManager.saveTracksState(list)
+                }
             }
         }
+
         viewModelScope.launch {
-            activeEngine.playbackState.collectLatest { state ->
+            engine.playbackState.collectLatest { state ->
                 _playbackState.value = state
-                preferencesManager.saveMasterVolume(state.masterVolume)
+                if (isPreferencesRestored) {
+                    preferencesManager.saveMasterVolume(state.masterVolume)
+                }
             }
         }
     }
 
     fun toggleMasterPlay() {
-        val currentState = activeEngine.playbackState.value.isMasterPlaying
-        activeEngine.setMasterPlaying(!currentState)
+        val currentState = engine.playbackState.value.isMasterPlaying
+        engine.setMasterPlaying(!currentState)
     }
 
     fun setMasterVolume(volume: Float) {
-        activeEngine.setMasterVolume(volume)
+        engine.setMasterVolume(volume)
     }
 
     fun toggleTrackPlay(trackId: String) {
-        val track = activeEngine.tracksState.value.find { it.id == trackId } ?: return
-        activeEngine.setTrackPlaying(trackId, !track.isPlaying)
+        val track = engine.tracksState.value.find { it.id == trackId } ?: return
+        engine.setTrackPlaying(trackId, !track.isPlaying)
     }
 
     fun setTrackVolume(trackId: String, volume: Float) {
-        activeEngine.setTrackVolume(trackId, volume)
+        engine.setTrackVolume(trackId, volume)
     }
 
     fun toggleTrackMute(trackId: String) {
-        val track = activeEngine.tracksState.value.find { it.id == trackId } ?: return
-        activeEngine.setTrackMuted(trackId, !track.isMuted)
+        val track = engine.tracksState.value.find { it.id == trackId } ?: return
+        engine.setTrackMuted(trackId, !track.isMuted)
     }
 
     fun applyPreset(preset: Preset) {
-        activeEngine.applyPreset(preset)
+        engine.applyPreset(preset)
     }
 
     fun stopAll() {
-        activeEngine.stopAll()
+        engine.stopAll()
     }
 
     fun saveCurrentAsPreset(name: String) {
         if (name.isBlank()) return
-        val currentTracks = activeEngine.tracksState.value
+        val currentTracks = engine.tracksState.value
         val volumeMap = currentTracks
             .filter { it.isPlaying && it.volume > 0f }
             .associate { it.id to it.volume }
@@ -176,12 +173,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun startSleepTimer(minutes: Int) {
-        activeEngine.startSleepTimer(minutes)
+        engine.startSleepTimer(minutes)
         _showSleepTimerDialog.value = false
     }
 
     fun cancelSleepTimer() {
-        activeEngine.cancelSleepTimer()
+        engine.cancelSleepTimer()
         _showSleepTimerDialog.value = false
     }
 
@@ -206,9 +203,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 e.printStackTrace()
             }
             isServiceBound = false
-        }
-        if (boundEngine == null && WhiteNoiseMediaService.instance == null) {
-            fallbackEngine.release()
         }
     }
 }
