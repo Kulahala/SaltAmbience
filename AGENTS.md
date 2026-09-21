@@ -191,3 +191,7 @@ flowchart LR
 - **提交信息格式**：
   `[Feature/Fix/Docs/Chore] 中文标题 (English Title)`
   正文清晰写明包含改动与验证依据，严禁虚假声称已通过未执行的测试。
+- **发布与版本规范 (Release Workflow)**：
+  - 递增版本：在 `app/build.gradle.kts` 中更新 `versionName` 与 `versionCode`；
+  - 触发发版：本地打 Tag 并推送（`git tag -a vX.Y.Z -m "release: vX.Y.Z" && git push origin vX.Y.Z`）；
+  - 自动交付：通过 `.github/workflows/release.yml` 在云端自动构建并挂载 `SaltAmbience-vX.Y.Z.apk` 至 GitHub Release。
