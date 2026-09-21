@@ -21,7 +21,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -84,6 +87,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
     private fun restorePreferencesAndObserve() {
         viewModelScope.launch {
             val savedTracks = preferencesManager.savedTracksStateFlow.first()
@@ -92,22 +96,42 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             isPreferencesRestored = true
         }
 
+        // Fast immediate emission to UI
         viewModelScope.launch {
             engine.tracksState.collectLatest { list ->
                 _tracks.value = list
-                if (isPreferencesRestored) {
-                    preferencesManager.saveTracksState(list)
-                }
             }
         }
 
+        // Debounced persistence to avoid disk I/O thrashing during slider dragging
+        viewModelScope.launch {
+            engine.tracksState
+                .debounce(500L)
+                .collectLatest { list ->
+                    if (isPreferencesRestored) {
+                        preferencesManager.saveTracksState(list)
+                    }
+                }
+        }
+
+        // Fast immediate emission of playback state to UI
         viewModelScope.launch {
             engine.playbackState.collectLatest { state ->
                 _playbackState.value = state
-                if (isPreferencesRestored) {
-                    preferencesManager.saveMasterVolume(state.masterVolume)
-                }
             }
+        }
+
+        // Debounced master volume persistence
+        viewModelScope.launch {
+            engine.playbackState
+                .map { it.masterVolume }
+                .distinctUntilChanged()
+                .debounce(500L)
+                .collectLatest { vol ->
+                    if (isPreferencesRestored) {
+                        preferencesManager.saveMasterVolume(vol)
+                    }
+                }
         }
     }
 

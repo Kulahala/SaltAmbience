@@ -207,11 +207,19 @@ class AudioMixerEngine private constructor(private val context: Context) {
     fun setTrackVolume(trackId: String, volume: Float) {
         val clamped = volume.coerceIn(0f, 1f)
         _tracksState.update { list ->
-            list.map { if (it.id == trackId) it.copy(volume = clamped) else it }
+            list.map {
+                if (it.id == trackId) {
+                    val unmuted = if (it.isMuted && clamped > 0f) false else it.isMuted
+                    it.copy(volume = clamped, isMuted = unmuted)
+                } else it
+            }
         }
         val track = _tracksState.value.find { it.id == trackId } ?: return
         playerPool[trackId]?.let { player ->
             player.volume = calculateVolumeForTrack(track)
+        }
+        _playbackState.update {
+            it.copy(activeTrackCount = _tracksState.value.count { t -> t.isPlaying && !t.isMuted })
         }
     }
 

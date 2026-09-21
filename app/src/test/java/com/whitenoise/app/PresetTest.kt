@@ -92,4 +92,36 @@ class PresetTest {
         assertEquals(false, decoded["wind"]!!.isPlaying)
         assertEquals(true, decoded["wind"]!!.isMuted)
     }
+
+    @Test
+    fun testSoundTrackIconEmojiMapping() {
+        val expectedEmojis = mapOf(
+            "rain" to "🌧️",
+            "storm" to "⛈️",
+            "wind" to "🌲",
+            "stream" to "🌊",
+            "fireplace" to "🪵",
+            "birds" to "🐦",
+            "summer_night" to "🦗",
+            "white_noise" to "📻"
+        )
+
+        for ((id, expectedEmoji) in expectedEmojis) {
+            val track = SoundTrack(
+                id = id,
+                name = id,
+                subtitle = id,
+                assetFileName = "$id.ogg"
+            )
+            assertEquals("Track $id should have emoji $expectedEmoji", expectedEmoji, track.iconEmoji)
+        }
+
+        val unknownTrack = SoundTrack(
+            id = "unknown_sound",
+            name = "未知音效",
+            subtitle = "未知",
+            assetFileName = "unknown.ogg"
+        )
+        assertEquals("🎵", unknownTrack.iconEmoji)
+    }
 }

@@ -99,13 +99,23 @@ fun BottomPlayerBar(
                     .padding(vertical = 4.dp, horizontal = 4.dp)
             ) {
                 // Top line: active badges / emojis + count
-                val titleText = if (activeTracks.isNotEmpty()) {
-                    val emojis = activeTracks.take(4).joinToString(" ") { it.iconEmoji }
-                    "$emojis · ${activeTracks.size}轨混音"
-                } else if (playbackState.activeTrackCount > 0) {
-                    "${playbackState.activeTrackCount} 轨混音中"
-                } else {
-                    "轻触音效开始混音"
+                val titleText = when {
+                    activeTracks.isNotEmpty() -> {
+                        val emojis = activeTracks.take(4).joinToString(" ") { it.iconEmoji }
+                        if (playbackState.isMasterPlaying) {
+                            "$emojis · ${activeTracks.size}轨混音中"
+                        } else {
+                            "$emojis · ${activeTracks.size}轨已暂停"
+                        }
+                    }
+                    playbackState.activeTrackCount > 0 -> {
+                        if (playbackState.isMasterPlaying) {
+                            "${playbackState.activeTrackCount} 轨混音中"
+                        } else {
+                            "${playbackState.activeTrackCount} 轨已暂停"
+                        }
+                    }
+                    else -> "轻触音效开始混音"
                 }
 
                 Text(

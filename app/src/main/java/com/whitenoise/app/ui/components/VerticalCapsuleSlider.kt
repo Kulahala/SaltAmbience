@@ -1,12 +1,14 @@
 package com.whitenoise.app.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -20,13 +22,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -43,6 +45,7 @@ import kotlin.math.roundToInt
 /**
  * Modern vertical capsule slider inspired by Xiaomi HyperOS and Apple Control Center.
  * Supports fluid vertical drag gestures, tap repositioning, animated fill, and embedded icon & percentage.
+ * Properly discriminates vertical dragging from parent horizontal scrolling.
  */
 @Composable
 fun VerticalCapsuleSlider(
@@ -63,12 +66,14 @@ fun VerticalCapsuleSlider(
     val cornerRadius = 24.dp
     val shape = RoundedCornerShape(cornerRadius)
 
+    var isDragging by remember { mutableStateOf(false) }
+
     val effectiveValue = if (isMuted) 0f else value.coerceIn(0f, 1f)
 
-    // Smooth animation for external value updates
+    // Direct 1:1 tracking during drag with zero latency; smooth tween for taps and external state updates
     val animatedFill by animateFloatAsState(
         targetValue = effectiveValue,
-        animationSpec = tween(durationMillis = 80),
+        animationSpec = if (isDragging) snap() else tween(durationMillis = 120),
         label = "capsule_fill_animation"
     )
 
@@ -88,27 +93,38 @@ fun VerticalCapsuleSlider(
                     color = SaltTheme.colors.text.copy(alpha = 0.05f),
                     shape = shape
                 )
-                .pointerInput(enabled, isMuted) {
+                .pointerInput(enabled) {
                     if (!enabled) return@pointerInput
-                    awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false)
+                    detectTapGestures { offset ->
                         val totalH = size.height.toFloat()
                         if (totalH > 0f) {
-                            val initialVal = ((totalH - down.position.y) / totalH).coerceIn(0f, 1f)
-                            currentOnValueChange(initialVal)
-                        }
-                        val pointerId = down.id
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            val change = event.changes.find { it.id == pointerId } ?: event.changes.firstOrNull() ?: break
-                            if (!change.pressed) break
-                            change.consume()
-                            if (totalH > 0f) {
-                                val currentVal = ((totalH - change.position.y) / totalH).coerceIn(0f, 1f)
-                                currentOnValueChange(currentVal)
-                            }
+                            val newVal = ((totalH - offset.y) / totalH).coerceIn(0f, 1f)
+                            currentOnValueChange(newVal)
                         }
                     }
+                }
+                .pointerInput(enabled) {
+                    if (!enabled) return@pointerInput
+                    detectVerticalDragGestures(
+                        onDragStart = { offset ->
+                            isDragging = true
+                            val totalH = size.height.toFloat()
+                            if (totalH > 0f) {
+                                val newVal = ((totalH - offset.y) / totalH).coerceIn(0f, 1f)
+                                currentOnValueChange(newVal)
+                            }
+                        },
+                        onDragEnd = { isDragging = false },
+                        onDragCancel = { isDragging = false },
+                        onVerticalDrag = { change, _ ->
+                            change.consume()
+                            val totalH = size.height.toFloat()
+                            if (totalH > 0f) {
+                                val newVal = ((totalH - change.position.y) / totalH).coerceIn(0f, 1f)
+                                currentOnValueChange(newVal)
+                            }
+                        }
+                    )
                 }
         ) {
             // Dynamic Active Fill Box anchored at the bottom
@@ -123,8 +139,8 @@ fun VerticalCapsuleSlider(
             // Top: Percentage Indicator
             val percentageText = when {
                 isMuted -> "静音"
-                animatedFill <= 0.001f -> "0%"
-                else -> "${(animatedFill * 100).roundToInt()}%"
+                effectiveValue <= 0.001f -> "0%"
+                else -> "${(effectiveValue * 100).roundToInt()}%"
             }
 
             Text(
@@ -144,13 +160,21 @@ fun VerticalCapsuleSlider(
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 12.dp)
                     .then(
-                        if (onIconClick != null) Modifier.clickable { onIconClick() } else Modifier
+                        if (onIconClick != null) {
+                            Modifier.clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { onIconClick() }
+                        } else Modifier
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = icon,
-                    fontSize = 24.sp
+                    fontSize = 24.sp,
+                    modifier = Modifier.then(
+                        if (isMuted) Modifier.alpha(0.4f) else Modifier
+                    )
                 )
             }
         }

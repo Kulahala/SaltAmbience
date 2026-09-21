@@ -109,11 +109,15 @@ fun MixerBottomSheet(
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Top Drag Pill Indicator
+                    // Top Drag Pill Indicator (tap to dismiss)
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 10.dp, bottom = 4.dp),
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { onDismiss() }
+                            .padding(top = 10.dp, bottom = 6.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Box(
@@ -143,7 +147,7 @@ fun MixerBottomSheet(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = if (activeTracks.isNotEmpty()) "${activeTracks.size} 轨正在发声" else "单轨主音量",
+                                text = if (activeTracks.isNotEmpty()) "${activeTracks.size} 轨正在混音" else "单轨主音量",
                                 style = SaltTheme.textStyles.sub,
                                 fontSize = 12.sp,
                                 color = SaltTheme.colors.subText
