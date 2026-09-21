@@ -25,5 +25,9 @@ Thumbs.db
 *.bak
 *.tmp
 
+# Build artifacts
+*.apk
+*.aab
+
 # Temporary download scripts
 download_sounds.py
