@@ -51,7 +51,7 @@ fun AboutDialog(
 
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "v1.2.0 · 椒盐美学自然声音混音器",
+                    text = "v1.3.0 · 椒盐美学自然声音混音器",
                     style = SaltTheme.textStyles.sub,
                     color = SaltTheme.colors.text.copy(alpha = 0.65f)
                 )
