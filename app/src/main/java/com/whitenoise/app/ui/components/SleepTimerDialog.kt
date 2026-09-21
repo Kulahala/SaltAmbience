@@ -23,6 +23,7 @@ import com.moriafly.salt.ui.RoundedColumn
 import com.moriafly.salt.ui.SaltTheme
 import com.moriafly.salt.ui.Text
 
+@Deprecated("Use SleepTimerBottomSheet instead", ReplaceWith("SleepTimerBottomSheet"))
 @Composable
 fun SleepTimerDialog(
     isRunning: Boolean,
@@ -52,7 +53,7 @@ fun SleepTimerDialog(
                         "定时结束后自动平滑淡出并释放音频播放服务"
                     },
                     style = SaltTheme.textStyles.sub,
-                    color = SaltTheme.colors.subText
+                    color = SaltTheme.colors.text.copy(alpha = 0.65f)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))

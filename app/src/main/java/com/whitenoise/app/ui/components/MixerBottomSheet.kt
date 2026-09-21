@@ -150,7 +150,7 @@ fun MixerBottomSheet(
                                 text = if (activeTracks.isNotEmpty()) "${activeTracks.size} 轨正在混音" else "单轨主音量",
                                 style = SaltTheme.textStyles.sub,
                                 fontSize = 12.sp,
-                                color = SaltTheme.colors.subText
+                                color = SaltTheme.colors.text.copy(alpha = 0.65f)
                             )
                         }
 
@@ -219,7 +219,7 @@ fun MixerBottomSheet(
                                     text = "轻触主页音效卡片\n开启多轨混音",
                                     style = SaltTheme.textStyles.sub,
                                     fontSize = 12.sp,
-                                    color = SaltTheme.colors.subText,
+                                    color = SaltTheme.colors.text.copy(alpha = 0.65f),
                                     lineHeight = 18.sp
                                 )
                             }

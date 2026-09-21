@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.moriafly.salt.ui.SaltTheme
 import com.moriafly.salt.ui.Text
+import com.whitenoise.app.core.audio.VolumeCalculator
 import com.whitenoise.app.core.model.PlaybackState
 import com.whitenoise.app.core.model.SoundTrack
 import kotlin.math.roundToInt
@@ -130,14 +131,14 @@ fun BottomPlayerBar(
 
                 Spacer(modifier = Modifier.height(2.dp))
 
-                // Subtitle line: sleep countdown or master volume hint
+                // Subtitle line: master volume hint with optional countdown
                 val subText = if (playbackState.isSleepTimerRunning) {
                     val remaining = playbackState.sleepTimerRemainingSeconds ?: 0L
                     val mins = remaining / 60
                     val secs = remaining % 60
-                    "⏱️ 倒计时 %02d:%02d · 混音台 ↗".format(mins, secs)
+                    "总音量: ${(playbackState.masterVolume * 100).roundToInt()}% (%02d:%02d) · 混音台 ↗".format(mins, secs)
                 } else {
-                    "总音量: ${(playbackState.masterVolume * 100).roundToInt()}% · 调音台 ↗"
+                    "总音量: ${(playbackState.masterVolume * 100).roundToInt()}% · 混音台 ↗"
                 }
 
                 Text(
@@ -163,8 +164,7 @@ fun BottomPlayerBar(
                 contentAlignment = Alignment.Center
             ) {
                 val timerText = if (playbackState.isSleepTimerRunning) {
-                    val remaining = playbackState.sleepTimerRemainingSeconds ?: 0L
-                    val mins = (remaining + 59) / 60
+                    val mins = VolumeCalculator.calculateRemainingMinutes(playbackState.sleepTimerRemainingSeconds)
                     "⏱️ ${mins}m"
                 } else {
                     "⏱️ 定时"

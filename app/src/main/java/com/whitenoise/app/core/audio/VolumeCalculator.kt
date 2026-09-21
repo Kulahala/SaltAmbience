@@ -56,4 +56,12 @@ object VolumeCalculator {
         if (totalSeconds <= 60L) return min(20L, totalSeconds / 3)
         return min(45L, totalSeconds / 4)
     }
+
+    /**
+     * Converts remaining seconds to ceil minutes for UI displays (e.g. 61s -> 2m, 60s -> 1m, 1s -> 1m, 0s -> 0m).
+     */
+    fun calculateRemainingMinutes(remainingSeconds: Long?): Int {
+        if (remainingSeconds == null || remainingSeconds <= 0L) return 0
+        return ((remainingSeconds + 59) / 60).toInt()
+    }
 }

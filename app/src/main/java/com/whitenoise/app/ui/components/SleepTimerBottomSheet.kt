@@ -22,13 +22,18 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -38,14 +43,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.moriafly.salt.ui.SaltTheme
 import com.moriafly.salt.ui.Text
+import com.whitenoise.app.core.audio.VolumeCalculator
 import kotlin.math.roundToInt
 
 /**
@@ -74,6 +84,28 @@ fun SleepTimerBottomSheet(
     var selectedMinutes by remember { mutableIntStateOf(30) }
     var isManualInputMode by remember { mutableStateOf(false) }
     var manualInputText by remember { mutableStateOf("30") }
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    // Synchronize selectedMinutes with running timer when opened, and reset manual mode
+    LaunchedEffect(isVisible) {
+        if (isVisible) {
+            isManualInputMode = false
+            if (isSleepTimerRunning && sleepTimerRemainingSeconds != null && sleepTimerRemainingSeconds > 0) {
+                val remainingMins = VolumeCalculator.calculateRemainingMinutes(sleepTimerRemainingSeconds).coerceIn(1, 240)
+                selectedMinutes = remainingMins
+                manualInputText = remainingMins.toString()
+            }
+        }
+    }
+
+    // Auto-focus and trigger soft keyboard when entering manual input mode
+    LaunchedEffect(isManualInputMode) {
+        if (isManualInputMode) {
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        }
+    }
 
     val shortcutMinutes = listOf(15, 30, 45, 60, 90)
 
@@ -115,11 +147,13 @@ fun SleepTimerBottomSheet(
                         indication = null
                     ) { /* Prevent dismissing */ }
                     .navigationBarsPadding()
+                    .imePadding()
                     .padding(bottom = 16.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
                         .padding(horizontal = 20.dp)
                 ) {
                     // Top Drag Pill Indicator
@@ -233,7 +267,23 @@ fun SleepTimerBottomSheet(
                                                 manualInputText = input
                                             }
                                         },
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                        modifier = Modifier.focusRequester(focusRequester),
+                                        keyboardOptions = KeyboardOptions(
+                                            keyboardType = KeyboardType.Number,
+                                            imeAction = ImeAction.Done
+                                        ),
+                                        keyboardActions = KeyboardActions(
+                                            onDone = {
+                                                val parsed = manualInputText.toIntOrNull()
+                                                if (parsed != null && parsed in 1..240) {
+                                                    selectedMinutes = parsed
+                                                } else {
+                                                    manualInputText = selectedMinutes.toString()
+                                                }
+                                                isManualInputMode = false
+                                                keyboardController?.hide()
+                                            }
+                                        ),
                                         singleLine = true,
                                         textStyle = SaltTheme.textStyles.main.copy(
                                             fontSize = 22.sp,
@@ -263,8 +313,11 @@ fun SleepTimerBottomSheet(
                                             val parsed = manualInputText.toIntOrNull()
                                             if (parsed != null && parsed in 1..240) {
                                                 selectedMinutes = parsed
+                                            } else {
+                                                manualInputText = selectedMinutes.toString()
                                             }
                                             isManualInputMode = false
+                                            keyboardController?.hide()
                                         }
                                         .padding(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
@@ -282,7 +335,11 @@ fun SleepTimerBottomSheet(
                                     modifier = Modifier
                                         .clip(CircleShape)
                                         .background(SaltTheme.colors.subBackground)
-                                        .clickable { isManualInputMode = false }
+                                        .clickable {
+                                            manualInputText = selectedMinutes.toString()
+                                            isManualInputMode = false
+                                            keyboardController?.hide()
+                                        }
                                         .padding(horizontal = 10.dp, vertical = 6.dp)
                                 ) {
                                     Text(
@@ -304,6 +361,14 @@ fun SleepTimerBottomSheet(
                                     .padding(horizontal = 12.dp, vertical = 4.dp)
                             ) {
                                 Text(
+                                    text = "时长：",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = SaltTheme.colors.text.copy(alpha = 0.7f),
+                                    modifier = Modifier.padding(bottom = 6.dp)
+                                )
+
+                                Text(
                                     text = "$selectedMinutes",
                                     fontSize = 44.sp,
                                     fontWeight = FontWeight.Bold,
@@ -311,7 +376,7 @@ fun SleepTimerBottomSheet(
                                     lineHeight = 44.sp
                                 )
 
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
 
                                 Text(
                                     text = "分钟",

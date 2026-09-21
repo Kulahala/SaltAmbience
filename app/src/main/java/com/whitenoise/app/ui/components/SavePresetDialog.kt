@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -43,13 +44,19 @@ fun SavePresetDialog(
                 .padding(20.dp)
         ) {
             Column {
-                ItemOuterTitle(text = "保存当前混音为预设")
+                Text(
+                    text = "保存当前混音为预设",
+                    style = SaltTheme.textStyles.main,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = SaltTheme.colors.text
+                )
 
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "将当前开启的音轨及音量方案保存为自定义预设，方便随时切换。",
                     style = SaltTheme.textStyles.sub,
-                    color = SaltTheme.colors.subText
+                    color = SaltTheme.colors.text.copy(alpha = 0.65f)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -65,7 +72,7 @@ fun SavePresetDialog(
                         Text(
                             text = "请输入预设名称（如：午后读书）",
                             style = SaltTheme.textStyles.sub,
-                            color = SaltTheme.colors.subText
+                            color = SaltTheme.colors.text.copy(alpha = 0.45f)
                         )
                     }
                     BasicTextField(
@@ -92,7 +99,7 @@ fun SavePresetDialog(
                         Text(
                             text = "取消",
                             style = SaltTheme.textStyles.sub,
-                            color = SaltTheme.colors.subText
+                            color = SaltTheme.colors.text.copy(alpha = 0.65f)
                         )
                     }
 
@@ -113,7 +120,8 @@ fun SavePresetDialog(
                         Text(
                             text = "保存",
                             fontSize = 14.sp,
-                            color = if (presetName.isNotBlank()) androidx.compose.ui.graphics.Color.White else SaltTheme.colors.subText
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (presetName.isNotBlank()) androidx.compose.ui.graphics.Color.White else SaltTheme.colors.text.copy(alpha = 0.35f)
                         )
                     }
                 }

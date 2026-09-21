@@ -240,8 +240,14 @@ fun HomeScreen(
             playbackState = playbackState,
             activeTracks = activeTracks,
             onToggleMasterPlay = { viewModel.toggleMasterPlay() },
-            onOpenMixer = { showMixerSheet = true },
-            onOpenSleepTimer = { viewModel.setShowSleepTimerDialog(true) },
+            onOpenMixer = {
+                viewModel.setShowSleepTimerDialog(false)
+                showMixerSheet = true
+            },
+            onOpenSleepTimer = {
+                showMixerSheet = false
+                viewModel.setShowSleepTimerDialog(true)
+            },
             modifier = Modifier.align(Alignment.BottomCenter)
         )
 

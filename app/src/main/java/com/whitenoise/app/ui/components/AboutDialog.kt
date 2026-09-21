@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -40,13 +41,19 @@ fun AboutDialog(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                ItemOuterTitle(text = "关于 SaltAmbience")
+                Text(
+                    text = "关于 SaltAmbience",
+                    style = SaltTheme.textStyles.main,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = SaltTheme.colors.text
+                )
 
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "v1.1.0 · 椒盐美学自然声音混音器",
+                    text = "v1.2.0 · 椒盐美学自然声音混音器",
                     style = SaltTheme.textStyles.sub,
-                    color = SaltTheme.colors.subText
+                    color = SaltTheme.colors.text.copy(alpha = 0.65f)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -56,6 +63,7 @@ fun AboutDialog(
                         Text(
                             text = "开源致谢与音源许可",
                             style = SaltTheme.textStyles.main,
+                            fontWeight = FontWeight.Bold,
                             color = SaltTheme.colors.text
                         )
                         Spacer(modifier = Modifier.height(8.dp))
@@ -75,7 +83,7 @@ fun AboutDialog(
                                     "• AndroidX Media3 ExoPlayer 多轨引擎\n" +
                                     "• Jetpack DataStore 状态记忆",
                             style = SaltTheme.textStyles.sub,
-                            color = SaltTheme.colors.subText,
+                            color = SaltTheme.colors.text.copy(alpha = 0.75f),
                             fontSize = 12.sp
                         )
                     }

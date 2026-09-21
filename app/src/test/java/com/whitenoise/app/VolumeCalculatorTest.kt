@@ -114,4 +114,28 @@ class VolumeCalculatorTest {
         // 60 mins (3600s): min(45, 3600/4 = 900) -> 45
         assertEquals(45L, VolumeCalculator.determineFadeDuration(3600L))
     }
+
+    @Test
+    fun testCalculateRemainingMinutes() {
+        // Null and negative/zero boundaries
+        assertEquals(0, VolumeCalculator.calculateRemainingMinutes(null))
+        assertEquals(0, VolumeCalculator.calculateRemainingMinutes(-10L))
+        assertEquals(0, VolumeCalculator.calculateRemainingMinutes(0L))
+
+        // Seconds within the first minute round up to 1 minute
+        assertEquals(1, VolumeCalculator.calculateRemainingMinutes(1L))
+        assertEquals(1, VolumeCalculator.calculateRemainingMinutes(30L))
+        assertEquals(1, VolumeCalculator.calculateRemainingMinutes(59L))
+        assertEquals(1, VolumeCalculator.calculateRemainingMinutes(60L))
+
+        // 61s rounds up to 2 minutes
+        assertEquals(2, VolumeCalculator.calculateRemainingMinutes(61L))
+        assertEquals(2, VolumeCalculator.calculateRemainingMinutes(120L))
+
+        // Multi-minute durations
+        assertEquals(15, VolumeCalculator.calculateRemainingMinutes(900L))
+        assertEquals(30, VolumeCalculator.calculateRemainingMinutes(1800L))
+        assertEquals(60, VolumeCalculator.calculateRemainingMinutes(3600L))
+        assertEquals(120, VolumeCalculator.calculateRemainingMinutes(7200L))
+    }
 }
