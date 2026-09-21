@@ -15,6 +15,7 @@ Guidance for coding agents working in WhiteNoise-Android.
     - 破坏或推翻已定音频架构（如放弃 Media3 ExoPlayer 池转用旧版 MediaPlayer）；
     - 破坏性删除文件、目录或全局重构；
     - 执行 Git Commit 操作；
+    - 自动递增版本号或推送发版 Tag（必须经用户明确同意，见第 6 节）；
     - 修改已授权清单外的文件。
   - **自主推进区（Low-Stakes，自主闭环）**：
     - 在已批准阶段和模块内，具体的 Kotlin 算法实现、Compose UI 局部布局排版、ViewModel 状态流绑定、私有辅助类抽取、单元测试编写；
@@ -85,6 +86,22 @@ app/src/main/java/com/whitenoise/app/
 
 ### 3.3 椒盐美学 UI 规范 (`SaltUI`)
 - **视觉风格**：清爽克制、低饱和度、大圆角卡片、清晰的分组布局。
+- **色彩与层级契约 (Color Tokens Contract)**：
+  - **主底色（Level 0 主屏幕背景）**：必须使用 `SaltTheme.colors.background`（浅色为极简纯白 `#FAFAFA`，深色为夜间友好的 `#121212`），严禁在根容器滥用 `subBackground` 导致全局发灰；
+  - **容器底色（Level 1 卡片与抽屉）**：统一使用 `SaltTheme.colors.subBackground`（浅色为柔和浅灰 `#F3F4F6`，深色为半透明白 `#FFFFFF14`），配合大圆角（`16.dp`~`20.dp`）；
+  - **文字阶梯与对比度规范（严禁固定灰度）**：
+    - 主标题/正文：`SaltTheme.colors.text`（100% 不透明度）；
+    - 次级信息/说明：`SaltTheme.colors.text.copy(alpha = 0.65f)`（确保在 `subBackground` 上满足 WCAG 4.5:1 对比度）；
+    - 失焦/静音提示：`SaltTheme.colors.text.copy(alpha = 0.40f)`；
+    - **铁律**：严禁在 `subBackground` 卡片上直接绘制 `subText`，必须统一使用 `text.copy(alpha)` 阶梯，杜绝“灰底灰字”。
+  - **强调色与激活态 (Highlight)**：
+    - 采用静谧自然的薄荷青/海盐青或深海蓝，严禁使用高刺激性荧光色；
+    - 激活态背景采用 `SaltTheme.colors.highlight.copy(alpha = 0.12f)`，图标/高亮文字采用 `SaltTheme.colors.highlight`；
+    - 纯色实心高亮按钮前景文字强制采用 `Color.White`。
+- **主题模式与夜间模式契约 (Theme Mode Contract)**：
+  - 支持三种模式：`SYSTEM`（跟随系统，默认）、`LIGHT`（强制浅色）、`DARK`（强制深色）；
+  - 主题配置持久化存储于 DataStore Preferences，应用启动时无闪烁加载；
+  - 根层通过 `SaltTheme(configs = SaltConfigs(isDarkTheme = isDark))` 统一驱动重组。
 - **交互规范**：
   - 音效卡片：大图标 + 音轨名称 + 独立静音/播放开关 + 精细音量滑块（基于 SaltTheme 配色封装的 Slider）；
   - 预设切换：一键载入场景方案（如“深夜暴雨”、“森林露营”），支持用户保存当前混音为新预设；
@@ -198,6 +215,9 @@ flowchart LR
   `[Feature/Fix/Docs/Chore] 中文标题 (English Title)`
   正文清晰写明包含改动与验证依据，严禁虚假声称已通过未执行的测试。
 - **发布与版本规范 (Release Workflow)**：
-  - 递增版本：在 `app/build.gradle.kts` 中更新 `versionName` 与 `versionCode`；
-  - 触发发版：本地打 Tag 并推送（`git tag -a vX.Y.Z -m "release: vX.Y.Z" && git push origin vX.Y.Z`）；
-  - 自动交付：通过 `.github/workflows/release.yml` 在云端自动构建并挂载 `SaltAmbience-vX.Y.Z.apk` 至 GitHub Release。
+  - **严禁擅自刷版（Release Authorization Gate）**：严禁未经用户明确授权自动递增版本号、打 Release Tag 或推送发版，杜绝高频率无序刷版。
+  - **提请发版前置要求（Change Ledger before Release）**：当某一阶段的特性、优化或重构完成，Agent 提请发版时，必须在对话中清晰列举**自上一发布版本以来的所有改动清单**（包括新增特性、UI/交互优化、缺陷修复及依赖调整），供用户逐项核对与确认。
+  - **标准发版执行流程**（仅在用户明确回复同意后执行）：
+    1. **递增版本**：在 `app/build.gradle.kts` 中更新 `versionName` 与 `versionCode`；
+    2. **打标签并推送**：`git tag -a vX.Y.Z -m "release: vX.Y.Z" && git push origin vX.Y.Z`；
+    3. **自动交付**：通过 `.github/workflows/release.yml` 在 GitHub Actions 自动构建并挂载 `SaltAmbience-vX.Y.Z.apk` 至 Releases 页面。

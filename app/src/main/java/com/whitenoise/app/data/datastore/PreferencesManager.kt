@@ -28,6 +28,22 @@ class PreferencesManager(private val context: Context) {
         private val KEY_MASTER_VOLUME = floatPreferencesKey("master_volume")
         private val KEY_CUSTOM_PRESETS = stringPreferencesKey("custom_presets_json")
         private val KEY_ACTIVE_TRACKS_STATE = stringPreferencesKey("active_tracks_state_json")
+        private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
+    }
+
+    val themeModeFlow: Flow<com.whitenoise.app.core.model.ThemeMode> = context.dataStore.data.map { preferences ->
+        val raw = preferences[KEY_THEME_MODE] ?: com.whitenoise.app.core.model.ThemeMode.SYSTEM.name
+        try {
+            com.whitenoise.app.core.model.ThemeMode.valueOf(raw)
+        } catch (e: Exception) {
+            com.whitenoise.app.core.model.ThemeMode.SYSTEM
+        }
+    }
+
+    suspend fun saveThemeMode(mode: com.whitenoise.app.core.model.ThemeMode) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_THEME_MODE] = mode.name
+        }
     }
 
     val masterVolumeFlow: Flow<Float> = context.dataStore.data.map { preferences ->

@@ -43,6 +43,7 @@ import com.whitenoise.app.ui.components.MixerBottomSheet
 import com.whitenoise.app.ui.components.SavePresetDialog
 import com.whitenoise.app.ui.components.SleepTimerBottomSheet
 import com.whitenoise.app.ui.components.SoundTileCard
+import com.whitenoise.app.ui.components.ThemeSelectionDialog
 
 @Composable
 fun HomeScreen(
@@ -56,6 +57,8 @@ fun HomeScreen(
     val showSleepDialog by viewModel.showSleepTimerDialog.collectAsState()
     val showAboutDialog by viewModel.showAboutDialog.collectAsState()
     val showSavePresetDialog by viewModel.showSavePresetDialog.collectAsState()
+    val showThemeDialog by viewModel.showThemeDialog.collectAsState()
+    val themeMode by viewModel.themeMode.collectAsState()
 
     // Control center bottom sheet visibility
     var showMixerSheet by remember { mutableStateOf(false) }
@@ -91,21 +94,57 @@ fun HomeScreen(
                     )
                 }
 
-                // About Button
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(SaltTheme.colors.subBackground)
-                        .clickable { viewModel.setShowAboutDialog(true) }
-                        .padding(horizontal = 14.dp, vertical = 7.dp),
-                    contentAlignment = Alignment.Center
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = "关于",
-                        style = SaltTheme.textStyles.sub,
-                        fontWeight = FontWeight.Medium,
-                        color = SaltTheme.colors.text.copy(alpha = 0.75f)
-                    )
+                    // Theme Switch Button
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(SaltTheme.colors.subBackground)
+                            .clickable { viewModel.setShowThemeDialog(true) }
+                            .padding(horizontal = 10.dp, vertical = 7.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = themeMode.iconEmoji,
+                                fontSize = 13.sp
+                            )
+                            Text(
+                                text = when (themeMode) {
+                                    com.whitenoise.app.core.model.ThemeMode.SYSTEM -> "系统"
+                                    com.whitenoise.app.core.model.ThemeMode.LIGHT -> "浅色"
+                                    com.whitenoise.app.core.model.ThemeMode.DARK -> "深色"
+                                },
+                                style = SaltTheme.textStyles.sub,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = SaltTheme.colors.text.copy(alpha = 0.75f)
+                            )
+                        }
+                    }
+
+                    // About Button
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(SaltTheme.colors.subBackground)
+                            .clickable { viewModel.setShowAboutDialog(true) }
+                            .padding(horizontal = 14.dp, vertical = 7.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "关于",
+                            style = SaltTheme.textStyles.sub,
+                            fontWeight = FontWeight.Medium,
+                            color = SaltTheme.colors.text.copy(alpha = 0.75f)
+                        )
+                    }
                 }
             }
 
@@ -285,6 +324,14 @@ fun HomeScreen(
             SavePresetDialog(
                 onSave = { name -> viewModel.saveCurrentAsPreset(name) },
                 onDismiss = { viewModel.setShowSavePresetDialog(false) }
+            )
+        }
+
+        if (showThemeDialog) {
+            ThemeSelectionDialog(
+                currentMode = themeMode,
+                onSelectMode = { mode -> viewModel.setThemeMode(mode) },
+                onDismiss = { viewModel.setShowThemeDialog(false) }
             )
         }
     }

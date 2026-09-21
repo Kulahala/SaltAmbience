@@ -49,6 +49,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         initialValue = Preset.DEFAULT_PRESETS
     )
 
+    val themeMode: StateFlow<com.whitenoise.app.core.model.ThemeMode> = preferencesManager.themeModeFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = com.whitenoise.app.core.model.ThemeMode.SYSTEM
+    )
+
     // Dialog display states
     private val _showSleepTimerDialog = MutableStateFlow(false)
     val showSleepTimerDialog: StateFlow<Boolean> = _showSleepTimerDialog.asStateFlow()
@@ -58,6 +64,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _showSavePresetDialog = MutableStateFlow(false)
     val showSavePresetDialog: StateFlow<Boolean> = _showSavePresetDialog.asStateFlow()
+
+    private val _showThemeDialog = MutableStateFlow(false)
+    val showThemeDialog: StateFlow<Boolean> = _showThemeDialog.asStateFlow()
 
     private var isPreferencesRestored = false
     private var isServiceBound = false
@@ -216,6 +225,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setShowSavePresetDialog(show: Boolean) {
         _showSavePresetDialog.value = show
+    }
+
+    fun setShowThemeDialog(show: Boolean) {
+        _showThemeDialog.value = show
+    }
+
+    fun setThemeMode(mode: com.whitenoise.app.core.model.ThemeMode) {
+        viewModelScope.launch {
+            preferencesManager.saveThemeMode(mode)
+        }
     }
 
     override fun onCleared() {
