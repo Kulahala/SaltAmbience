@@ -1,0 +1,370 @@
+package com.whitenoise.app.ui.components
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.moriafly.salt.ui.SaltTheme
+import com.moriafly.salt.ui.Text
+import com.whitenoise.app.core.model.SoundTrack
+
+/**
+ * HyperOS & Apple Control Center-inspired expandable multi-track mixer bottom sheet.
+ * Displays side-by-side [VerticalCapsuleSlider] components for Master volume and currently active tracks.
+ */
+@Composable
+fun MixerBottomSheet(
+    isVisible: Boolean,
+    onDismiss: () -> Unit,
+    masterVolume: Float,
+    onMasterVolumeChange: (Float) -> Unit,
+    activeTracks: List<SoundTrack>,
+    onTrackVolumeChange: (String, Float) -> Unit,
+    onToggleTrackMute: (String) -> Unit,
+    isMasterPlaying: Boolean,
+    onToggleMasterPlay: () -> Unit,
+    onStopAll: () -> Unit,
+    isSleepTimerRunning: Boolean,
+    sleepTimerRemainingSeconds: Long?,
+    onSelectSleepMinutes: (Int) -> Unit,
+    onCancelSleepTimer: () -> Unit,
+    onOpenFullSleepTimer: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (isVisible) {
+        BackHandler(onBack = onDismiss)
+    }
+
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        // Semi-transparent scrim
+        AnimatedVisibility(
+            visible = isVisible,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.45f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { onDismiss() }
+            )
+        }
+
+        // Sliding Bottom Sheet
+        AnimatedVisibility(
+            visible = isVisible,
+            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(elevation = 20.dp, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                    .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                    .background(SaltTheme.colors.background)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { /* Consume click to prevent dismissing */ }
+                    .navigationBarsPadding()
+                    .padding(bottom = 12.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Top Drag Pill Indicator
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp, bottom = 4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(36.dp)
+                                .height(4.dp)
+                                .clip(CircleShape)
+                                .background(SaltTheme.colors.subText.copy(alpha = 0.25f))
+                        )
+                    }
+
+                    // Header: Title & Close Button
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "声音控制中心",
+                                style = SaltTheme.textStyles.main,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                color = SaltTheme.colors.text
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = if (activeTracks.isNotEmpty()) "${activeTracks.size} 轨正在发声" else "单轨主音量",
+                                style = SaltTheme.textStyles.sub,
+                                fontSize = 12.sp,
+                                color = SaltTheme.colors.subText
+                            )
+                        }
+
+                        // Close "完成" Button
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(SaltTheme.colors.subBackground)
+                                .clickable { onDismiss() }
+                                .padding(horizontal = 14.dp, vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "完成",
+                                style = SaltTheme.textStyles.sub,
+                                fontWeight = FontWeight.Medium,
+                                color = SaltTheme.colors.text,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+
+                    // Scrollable Horizontal Mixer Capsule Sliders
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Column 1: Master Volume Capsule
+                        VerticalCapsuleSlider(
+                            value = masterVolume,
+                            onValueChange = onMasterVolumeChange,
+                            title = "主音量",
+                            icon = "🎧",
+                            activeColor = SaltTheme.colors.highlight
+                        )
+
+                        // Subsequent Columns: ONLY currently active playing sound tracks
+                        activeTracks.forEach { track ->
+                            VerticalCapsuleSlider(
+                                value = if (track.isMuted) 0f else track.volume,
+                                onValueChange = { onTrackVolumeChange(track.id, it) },
+                                title = track.name,
+                                icon = track.iconEmoji,
+                                isMuted = track.isMuted,
+                                activeColor = SaltTheme.colors.highlight,
+                                onIconClick = { onToggleTrackMute(track.id) }
+                            )
+                        }
+
+                        // Friendly Hint Card when no active tracks
+                        if (activeTracks.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .width(140.dp)
+                                    .height(180.dp)
+                                    .clip(RoundedCornerShape(24.dp))
+                                    .background(SaltTheme.colors.subBackground.copy(alpha = 0.5f))
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "轻触主页音效卡片\n开启多轨混音",
+                                    style = SaltTheme.textStyles.sub,
+                                    fontSize = 12.sp,
+                                    color = SaltTheme.colors.subText,
+                                    lineHeight = 18.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Bottom Section: Quick Sleep Timer & Action Controls
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 6.dp)
+                    ) {
+                        // Sleep Timer Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "休眠定时",
+                                style = SaltTheme.textStyles.sub,
+                                fontSize = 12.sp,
+                                color = SaltTheme.colors.subText
+                            )
+
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (isSleepTimerRunning) {
+                                    val remaining = sleepTimerRemainingSeconds ?: 0L
+                                    val mins = remaining / 60
+                                    val secs = remaining % 60
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(CircleShape)
+                                            .background(SaltTheme.colors.highlight.copy(alpha = 0.15f))
+                                            .clickable { onOpenFullSleepTimer() }
+                                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                                    ) {
+                                        Text(
+                                            text = "⏱️ %02d:%02d".format(mins, secs),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = SaltTheme.colors.highlight
+                                        )
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(CircleShape)
+                                            .background(SaltTheme.colors.subBackground)
+                                            .clickable { onCancelSleepTimer() }
+                                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                                    ) {
+                                        Text(
+                                            text = "取消",
+                                            fontSize = 11.sp,
+                                            color = SaltTheme.colors.subText
+                                        )
+                                    }
+                                } else {
+                                    listOf(15, 30, 45, 60).forEach { mins ->
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(CircleShape)
+                                                .background(SaltTheme.colors.subBackground)
+                                                .clickable { onSelectSleepMinutes(mins) }
+                                                .padding(horizontal = 10.dp, vertical = 5.dp)
+                                        ) {
+                                            Text(
+                                                text = "${mins}m",
+                                                fontSize = 11.sp,
+                                                color = SaltTheme.colors.text
+                                            )
+                                        }
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(CircleShape)
+                                            .background(SaltTheme.colors.subBackground)
+                                            .clickable { onOpenFullSleepTimer() }
+                                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                                    ) {
+                                        Text(
+                                            text = "更多",
+                                            fontSize = 11.sp,
+                                            color = SaltTheme.colors.subText
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Master Action Buttons Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Stop All Button
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(SaltTheme.colors.subBackground)
+                                    .clickable { onStopAll() }
+                                    .padding(vertical = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "⏹ 全部停止",
+                                    style = SaltTheme.textStyles.sub,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 13.sp,
+                                    color = SaltTheme.colors.subText
+                                )
+                            }
+
+                            // Master Play/Pause Button
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(
+                                        if (isMasterPlaying) SaltTheme.colors.highlight
+                                        else SaltTheme.colors.highlight.copy(alpha = 0.15f)
+                                    )
+                                    .clickable { onToggleMasterPlay() }
+                                    .padding(vertical = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (isMasterPlaying) "⏸ 暂停混音" else "▶ 继续混音",
+                                    style = SaltTheme.textStyles.sub,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 13.sp,
+                                    color = if (isMasterPlaying) Color.White else SaltTheme.colors.highlight
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

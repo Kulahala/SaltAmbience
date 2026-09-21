@@ -1,6 +1,9 @@
 package com.whitenoise.app.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,125 +13,150 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.moriafly.salt.ui.RoundedColumn
 import com.moriafly.salt.ui.SaltTheme
-import com.moriafly.salt.ui.Switcher
 import com.moriafly.salt.ui.Text
 import com.whitenoise.app.core.model.SoundTrack
 import kotlin.math.roundToInt
 
+/**
+ * Modern Bento-style sound tile card for 2-column grid.
+ * Clean, tactile, and responsive. Clicking toggles playback state with a SaltUI active glow/tint.
+ */
 @Composable
-fun SoundCard(
+fun SoundTileCard(
     track: SoundTrack,
     onTogglePlay: () -> Unit,
-    onVolumeChange: (Float) -> Unit,
-    onToggleMute: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    RoundedColumn(
+    val shape = RoundedCornerShape(20.dp)
+
+    val targetBgColor = if (track.isPlaying) {
+        SaltTheme.colors.highlight.copy(alpha = 0.12f)
+    } else {
+        SaltTheme.colors.background
+    }
+    val animatedBgColor by animateColorAsState(
+        targetValue = targetBgColor,
+        animationSpec = tween(150),
+        label = "tile_bg"
+    )
+
+    val targetBorderColor = if (track.isPlaying) {
+        SaltTheme.colors.highlight
+    } else {
+        SaltTheme.colors.subBackground.copy(alpha = 0.8f)
+    }
+    val animatedBorderColor by animateColorAsState(
+        targetValue = targetBorderColor,
+        animationSpec = tween(150),
+        label = "tile_border"
+    )
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clip(shape)
+            .border(
+                width = if (track.isPlaying) 1.5.dp else 1.dp,
+                color = animatedBorderColor,
+                shape = shape
+            )
+            .background(animatedBgColor)
+            .clickable { onTogglePlay() }
+            .padding(16.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
-            // Header Row: Track title, subtitle, and Switcher
+            // Top Row: Emoji Icon on Left, Status Badge on Right
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = track.name,
-                        style = SaltTheme.textStyles.main,
-                        color = if (track.isPlaying) SaltTheme.colors.highlight else SaltTheme.colors.text
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = track.subtitle,
-                        style = SaltTheme.textStyles.sub,
-                        color = SaltTheme.colors.subText
-                    )
-                }
+                Text(
+                    text = track.iconEmoji,
+                    fontSize = 32.sp
+                )
 
-                Spacer(modifier = Modifier.width(12.dp))
-
-                // Track Toggle Switcher
-                Box(
-                    modifier = Modifier.clickable { onTogglePlay() }
-                ) {
-                    Switcher(
-                        state = track.isPlaying
-                    )
-                }
-            }
-
-            // If track is playing, show the fine-grained volume slider and mute controls
-            if (track.isPlaying) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Mute / Unmute pill button
+                if (track.isPlaying) {
                     Box(
                         modifier = Modifier
                             .clip(CircleShape)
-                            .background(
-                                if (track.isMuted) SaltTheme.colors.highlight.copy(alpha = 0.15f)
-                                else SaltTheme.colors.subBackground
-                            )
-                            .clickable { onToggleMute() }
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        contentAlignment = Alignment.Center
+                            .background(SaltTheme.colors.highlight)
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Text(
-                            text = if (track.isMuted) "已静音" else "静音",
+                            text = if (track.isMuted) "静音" else "${(track.volume * 100).roundToInt()}%",
                             fontSize = 11.sp,
-                            color = if (track.isMuted) SaltTheme.colors.highlight else SaltTheme.colors.subText
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
                         )
                     }
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    // Material3 Slider styled with SaltTheme colors
-                    Slider(
-                        value = if (track.isMuted) 0f else track.volume,
-                        onValueChange = { onVolumeChange(it) },
-                        enabled = !track.isMuted,
-                        modifier = Modifier.weight(1f),
-                        colors = SliderDefaults.colors(
-                            thumbColor = SaltTheme.colors.highlight,
-                            activeTrackColor = SaltTheme.colors.highlight,
-                            inactiveTrackColor = SaltTheme.colors.subBackground
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    // Volume percentage text
-                    Text(
-                        text = if (track.isMuted) "0%" else "${(track.volume * 100).roundToInt()}%",
-                        style = SaltTheme.textStyles.sub,
-                        color = SaltTheme.colors.subText,
-                        modifier = Modifier.width(36.dp)
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(SaltTheme.colors.subText.copy(alpha = 0.25f))
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Sound Name Title
+            Text(
+                text = track.name,
+                style = SaltTheme.textStyles.main,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                color = if (track.isPlaying) SaltTheme.colors.highlight else SaltTheme.colors.text
+            )
+
+            Spacer(modifier = Modifier.height(3.dp))
+
+            // Sound Subtitle
+            Text(
+                text = track.subtitle,
+                style = SaltTheme.textStyles.sub,
+                fontSize = 11.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = SaltTheme.colors.subText
+            )
         }
     }
+}
+
+/**
+ * Backward compatibility alias for SoundCard.
+ */
+@Deprecated("Use SoundTileCard instead", ReplaceWith("SoundTileCard(track, onTogglePlay, modifier)"))
+@Composable
+fun SoundCard(
+    track: SoundTrack,
+    onTogglePlay: () -> Unit,
+    onVolumeChange: (Float) -> Unit = {},
+    onToggleMute: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    SoundTileCard(
+        track = track,
+        onTogglePlay = onTogglePlay,
+        modifier = modifier
+    )
 }
