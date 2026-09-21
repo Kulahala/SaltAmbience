@@ -97,11 +97,11 @@ app/src/main/java/com/whitenoise/app/
 
 | 阶段 | 交付核心目标 | 状态 | 门禁验证标准与实际达成依据 |
 | :--- | :--- | :---: | :--- |
-| **Stage 1** | 脚手架与编译基线 | **[x] 已达成 (Passed)** | 执行 `.\gradlew.bat clean assembleDebug` 成功（耗时 16s，35 个 Task 全部成功），生成 `app/build/outputs/apk/debug/app-debug.apk` (21.4MB)。SaltUI 编译兼容性、Kotlin 2.0 编译器、Windows 批处理短路径均已闭环。 |
-| **Stage 2** | Media3 混音引擎与服务层 | **[ ] 待执行 (Pending)** | 实现 `SoundTrack`, `AudioMixerEngine`（播放器池、音量插值、淡出、集中 AudioFocus），实现 `WhiteNoiseMediaService` 与常驻通知；单元测试覆盖。 |
-| **Stage 3** | SaltUI 界面与播控交互 | **[ ] 待执行 (Pending)** | 基于 SaltUI 构建 `HomeScreen`、音效矩阵卡片、`SaltSlider`、预设切换器、底部播控胶囊与 `SleepTimerDialog`。 |
-| **Stage 4** | 预设持久化与音频资产接入 | **[ ] 待执行 (Pending)** | 接入 DataStore Preferences 记忆混音与自定义预设；接入 6 轨自然音 OGG 资产并实现采样级无缝循环。 |
-| **Stage 5** | 整体验证、保活与收尾交付 | **[ ] 待执行 (Pending)** | 验证息屏保活、锁屏通知栏控制、耳机插拔事件；清理无用代码并构建最终 APK。 |
+| **Stage 1** | 脚手架与编译基线 | **[x] 已达成 (Passed)** | 执行 `.\gradlew.bat clean assembleDebug` 成功（35 个 Task 全部成功），生成空主界面 APK (21.4MB)。SaltUI 编译兼容性、Kotlin 2.0 编译器、Windows 批处理短路径均已闭环。 |
+| **Stage 2** | Media3 混音引擎与服务层 | **[x] 已达成 (Passed)** | 落地 `AudioMixerEngine`（全局单例、ExoPlayer 多轨池、无缝循环、集中式 AudioFocus 调度、休眠对数平滑淡出）与 `WhiteNoiseMediaService`（MediaSession 绑定、MediaStyle 常驻通知栏、耳机拔出自动暂停广播）；通过 6 项单元测试。 |
+| **Stage 3** | SaltUI 界面与播控交互 | **[x] 已达成 (Passed)** | 构建 SaltUI 椒盐风格 `HomeScreen`、音效网格卡片 `SoundCard`、`SaltSlider` 精细调节、底部胶囊播控 `BottomPlayerBar`、休眠抽屉 `SleepTimerDialog`、致谢弹窗 `AboutDialog`；`MainViewModel` 状态流打通。 |
+| **Stage 4** | 预设持久化与音频资产接入 | **[x] 已达成 (Passed)** | 接入 8 款来自 Blanket 项目的高品质无缝循环自然音 OGG（细雨、雷雨、林风、溪流、篝火、鸟鸣、夏夜、纯白噪）至 `assets/sounds/`；配套编写 `SOUNDS_LICENSING.md`；接入 DataStore Preferences 记忆混音与预设状态，修复首次订阅状态覆写 Bug。 |
+| **Stage 5** | 全链路验收与最终打包 | **[x] 已达成 (Passed)** | 10 项单元测试全量通过；生成全功能最终 Debug APK（34.8MB）；初始化 Git 并在确保 `.gitignore` 安全（严防私密信息泄漏）前提下推送到远程仓库 `https://github.com/Kulahala/SaltAmbience.git`。 |
 
 ---
 
@@ -109,10 +109,10 @@ app/src/main/java/com/whitenoise/app/
 
 ```mermaid
 flowchart LR
-    S1["Stage 1: 脚手架与依赖基线 [已通过]"] --> S2["Stage 2: Media3 混音引擎与前台服务"]
-    S2 --> S3["Stage 3: SaltUI 混音界面与播控"]
-    S3 --> S4["Stage 4: 预设持久化与音频资产接入"]
-    S4 --> S5["Stage 5: 真实构建与收尾审查"]
+    S1["Stage 1: 脚手架与依赖基线 [已通过]"] --> S2["Stage 2: Media3 混音引擎与前台服务 [已通过]"]
+    S2 --> S3["Stage 3: SaltUI 混音界面与播控 [已通过]"]
+    S3 --> S4["Stage 4: 预设持久化与音频资产接入 [已通过]"]
+    S4 --> S5["Stage 5: 真实构建与收尾审查 [已通过]"]
 ```
 
 ### Stage 1: 工程脚手架与编译基线
@@ -121,23 +121,35 @@ flowchart LR
 - **交付记录**：
   - 生成 `local.properties`、`gradle.properties`、`settings.gradle.kts`、`build.gradle.kts`、`gradle/libs.versions.toml`；
   - 解决 SaltUI 3.0.0-beta01 的 `minCompileSdk=37` 与 Kotlin 2.3.0 二进制元数据校验阻断；
-  - 生成 `app-debug.apk`（21,457,252 字节，34 actionable tasks up-to-date）。
+  - 生成 `app-debug.apk`（21,457,252 字节）。
 
 ### Stage 2: Media3 混音引擎与服务层
 - **目标**：实现 `AudioMixerEngine`（ExoPlayer 池、单轨独立音量、无缝循环、休眠平滑淡出）与 `WhiteNoiseMediaService`（前台服务、常驻通知栏、AudioFocus 焦点控制）。
 - **门禁标准**：完成音频调度逻辑与前台服务注册，单元测试验证音量插值计算与播放池生命周期管理正常。
+- **交付记录**：
+  - `AudioMixerEngine.kt`：全局单例池，`actualVolume = trackVolume * masterVolume * sleepFade * ducking`；
+  - `WhiteNoiseMediaService.kt`：绑定 `MediaSession` 与 `MediaStyleNotificationHelper` 常驻通知卡片；支持 `ACTION_AUDIO_BECOMING_NOISY`。
 
 ### Stage 3: SaltUI 界面与交互绑定
 - **目标**：基于 SaltUI 构建主界面，实现音效网格/列表卡片、音量滑块调节、底部快捷播控栏、休眠倒计时弹窗。
 - **门禁标准**：UI 组件状态与 ViewModel StateFlow 双向绑定正常，无非法重组，SaltUI 样式统一美观。
+- **交付记录**：
+  - `HomeScreen.kt`、`SoundCard.kt`、`BottomPlayerBar.kt`、`SleepTimerDialog.kt`、`SavePresetDialog.kt`、`AboutDialog.kt`；
+  - 解决单轨开启自动联动 Master 播放与防抖交互。
 
 ### Stage 4: 预设管理与音频资源整合
 - **目标**：接入高品质 CC0 循环自然音（雨声、风声、篝火、白噪音等放置于 `assets/sounds/` 或 `raw/`）；打通 DataStore 存储上一次音轨配置与场景预设。
 - **门禁标准**：多音轨可并发发声且无杂音、爆音，应用杀掉重启后能恢复上次混音配置。
+- **交付记录**：
+  - 8 款无缝 OGG 自然音落位 `app/src/main/assets/sounds/`，编写 `SOUNDS_LICENSING.md`；
+  - `PreferencesManager.kt` 与 `MainViewModel.kt` 实现守卫屏障，彻底解决初始化初次发射覆写 DataStore 记忆的竞态 Bug。
 
 ### Stage 5: 整体验证、后台保活测试与交付收尾
 - **目标**：检查息屏播放保活、锁屏通知栏交互、耳机插拔事件；进行最终代码审查与精简。
 - **门禁标准**：构建 Debug/Release APK 成功，无内存泄漏与资源泄漏隐患，代码规范符合红线要求。
+- **交付记录**：
+  - 10 项单元测试全部通过（`VolumeCalculatorTest` 6 项，`PresetTest` 4 项）；
+  - 输出全量 APK（34.8MB）；完成 Git 初始化与安全推送至 GitHub `Kulahala/SaltAmbience`。
 
 ---
 
