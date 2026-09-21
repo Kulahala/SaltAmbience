@@ -22,6 +22,12 @@ Guidance for coding agents working in WhiteNoise-Android.
 - **最小必要改动（YAGNI）**：
   - 只写必须的代码，不为单次使用过度抽象，不为“以后可能需要”提前堆积插件化、多主题定制、复杂数据库框架；
   - 交付前清理无用 import、未引用变量与临时调试代码。
+- **事前深度对齐（Grill before Code）**：
+  凡涉及新增重大功能、重构音频管线或修改持久化契约时，Agent 必须先列出方案设计取舍、破坏性风险与边界问答，与用户确认无歧义后方可动刀，严禁盲目开工。
+- **测试先行守门（Test-Driven Gate）**：
+  所有核心业务算法（如多轨音量增益衰减、休眠曲线、JSON 序列化往返、状态机流转）必须配备独立可运行的 JVM 单元测试，PR / 交付前必须在本地无缓存运行全绿（`./gradlew testDebugUnitTest`）。
+- **项目专属技能隔离（Project-Specific Skills）**：
+  宿主主要工作为 UE (Unreal Engine) 开发，全局 Skill 库面向游戏引擎；针对本 Android 原生项目的专属扩展技能（如 Media3 编解码调优、SaltUI 模式等），**强制存放于本项目根目录 `.agents/skills/<skill-name>/SKILL.md`**，实现项目级隔离管理，严禁污染全局 UE 工作区。
 - **原生编辑优先**：
   - 文件修改优先使用原生工具（`replace_file_content` / `write_to_file`），严禁无谓编写临时脚本替代编辑。
 
