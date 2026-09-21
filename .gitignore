@@ -1,0 +1,29 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Android build outputs
+app/build/
+build/
+*/build/
+
+# Kotlin / IDE
+.kotlin/
+.idea/
+*.ipr
+*.iws
+
+# OS files
+Thumbs.db
+*.bak
+*.tmp
+
+# Temporary download scripts
+download_sounds.py
