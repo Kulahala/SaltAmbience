@@ -31,9 +31,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.moriafly.salt.ui.ItemOuterTitle
 import com.moriafly.salt.ui.SaltTheme
 import com.moriafly.salt.ui.Text
 import com.whitenoise.app.ui.MainViewModel
@@ -41,7 +41,7 @@ import com.whitenoise.app.ui.components.AboutDialog
 import com.whitenoise.app.ui.components.BottomPlayerBar
 import com.whitenoise.app.ui.components.MixerBottomSheet
 import com.whitenoise.app.ui.components.SavePresetDialog
-import com.whitenoise.app.ui.components.SleepTimerDialog
+import com.whitenoise.app.ui.components.SleepTimerBottomSheet
 import com.whitenoise.app.ui.components.SoundTileCard
 
 @Composable
@@ -65,7 +65,7 @@ fun HomeScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(SaltTheme.colors.subBackground)
+            .background(SaltTheme.colors.background)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // App Bar / Header
@@ -87,7 +87,7 @@ fun HomeScreen(
                     Text(
                         text = "椒盐美学 · 多轨自然声混音",
                         style = SaltTheme.textStyles.sub,
-                        color = SaltTheme.colors.subText
+                        color = SaltTheme.colors.text.copy(alpha = 0.65f)
                     )
                 }
 
@@ -95,15 +95,16 @@ fun HomeScreen(
                 Box(
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(SaltTheme.colors.background)
+                        .background(SaltTheme.colors.subBackground)
                         .clickable { viewModel.setShowAboutDialog(true) }
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                        .padding(horizontal = 14.dp, vertical = 7.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "关于",
                         style = SaltTheme.textStyles.sub,
-                        color = SaltTheme.colors.subText
+                        fontWeight = FontWeight.Medium,
+                        color = SaltTheme.colors.text.copy(alpha = 0.75f)
                     )
                 }
             }
@@ -121,9 +122,13 @@ fun HomeScreen(
                 // Section 1: Presets (Span 2)
                 item(span = { GridItemSpan(2) }) {
                     Column {
-                        ItemOuterTitle(
+                        Text(
                             text = "场景预设",
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp)
+                            style = SaltTheme.textStyles.main,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = SaltTheme.colors.text,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp)
                         )
                         Row(
                             modifier = Modifier
@@ -135,8 +140,8 @@ fun HomeScreen(
                             presets.forEach { preset ->
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(SaltTheme.colors.background)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(SaltTheme.colors.subBackground)
                                         .clickable { viewModel.applyPreset(preset) }
                                         .padding(horizontal = 14.dp, vertical = 10.dp)
                                 ) {
@@ -145,6 +150,7 @@ fun HomeScreen(
                                             Text(
                                                 text = preset.name,
                                                 style = SaltTheme.textStyles.main,
+                                                fontWeight = FontWeight.Medium,
                                                 color = SaltTheme.colors.text
                                             )
                                             if (preset.description.isNotBlank()) {
@@ -152,7 +158,7 @@ fun HomeScreen(
                                                     text = preset.description,
                                                     style = SaltTheme.textStyles.sub,
                                                     fontSize = 11.sp,
-                                                    color = SaltTheme.colors.subText
+                                                    color = SaltTheme.colors.text.copy(alpha = 0.65f)
                                                 )
                                             }
                                         }
@@ -160,7 +166,7 @@ fun HomeScreen(
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Text(
                                                 text = "✕",
-                                                color = SaltTheme.colors.subText,
+                                                color = SaltTheme.colors.text.copy(alpha = 0.45f),
                                                 fontSize = 12.sp,
                                                 modifier = Modifier.clickable {
                                                     viewModel.deletePreset(preset.id)
@@ -174,7 +180,7 @@ fun HomeScreen(
                             // Add Custom Preset Button
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
+                                    .clip(RoundedCornerShape(14.dp))
                                     .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
                                     .clickable { viewModel.setShowSavePresetDialog(true) }
                                     .padding(horizontal = 14.dp, vertical = 10.dp),
@@ -184,6 +190,7 @@ fun HomeScreen(
                                     text = "+ 存为预设",
                                     color = SaltTheme.colors.highlight,
                                     style = SaltTheme.textStyles.main,
+                                    fontWeight = FontWeight.SemiBold,
                                     fontSize = 13.sp
                                 )
                             }
@@ -197,16 +204,23 @@ fun HomeScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 4.dp, vertical = 2.dp),
+                            .padding(horizontal = 4.dp, vertical = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        ItemOuterTitle(text = "音效矩阵")
+                        Text(
+                            text = "音效矩阵",
+                            style = SaltTheme.textStyles.main,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = SaltTheme.colors.text
+                        )
                         Text(
                             text = if (activeTracks.isNotEmpty()) "已开启 ${activeTracks.size} 轨" else "轻触卡片开启混音",
                             style = SaltTheme.textStyles.sub,
+                            fontWeight = FontWeight.Medium,
                             fontSize = 12.sp,
-                            color = SaltTheme.colors.subText
+                            color = if (activeTracks.isNotEmpty()) SaltTheme.colors.highlight else SaltTheme.colors.text.copy(alpha = 0.65f)
                         )
                     }
                 }
@@ -242,27 +256,18 @@ fun HomeScreen(
             onToggleTrackMute = { trackId -> viewModel.toggleTrackMute(trackId) },
             isMasterPlaying = playbackState.isMasterPlaying,
             onToggleMasterPlay = { viewModel.toggleMasterPlay() },
-            onStopAll = { viewModel.stopAll() },
-            isSleepTimerRunning = playbackState.isSleepTimerRunning,
-            sleepTimerRemainingSeconds = playbackState.sleepTimerRemainingSeconds,
-            onSelectSleepMinutes = { viewModel.startSleepTimer(it) },
-            onCancelSleepTimer = { viewModel.cancelSleepTimer() },
-            onOpenFullSleepTimer = {
-                showMixerSheet = false
-                viewModel.setShowSleepTimerDialog(true)
-            }
+            onStopAll = { viewModel.stopAll() }
         )
 
-        // Additional Dialogs
-        if (showSleepDialog) {
-            SleepTimerDialog(
-                isRunning = playbackState.isSleepTimerRunning,
-                remainingSeconds = playbackState.sleepTimerRemainingSeconds,
-                onSelectMinutes = { viewModel.startSleepTimer(it) },
-                onCancelTimer = { viewModel.cancelSleepTimer() },
-                onDismiss = { viewModel.setShowSleepTimerDialog(false) }
-            )
-        }
+        // Standalone Modern Music Player Style Sleep Timer Bottom Sheet
+        SleepTimerBottomSheet(
+            isVisible = showSleepDialog,
+            onDismiss = { viewModel.setShowSleepTimerDialog(false) },
+            isSleepTimerRunning = playbackState.isSleepTimerRunning,
+            sleepTimerRemainingSeconds = playbackState.sleepTimerRemainingSeconds,
+            onStartTimer = { mins -> viewModel.startSleepTimer(mins) },
+            onCancelTimer = { viewModel.cancelSleepTimer() }
+        )
 
         if (showAboutDialog) {
             AboutDialog(

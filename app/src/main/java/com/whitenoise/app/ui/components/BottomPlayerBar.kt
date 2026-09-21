@@ -144,11 +144,41 @@ fun BottomPlayerBar(
                     text = subText,
                     style = SaltTheme.textStyles.sub,
                     fontSize = 11.sp,
-                    color = if (playbackState.isSleepTimerRunning) SaltTheme.colors.highlight else SaltTheme.colors.subText
+                    color = if (playbackState.isSleepTimerRunning) SaltTheme.colors.highlight else SaltTheme.colors.text.copy(alpha = 0.65f)
                 )
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(6.dp))
+
+            // Clock / Sleep Timer Button
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(
+                        if (playbackState.isSleepTimerRunning) SaltTheme.colors.highlight.copy(alpha = 0.16f)
+                        else SaltTheme.colors.subBackground
+                    )
+                    .clickable { onOpenSleepTimer() }
+                    .padding(horizontal = 9.dp, vertical = 7.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                val timerText = if (playbackState.isSleepTimerRunning) {
+                    val remaining = playbackState.sleepTimerRemainingSeconds ?: 0L
+                    val mins = (remaining + 59) / 60
+                    "⏱️ ${mins}m"
+                } else {
+                    "⏱️ 定时"
+                }
+                Text(
+                    text = timerText,
+                    style = SaltTheme.textStyles.sub,
+                    fontWeight = if (playbackState.isSleepTimerRunning) FontWeight.Bold else FontWeight.Medium,
+                    fontSize = 12.sp,
+                    color = if (playbackState.isSleepTimerRunning) SaltTheme.colors.highlight else SaltTheme.colors.text
+                )
+            }
+
+            Spacer(modifier = Modifier.width(6.dp))
 
             // Right: Expandable Mixer Sheet Trigger Button
             Box(
@@ -156,11 +186,11 @@ fun BottomPlayerBar(
                     .clip(CircleShape)
                     .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
                     .clickable { onOpenMixer() }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 10.dp, vertical = 7.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "🎛️ 混音台",
+                    text = "🎛️ 混音",
                     style = SaltTheme.textStyles.sub,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 12.sp,

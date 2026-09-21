@@ -55,12 +55,12 @@ fun MixerBottomSheet(
     isMasterPlaying: Boolean,
     onToggleMasterPlay: () -> Unit,
     onStopAll: () -> Unit,
-    isSleepTimerRunning: Boolean,
-    sleepTimerRemainingSeconds: Long?,
-    onSelectSleepMinutes: (Int) -> Unit,
-    onCancelSleepTimer: () -> Unit,
-    onOpenFullSleepTimer: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isSleepTimerRunning: Boolean = false,
+    sleepTimerRemainingSeconds: Long? = null,
+    onSelectSleepMinutes: (Int) -> Unit = {},
+    onCancelSleepTimer: () -> Unit = {},
+    onOpenFullSleepTimer: () -> Unit = {}
 ) {
     if (isVisible) {
         BackHandler(onBack = onDismiss)
@@ -228,97 +228,12 @@ fun MixerBottomSheet(
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    // Bottom Section: Quick Sleep Timer & Action Controls
+                    // Bottom Section: Action Controls (Stop All & Master Play/Pause)
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 6.dp)
+                            .padding(horizontal = 20.dp, vertical = 10.dp)
                     ) {
-                        // Sleep Timer Row
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "休眠定时",
-                                style = SaltTheme.textStyles.sub,
-                                fontSize = 12.sp,
-                                color = SaltTheme.colors.subText
-                            )
-
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                if (isSleepTimerRunning) {
-                                    val remaining = sleepTimerRemainingSeconds ?: 0L
-                                    val mins = remaining / 60
-                                    val secs = remaining % 60
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(CircleShape)
-                                            .background(SaltTheme.colors.highlight.copy(alpha = 0.15f))
-                                            .clickable { onOpenFullSleepTimer() }
-                                            .padding(horizontal = 10.dp, vertical = 5.dp)
-                                    ) {
-                                        Text(
-                                            text = "⏱️ %02d:%02d".format(mins, secs),
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = SaltTheme.colors.highlight
-                                        )
-                                    }
-
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(CircleShape)
-                                            .background(SaltTheme.colors.subBackground)
-                                            .clickable { onCancelSleepTimer() }
-                                            .padding(horizontal = 10.dp, vertical = 5.dp)
-                                    ) {
-                                        Text(
-                                            text = "取消",
-                                            fontSize = 11.sp,
-                                            color = SaltTheme.colors.subText
-                                        )
-                                    }
-                                } else {
-                                    listOf(15, 30, 45, 60).forEach { mins ->
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(CircleShape)
-                                                .background(SaltTheme.colors.subBackground)
-                                                .clickable { onSelectSleepMinutes(mins) }
-                                                .padding(horizontal = 10.dp, vertical = 5.dp)
-                                        ) {
-                                            Text(
-                                                text = "${mins}m",
-                                                fontSize = 11.sp,
-                                                color = SaltTheme.colors.text
-                                            )
-                                        }
-                                    }
-
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(CircleShape)
-                                            .background(SaltTheme.colors.subBackground)
-                                            .clickable { onOpenFullSleepTimer() }
-                                            .padding(horizontal = 10.dp, vertical = 5.dp)
-                                    ) {
-                                        Text(
-                                            text = "更多",
-                                            fontSize = 11.sp,
-                                            color = SaltTheme.colors.subText
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
                         // Master Action Buttons Row
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -332,15 +247,15 @@ fun MixerBottomSheet(
                                     .clip(RoundedCornerShape(16.dp))
                                     .background(SaltTheme.colors.subBackground)
                                     .clickable { onStopAll() }
-                                    .padding(vertical = 12.dp),
+                                    .padding(vertical = 14.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = "⏹ 全部停止",
-                                    style = SaltTheme.textStyles.sub,
+                                    style = SaltTheme.textStyles.main,
                                     fontWeight = FontWeight.Medium,
-                                    fontSize = 13.sp,
-                                    color = SaltTheme.colors.subText
+                                    fontSize = 14.sp,
+                                    color = SaltTheme.colors.text.copy(alpha = 0.8f)
                                 )
                             }
 
@@ -354,14 +269,14 @@ fun MixerBottomSheet(
                                         else SaltTheme.colors.highlight.copy(alpha = 0.15f)
                                     )
                                     .clickable { onToggleMasterPlay() }
-                                    .padding(vertical = 12.dp),
+                                    .padding(vertical = 14.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = if (isMasterPlaying) "⏸ 暂停混音" else "▶ 继续混音",
-                                    style = SaltTheme.textStyles.sub,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 13.sp,
+                                    style = SaltTheme.textStyles.main,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
                                     color = if (isMasterPlaying) Color.White else SaltTheme.colors.highlight
                                 )
                             }

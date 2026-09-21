@@ -104,4 +104,14 @@ class VolumeCalculatorTest {
         )
         assertEquals(0.0f, under, 0.0001f)
     }
+
+    @Test
+    fun testDetermineFadeDuration() {
+        assertEquals(5L, VolumeCalculator.determineFadeDuration(10L))
+        assertEquals(20L, VolumeCalculator.determineFadeDuration(60L))
+        // 30 mins (1800s): min(45, 1800/4 = 450) -> 45
+        assertEquals(45L, VolumeCalculator.determineFadeDuration(1800L))
+        // 60 mins (3600s): min(45, 3600/4 = 900) -> 45
+        assertEquals(45L, VolumeCalculator.determineFadeDuration(3600L))
+    }
 }

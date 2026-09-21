@@ -46,7 +46,7 @@ fun SoundTileCard(
     val targetBgColor = if (track.isPlaying) {
         SaltTheme.colors.highlight.copy(alpha = 0.12f)
     } else {
-        SaltTheme.colors.background
+        SaltTheme.colors.subBackground
     }
     val animatedBgColor by animateColorAsState(
         targetValue = targetBgColor,
@@ -57,7 +57,7 @@ fun SoundTileCard(
     val targetBorderColor = if (track.isPlaying) {
         SaltTheme.colors.highlight
     } else {
-        SaltTheme.colors.subBackground.copy(alpha = 0.8f)
+        SaltTheme.colors.subBackground
     }
     val animatedBorderColor by animateColorAsState(
         targetValue = targetBorderColor,
@@ -111,7 +111,7 @@ fun SoundTileCard(
                         modifier = Modifier
                             .size(8.dp)
                             .clip(CircleShape)
-                            .background(SaltTheme.colors.subText.copy(alpha = 0.25f))
+                            .background(SaltTheme.colors.text.copy(alpha = 0.18f))
                     )
                 }
             }
@@ -129,14 +129,14 @@ fun SoundTileCard(
 
             Spacer(modifier = Modifier.height(3.dp))
 
-            // Sound Subtitle
+            // Sound Subtitle (High contrast, eliminating washed-out grey)
             Text(
                 text = track.subtitle,
                 style = SaltTheme.textStyles.sub,
                 fontSize = 11.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = SaltTheme.colors.subText
+                color = if (track.isPlaying) SaltTheme.colors.highlight.copy(alpha = 0.85f) else SaltTheme.colors.text.copy(alpha = 0.65f)
             )
         }
     }
