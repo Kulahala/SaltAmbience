@@ -37,8 +37,19 @@ import androidx.compose.ui.unit.sp
 import com.moriafly.salt.ui.SaltTheme
 import com.moriafly.salt.ui.Text
 import com.whitenoise.app.ui.MainViewModel
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlinx.coroutines.flow.collectLatest
 import com.whitenoise.app.ui.components.AboutDialog
 import com.whitenoise.app.ui.components.BottomPlayerBar
+import com.whitenoise.app.ui.components.ImportPresetDialog
 import com.whitenoise.app.ui.components.MixerBottomSheet
 import com.whitenoise.app.ui.components.SavePresetDialog
 import com.whitenoise.app.ui.components.SleepTimerBottomSheet
@@ -50,6 +61,9 @@ fun HomeScreen(
     viewModel: MainViewModel,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
     val tracks by viewModel.tracks.collectAsState()
     val playbackState by viewModel.playbackState.collectAsState()
     val presets by viewModel.presets.collectAsState()
@@ -58,7 +72,35 @@ fun HomeScreen(
     val showAboutDialog by viewModel.showAboutDialog.collectAsState()
     val showSavePresetDialog by viewModel.showSavePresetDialog.collectAsState()
     val showThemeDialog by viewModel.showThemeDialog.collectAsState()
+    val showImportDialog by viewModel.showImportDialog.collectAsState()
+    val detectedPayload by viewModel.clipboardDetectedPayload.collectAsState()
     val themeMode by viewModel.themeMode.collectAsState()
+
+    // Observe Toast feedback events
+    LaunchedEffect(Unit) {
+        viewModel.toastMessage.collectLatest { msg ->
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Inspect clipboard when Activity resumes to foreground
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                try {
+                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                    val clipText = clipboard?.primaryClip?.getItemAt(0)?.text?.toString()
+                    viewModel.inspectClipboard(clipText)
+                } catch (e: Exception) {
+                    // Ignore
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     // Control center bottom sheet visibility
     var showMixerSheet by remember { mutableStateOf(false) }
@@ -148,6 +190,53 @@ fun HomeScreen(
                 }
             }
 
+            // Lightweight detected clipboard banner
+            if (detectedPayload != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
+                        .clickable { viewModel.setShowImportDialog(true) }
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = "🎧", fontSize = 14.sp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "检测到混音【${detectedPayload?.name}】，点击一键导入",
+                                style = SaltTheme.textStyles.sub,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = SaltTheme.colors.highlight,
+                                maxLines = 1
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .clickable { viewModel.dismissClipboardBanner() }
+                                .padding(4.dp)
+                        ) {
+                            Text(
+                                text = "✕",
+                                fontSize = 11.sp,
+                                color = SaltTheme.colors.highlight.copy(alpha = 0.65f)
+                            )
+                        }
+                    }
+                }
+            }
+
             // 2-Column Bento Grid for Sound Tiles
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
@@ -161,14 +250,77 @@ fun HomeScreen(
                 // Section 1: Presets (Span 2)
                 item(span = { GridItemSpan(2) }) {
                     Column {
-                        Text(
-                            text = "场景预设",
-                            style = SaltTheme.textStyles.main,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            color = SaltTheme.colors.text,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp)
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "场景方案",
+                                style = SaltTheme.textStyles.main,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = SaltTheme.colors.text
+                            )
+
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                // 📥 导入按钮
+                                Box(
+                                    modifier = Modifier
+                                        .clip(CircleShape)
+                                        .background(SaltTheme.colors.subBackground)
+                                        .clickable { viewModel.setShowImportDialog(true) }
+                                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Text(text = "📥", fontSize = 11.sp)
+                                        Text(
+                                            text = "导入",
+                                            style = SaltTheme.textStyles.sub,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = SaltTheme.colors.text.copy(alpha = 0.8f)
+                                        )
+                                    }
+                                }
+
+                                // ➕ 保存当前
+                                Box(
+                                    modifier = Modifier
+                                        .clip(CircleShape)
+                                        .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
+                                        .clickable { viewModel.setShowSavePresetDialog(true) }
+                                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(3.dp)
+                                    ) {
+                                        Text(
+                                            text = "+",
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = SaltTheme.colors.highlight
+                                        )
+                                        Text(
+                                            text = "保存当前",
+                                            style = SaltTheme.textStyles.sub,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = SaltTheme.colors.highlight
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -201,16 +353,38 @@ fun HomeScreen(
                                                 )
                                             }
                                         }
-                                        if (!preset.isDefault) {
-                                            Spacer(modifier = Modifier.width(8.dp))
+
+                                        Spacer(modifier = Modifier.width(8.dp))
+
+                                        // Share Preset Button
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(CircleShape)
+                                                .clickable { viewModel.copyPresetShareCode(preset) }
+                                                .padding(2.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
                                             Text(
-                                                text = "✕",
-                                                color = SaltTheme.colors.text.copy(alpha = 0.45f),
-                                                fontSize = 12.sp,
-                                                modifier = Modifier.clickable {
-                                                    viewModel.deletePreset(preset.id)
-                                                }
+                                                text = "📤",
+                                                fontSize = 12.sp
                                             )
+                                        }
+
+                                        if (!preset.isDefault) {
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(CircleShape)
+                                                    .clickable { viewModel.deletePreset(preset.id) }
+                                                    .padding(2.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = "✕",
+                                                    color = SaltTheme.colors.text.copy(alpha = 0.45f),
+                                                    fontSize = 12.sp
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -332,6 +506,16 @@ fun HomeScreen(
                 currentMode = themeMode,
                 onSelectMode = { mode -> viewModel.setThemeMode(mode) },
                 onDismiss = { viewModel.setShowThemeDialog(false) }
+            )
+        }
+
+        if (showImportDialog) {
+            ImportPresetDialog(
+                initialPayload = detectedPayload,
+                onImport = { payload, applyImmediately ->
+                    viewModel.importPreset(payload, applyImmediately)
+                },
+                onDismiss = { viewModel.setShowImportDialog(false) }
             )
         }
     }

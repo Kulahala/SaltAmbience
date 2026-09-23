@@ -26,11 +26,17 @@ data class SoundTrack(
             "rain" -> "🌧️"
             "storm" -> "⛈️"
             "wind" -> "🌲"
-            "stream" -> "🌊"
+            "stream" -> "💧"
             "fireplace" -> "🪵"
             "birds" -> "🐦"
             "summer_night" -> "🦗"
             "white_noise" -> "📻"
+            "waves" -> "🌊"
+            "coffee_shop" -> "☕"
+            "train" -> "🚂"
+            "boat" -> "🛶"
+            "pink_noise" -> "🌸"
+            "city" -> "🏙️"
             else -> "🎵"
         }
 }

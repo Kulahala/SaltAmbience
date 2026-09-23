@@ -1,6 +1,8 @@
 package com.whitenoise.app.ui
 
 import android.app.Application
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -11,14 +13,19 @@ import androidx.lifecycle.viewModelScope
 import com.whitenoise.app.core.audio.AudioMixerEngine
 import com.whitenoise.app.core.model.PlaybackState
 import com.whitenoise.app.core.model.Preset
+import com.whitenoise.app.core.model.PresetShareCode
+import com.whitenoise.app.core.model.PresetSharePayload
 import com.whitenoise.app.core.model.SoundTrack
 import com.whitenoise.app.core.service.WhiteNoiseMediaService
 import com.whitenoise.app.data.datastore.PreferencesManager
 import com.whitenoise.app.data.repository.PresetRepository
 import com.whitenoise.app.data.repository.SoundRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
@@ -67,6 +74,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _showThemeDialog = MutableStateFlow(false)
     val showThemeDialog: StateFlow<Boolean> = _showThemeDialog.asStateFlow()
+
+    private val _showImportDialog = MutableStateFlow(false)
+    val showImportDialog: StateFlow<Boolean> = _showImportDialog.asStateFlow()
+
+    // Detected clipboard preset payload for banner
+    private val _clipboardDetectedPayload = MutableStateFlow<PresetSharePayload?>(null)
+    val clipboardDetectedPayload: StateFlow<PresetSharePayload?> = _clipboardDetectedPayload.asStateFlow()
+
+    // Toast event flow for UI feedback
+    private val _toastMessage = MutableSharedFlow<String>()
+    val toastMessage: SharedFlow<String> = _toastMessage.asSharedFlow()
 
     private var isPreferencesRestored = false
     private var isServiceBound = false
@@ -229,6 +247,52 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setShowThemeDialog(show: Boolean) {
         _showThemeDialog.value = show
+    }
+
+    fun setShowImportDialog(show: Boolean) {
+        _showImportDialog.value = show
+    }
+
+    fun dismissClipboardBanner() {
+        _clipboardDetectedPayload.value = null
+    }
+
+    fun copyPresetShareCode(preset: Preset) {
+        val soundNames = SoundRepository.ALL_TRACKS.associate { it.id to it.name }
+        val shareText = PresetShareCode.generateShareText(preset, soundNames)
+        try {
+            val clipboard = getApplication<Application>().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("SaltAmbience混音方案", shareText)
+            clipboard.setPrimaryClip(clip)
+            viewModelScope.launch {
+                _toastMessage.emit("已复制【${preset.name}】混音口令，可直接发给微信好友！")
+            }
+        } catch (e: Exception) {
+            viewModelScope.launch {
+                _toastMessage.emit("复制失败，请稍后重试")
+            }
+        }
+    }
+
+    fun inspectClipboard(clipboardText: String?) {
+        if (clipboardText.isNullOrBlank()) return
+        val payload = PresetShareCode.parseShareText(clipboardText)
+        if (payload != null && payload != _clipboardDetectedPayload.value) {
+            _clipboardDetectedPayload.value = payload
+        }
+    }
+
+    fun importPreset(payload: PresetSharePayload, applyImmediately: Boolean = true) {
+        viewModelScope.launch {
+            val currentCustom = preferencesManager.customPresetsFlow.first()
+            val createdPreset = presetRepository.importPresetPayload(payload, currentCustom)
+            if (applyImmediately) {
+                engine.applyPreset(createdPreset)
+            }
+            _showImportDialog.value = false
+            _clipboardDetectedPayload.value = null
+            _toastMessage.emit("成功导入混音方案【${createdPreset.name}】！")
+        }
     }
 
     fun setThemeMode(mode: com.whitenoise.app.core.model.ThemeMode) {

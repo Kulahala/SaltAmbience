@@ -42,6 +42,12 @@
 - 鸟鸣 (`birds.ogg`) · CC0 1.0
 - 夏夜 (`summer_night.ogg`) · Public Domain
 - 纯白噪 (`white_noise.ogg`) · CC BY-SA 3.0
+- 海浪 (`waves.ogg`) · CC BY 3.0
+- 咖啡馆 (`coffee_shop.ogg`) · Public Domain
+- 列车 (`train.ogg`) · CC BY 3.0
+- 小舟 (`boat.ogg`) · CC0 1.0
+- 粉红噪 (`pink_noise.ogg`) · CC BY-SA 3.0
+- 都市 (`city.ogg`) · CC BY 3.0
 
 详细版权与原作者署名参见 [SOUNDS_LICENSING.md](SOUNDS_LICENSING.md)。
 

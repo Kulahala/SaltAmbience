@@ -99,11 +99,17 @@ class PresetTest {
             "rain" to "🌧️",
             "storm" to "⛈️",
             "wind" to "🌲",
-            "stream" to "🌊",
+            "stream" to "💧",
             "fireplace" to "🪵",
             "birds" to "🐦",
             "summer_night" to "🦗",
-            "white_noise" to "📻"
+            "white_noise" to "📻",
+            "waves" to "🌊",
+            "coffee_shop" to "☕",
+            "train" to "🚂",
+            "boat" to "🛶",
+            "pink_noise" to "🌸",
+            "city" to "🏙️"
         )
 
         for ((id, expectedEmoji) in expectedEmojis) {
@@ -123,5 +129,40 @@ class PresetTest {
             assetFileName = "unknown.ogg"
         )
         assertEquals("🎵", unknownTrack.iconEmoji)
+    }
+
+    @Test
+    fun testImportPresetUnknownTracksFilteringAndRename() {
+        val knownTrackIds = setOf("rain", "storm", "wind")
+        val payload = com.whitenoise.app.core.model.PresetSharePayload(
+            name = "深夜暴雨", // Matches default preset
+            description = "导入测试",
+            volumes = mapOf(
+                "rain" to 0.7f,
+                "future_magic_sound" to 0.9f, // Unknown sound, should be dropped
+                "wind" to -0.5f // Negative volume, should be dropped
+            )
+        )
+
+        val validVolumes = payload.volumes
+            .filter { (id, vol) -> id in knownTrackIds && vol > 0f }
+            .mapValues { it.value.coerceIn(0f, 1f) }
+
+        assertEquals(1, validVolumes.size)
+        assertTrue(validVolumes.containsKey("rain"))
+        assertEquals(false, validVolumes.containsKey("future_magic_sound"))
+        assertEquals(false, validVolumes.containsKey("wind"))
+
+        // Duplicate name test
+        val existingNames = setOf("深夜暴雨", "深夜暴雨(导入1)")
+        var finalName = payload.name.trim()
+        if (finalName in existingNames) {
+            var counter = 1
+            while ("$finalName(导入$counter)" in existingNames) {
+                counter++
+            }
+            finalName = "$finalName(导入$counter)"
+        }
+        assertEquals("深夜暴雨(导入2)", finalName)
     }
 }

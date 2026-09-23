@@ -24,6 +24,27 @@ data class Preset(
                 isDefault = true
             ),
             Preset(
+                id = "ocean_whisper",
+                name = "海边小木屋",
+                description = "微风伴着节律潮汐，推窗即是大海",
+                trackVolumes = mapOf(
+                    "waves" to 0.75f,
+                    "wind" to 0.35f,
+                    "rain" to 0.3f
+                ),
+                isDefault = true
+            ),
+            Preset(
+                id = "corner_cafe",
+                name = "街角咖啡馆",
+                description = "雨滴敲击玻璃，室内香浓温暖的阅读心流",
+                trackVolumes = mapOf(
+                    "coffee_shop" to 0.7f,
+                    "rain" to 0.55f
+                ),
+                isDefault = true
+            ),
+            Preset(
                 id = "forest_camp",
                 name = "森林露营",
                 description = "微风、溪流、鸟鸣与温暖的篝火",
@@ -32,6 +53,16 @@ data class Preset(
                     "wind" to 0.4f,
                     "stream" to 0.5f,
                     "fireplace" to 0.65f
+                ),
+                isDefault = true
+            ),
+            Preset(
+                id = "midnight_train",
+                name = "午夜列车",
+                description = "铁轨规律的咔哒律动，催眠放空身心",
+                trackVolumes = mapOf(
+                    "train" to 0.75f,
+                    "rain" to 0.4f
                 ),
                 isDefault = true
             ),
@@ -48,10 +79,10 @@ data class Preset(
             Preset(
                 id = "deep_focus",
                 name = "深度专注",
-                description = "温和纯白噪与规律雨滴，隔绝环境噪音",
+                description = "柔和粉红噪与纯白噪，深沉阻隔外界喧嚣",
                 trackVolumes = mapOf(
-                    "white_noise" to 0.5f,
-                    "rain" to 0.4f
+                    "pink_noise" to 0.55f,
+                    "white_noise" to 0.35f
                 ),
                 isDefault = true
             )
