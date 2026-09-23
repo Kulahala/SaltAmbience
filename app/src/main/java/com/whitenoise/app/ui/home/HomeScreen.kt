@@ -211,7 +211,7 @@ fun HomeScreen(
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = "v1.6.1",
+                                    text = "v1.7.0",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = SaltTheme.colors.text.copy(alpha = 0.65f)
