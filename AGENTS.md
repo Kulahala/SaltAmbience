@@ -133,6 +133,7 @@ app/src/main/java/com/whitenoise/app/
 | **Stage 6 (P0)** | 底层能耗止血与核心状态机修复 | **[x] 已达成 (Passed)** | 阻断通知每秒重复推流（`distinctUntilChanged`）与休眠淡出前无效音量计算；修复暂停文案与音频焦点释放；拦截冷启动幽灵通知；实现剪贴板口令关闭记忆与服务销毁守护；22 项单测全绿。 |
 | **Stage 7 (P1)** | 视觉交互闭环与全站抽屉化 (v1.5.0) | **[x] 已达成 (Passed)** | 全站居中弹窗统一重构为 SaltUI 底部抽屉规范（`SaltBottomSheet`）并接入向下滑动拖拽关闭手势；彻底解决输入法软键盘挤压；重塑深色模式悬浮底栏景深；实现预设激活态高亮与删除二次确认；胶囊滑块触感微震动与对比度反转盾牌；25 项单测全绿，产出 Release 与 Debug APK。 |
 | **Stage 8** | 分类导航、棕色噪音与预设全自由管理 (v1.6.0) | **[x] 已达成 (Passed)** | 自定义预设置顶与最新倒序排列；默认预设软删除与一键“↺ 恢复默认”后悔药机制；引入 CC0 慢波助眠「棕色噪音 (Brown Noise)」(🪐 brown_noise.ogg) 扩充至 15 款音源；音效矩阵 5 维胶囊过滤标签 (Filter Chips) 交互与微触感反馈；33 项单测全绿，产出 Release 与 Debug APK。 |
+| **Stage 9** | 视觉交互闭环与图标重塑 (v1.6.1) | **[x] 已达成 (Passed)** | 落地「包豪斯声学 · 琴弦点线面」(D-14) 官方自适应矢量图标并归档 D-16 备选；重构底部悬浮播控条为 100% 实色表面杜绝半透穿透叠字；垫高底部安全内边距至 130.dp 消除音效卡片被遮挡；顶栏随手势自然平滑滚动释放全屏视野；33 项单测全绿，产出 Release 与 Debug 双版本 APK。 |
 
 ---
 
@@ -147,6 +148,7 @@ flowchart LR
     S5 --> S6["Stage 6 (P0): 底层能耗与状态机修复 [已通过]"]
     S6 --> S7["Stage 7 (P1): 视觉交互抽屉化闭环 (v1.5.0) [已通过]"]
     S7 --> S8["Stage 8: 分类导航、棕噪与预设全自由管理 [已通过]"]
+    S8 --> S9["Stage 9: 图标重塑与视觉交互闭环 (v1.6.1) [已通过]"]
 ```
 
 ### Stage 1: 工程脚手架与编译基线
@@ -211,6 +213,16 @@ flowchart LR
   - `SoundCategory.kt`：`ALL` / `RAIN` / `NATURE` / `LIFE` / `NOISE` 5 维分类枚举与单测覆盖；
   - `brown_noise.ogg`：10s CC0 无缝慢波循环音频接入，更新 `SoundTrack`、`SoundRepository`、`AboutBottomSheet` 及两处 `SOUNDS_LICENSING.md`；
   - 版本号递增为 `v1.6.0` (versionCode 9)。
+
+### Stage 9: 视觉交互闭环与图标重塑 (v1.6.1)
+- **目标**：落地包豪斯声学琴弦 (D-14) 官方自适应矢量图标并归档 D-16 备选；重构底部悬浮播控条为 100% 实色表面杜绝半透穿透叠字；垫高底部安全内边距至 130.dp 消除音效卡片被遮挡；顶栏随手势自然平滑滚动释放全屏视野。
+- **门禁标准**：33 项单元测试 100% 通过，assembleRelease 与 assembleDebug 编译成功。
+- **交付记录**：
+  - `ic_launcher_background.xml` + `ic_launcher_foreground.xml` + `ic_launcher_monochrome.xml` (D-14 实装，支持 Android 13+ 主题取色)；
+  - `ic_launcher_background_d16.xml` + `ic_launcher_foreground_d16.xml` + `ic_launcher_d16.xml` (D-16 备选归档)；
+  - `BottomPlayerBar.kt`：背景采用 100% 实色表面（深色 `#1E2026` / 浅色 `#F2F4F7`），内部按键独立景深，彻底杜绝半透明背景导致的卡片文字穿透叠字；
+  - `HomeScreen.kt`：移除外层静态 Column，Header 移入 `LazyVerticalGrid` 头部随手势自然滚动，释放全屏垂直沉浸视野；`contentPadding.bottom` 增加至 130.dp 确保末行卡片完全露在底栏上方；
+  - 版本号递增为 `v1.6.1` (versionCode 10)。
 
 ---
 

@@ -136,141 +136,141 @@ fun HomeScreen(
             .fillMaxSize()
             .background(SaltTheme.colors.background)
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // App Bar / Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "SaltAmbience",
-                        style = SaltTheme.textStyles.largeTitle,
-                        color = SaltTheme.colors.text
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "椒盐美学 · 多轨自然声混音",
-                        style = SaltTheme.textStyles.sub,
-                        color = SaltTheme.colors.text.copy(alpha = 0.65f)
-                    )
-                }
-
+        // 2-Column Bento Grid as Main Scroll Container (Header scrolls away naturally)
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 130.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Section 0: App Bar Header (Span 2)
+            item(span = { GridItemSpan(2) }) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(horizontal = 4.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Theme Switch Button
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(SaltTheme.colors.subBackground)
-                            .clickable { viewModel.setShowThemeDialog(true) }
-                            .padding(horizontal = 10.dp, vertical = 7.dp),
-                        contentAlignment = Alignment.Center
+                    Column {
+                        Text(
+                            text = "SaltAmbience",
+                            style = SaltTheme.textStyles.largeTitle,
+                            color = SaltTheme.colors.text
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "椒盐美学 · 多轨自然声混音",
+                            style = SaltTheme.textStyles.sub,
+                            color = SaltTheme.colors.text.copy(alpha = 0.65f)
+                        )
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        // Theme Switch Button
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(SaltTheme.colors.subBackground)
+                                .clickable { viewModel.setShowThemeDialog(true) }
+                                .padding(horizontal = 10.dp, vertical = 7.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = themeMode.iconEmoji,
+                                    fontSize = 13.sp
+                                )
+                                Text(
+                                    text = when (themeMode) {
+                                        com.whitenoise.app.core.model.ThemeMode.SYSTEM -> "系统"
+                                        com.whitenoise.app.core.model.ThemeMode.LIGHT -> "浅色"
+                                        com.whitenoise.app.core.model.ThemeMode.DARK -> "深色"
+                                    },
+                                    style = SaltTheme.textStyles.sub,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = SaltTheme.colors.text.copy(alpha = 0.75f)
+                                )
+                            }
+                        }
+
+                        // About Button
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(SaltTheme.colors.subBackground)
+                                .clickable { viewModel.setShowAboutDialog(true) }
+                                .padding(horizontal = 14.dp, vertical = 7.dp),
+                            contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = themeMode.iconEmoji,
-                                fontSize = 13.sp
-                            )
-                            Text(
-                                text = when (themeMode) {
-                                    com.whitenoise.app.core.model.ThemeMode.SYSTEM -> "系统"
-                                    com.whitenoise.app.core.model.ThemeMode.LIGHT -> "浅色"
-                                    com.whitenoise.app.core.model.ThemeMode.DARK -> "深色"
-                                },
+                                text = "关于",
                                 style = SaltTheme.textStyles.sub,
-                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = SaltTheme.colors.text.copy(alpha = 0.75f)
                             )
                         }
                     }
+                }
+            }
 
-                    // About Button
+            // Lightweight detected clipboard banner (Span 2)
+            if (detectedPayload != null) {
+                item(span = { GridItemSpan(2) }) {
                     Box(
                         modifier = Modifier
-                            .clip(CircleShape)
-                            .background(SaltTheme.colors.subBackground)
-                            .clickable { viewModel.setShowAboutDialog(true) }
-                            .padding(horizontal = 14.dp, vertical = 7.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "关于",
-                            style = SaltTheme.textStyles.sub,
-                            fontWeight = FontWeight.Medium,
-                            color = SaltTheme.colors.text.copy(alpha = 0.75f)
-                        )
-                    }
-                }
-            }
-
-            // Lightweight detected clipboard banner
-            if (detectedPayload != null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
-                        .clickable { viewModel.setShowImportDialog(true) }
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
+                            .clickable { viewModel.setShowImportDialog(true) }
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         Row(
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "🎧", fontSize = 14.sp)
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "检测到混音【${detectedPayload?.name}】，点击一键导入",
-                                style = SaltTheme.textStyles.sub,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = SaltTheme.colors.highlight,
-                                maxLines = 1
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .clickable { viewModel.dismissClipboardBanner() }
-                                .padding(4.dp)
-                        ) {
-                            Text(
-                                text = "✕",
-                                fontSize = 11.sp,
-                                color = SaltTheme.colors.highlight.copy(alpha = 0.65f)
-                            )
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(text = "🎧", fontSize = 14.sp)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "检测到混音【${detectedPayload?.name}】，点击一键导入",
+                                    style = SaltTheme.textStyles.sub,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = SaltTheme.colors.highlight,
+                                    maxLines = 1
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .clickable { viewModel.dismissClipboardBanner() }
+                                    .padding(4.dp)
+                            ) {
+                                Text(
+                                    text = "✕",
+                                    fontSize = 11.sp,
+                                    color = SaltTheme.colors.highlight.copy(alpha = 0.65f)
+                                )
+                            }
                         }
                     }
                 }
             }
-
-            // 2-Column Bento Grid for Sound Tiles
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 110.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
                 // Section 1: Presets (Span 2)
                 item(span = { GridItemSpan(2) }) {
                     Column {
@@ -583,7 +583,6 @@ fun HomeScreen(
                     )
                 }
             }
-        }
 
         // Floating Compact Mini Pill Player Bar
         BottomPlayerBar(
