@@ -31,6 +31,12 @@ Guidance for coding agents working in WhiteNoise-Android.
   宿主主要工作为 UE (Unreal Engine) 开发，全局 Skill 库面向游戏引擎；针对本 Android 原生项目的专属扩展技能（如 Media3 编解码调优、SaltUI 模式等），**强制存放于本项目根目录 `.agents/skills/<skill-name>/SKILL.md`**，实现项目级隔离管理，严禁污染全局 UE 工作区。
 - **原生编辑优先**：
   - 文件修改优先使用原生工具（`replace_file_content` / `write_to_file`），严禁无谓编写临时脚本替代编辑。
+- **文档分层与防膨胀铁律 (Documentation Layering & Anti-Bloat)**：
+  - **`README.md` 严格定位于产品与架构白皮书**：仅面向最终用户与开源访客展示系统当前最新版本的“终态设计与核心特性”；**严禁**在此追加版本更新日志（Changelog）、缺陷修复流水账或调试记录；版本发布细节统一交由 GitHub Releases 处理；
+  - **`AGENTS.md` 严格定位于系统工程与架构总账 (Architecture Contracts)**：
+    - **契约固化优先**：凡重大功能与声学/UI模式落地，必须提炼沉淀为第 3 节的【永久架构契约】，作为后续所有 Agent 的系统底线；
+    - **演进总账紧凑化**：第 4 节阶段演进记录**仅保留表格级里程碑索引（单阶段严格限制 1~2 行）**，历史阶段定期折叠归档至 4.1；
+    - **严禁过程性垃圾**：严禁在 AGENTS.md 堆砌对话历史、单次 Bug 调试排错过程或临时日志。
 
 ---
 
