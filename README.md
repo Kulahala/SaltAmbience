@@ -1,26 +1,29 @@
 # SaltAmbience (椒盐白噪音)
 
-一款遵循 **SaltUI 椒盐美学** 设计哲学、基于 **AndroidX Media3** 与 **Jetpack Compose** 构建的优雅原生白噪音混音应用。
+一款遵循 **SaltUI 椒盐美学** 设计哲学、基于 **AndroidX Media3** 与 **Jetpack Compose** 构建的原生白噪音混音应用。
 
-让连绵细雨、山涧清泉、微风与林野鸟鸣在耳畔交织，助你沉浸专注、安抚身心、深度入眠。
+让连绵细雨、山涧清泉、夜风与林野鸟鸣在耳畔交织，助你专注沉浸、安抚身心、深度入眠。
 
 ---
 
-## 视觉与交互特性 (SaltUI Aesthetic)
+## 核心设计与特性
 
-- **官方自适应矢量图标 (Adaptive Vector Icon)**：基于「包豪斯声学 · 琴弦点线面」(D-14) 纯粹主义设计，午夜蓝黑底座融合垂直声轴与纯白/冰青三道利落琴弦波形；支持 Android 13+ Material You 单色取色；工程同步归档 Teenage Engineering 风格点阵刻度圆轨 (D-16) 备选资源。
-- **顶栏随手势自然滚动与视野沉浸**：顶栏作为主滚动容器头部，上滑浏览 15 款音效时自然平滑滑出视线，释放全屏纯净视野；下滑自然拉回，彻底杜绝顶栏文字穿透撞车。
-- **顶栏极简减法与品牌关于入口**：移除右上角冗余的「关于」药丸，仅留紧凑主题切换胶囊；左上角品牌标题区无缝嵌入极简 `v1.6.1` 微胶囊与大圆角触感水波纹，轻触即弹出关于与许可抽屉，兼具极简留白与顺畅发现性。
-- **全设备响应式自适应网格 (Multi-Device Adaptive Bento)**：全面升级为 `GridCells.Adaptive(minSize = 160.dp)` 配合 `GridItemSpan(maxLineSpan)` 全宽跨度；普通手机竖屏稳定呈现 2 列经典黄金比例，在折叠屏展开态、大平板或横屏模式下自动优雅平滑延展为 3~4 列精致方格，彻底杜绝拉伸大板砖。
-- **纯净背景高斯虚化 (Pure Backdrop Blur)**：抽屉面板展开时，主界面稳固原位并平滑渐变为 `14.dp` 高斯毛玻璃失焦，抽屉采用玄武岩冷炭黑（`#1B1D24`）立体悬浮，彻底告别死黑呆板，Android 12+ 硬件加速，低版本平滑柔和降级。
-- **实色微质感悬浮舱与防叠字保护**：底部悬浮播控条告别伪毛玻璃半透明缺陷，改用 100% 实色立体表面（深色 `#1E2026` / 浅色 `#F2F4F7`）搭配细微毛玻璃高光边框；配合 `130.dp` 底部安全内边距，最后一行卡片滑到底部完整外露，滑动穿透物理遮挡，杜绝叠字车祸。
-- **五维音效分类导航**：雨水、自然、生活、纯噪横向平滑滑动胶囊（Filter Chips），轻微触感微振动反馈，Bento 网格即时无缝过滤，支持一秒切回全部。
-- **自定义预设置顶与自由管理**：自定义混音方案倒序置顶优先展示；所有预设统一支持二次确认删除；列表末尾提供「↺ 恢复默认」后悔药按钮一键复原系统方案。
-- **全站抽屉范式 (BottomSheet)**：告别局促居中弹窗，全面升级为大圆角底部抽屉（`SaltBottomSheet`），支持非线性物理弹簧（Spring）进场与自然的向下滑动拖拽关闭（Swipe to Dismiss）。
-- **输入法平滑避让**：导入与保存预设抽屉全量接入 `.imePadding()` 与自适应滚动，软键盘弹起时优雅顶升，输入视口充裕从容。
-- **预设场景智能闭环**：当前混音方案自动识别匹配预设并赋予高亮边框；自定义预设删除配备二次确认抽屉杜绝误触抹除；长按触感振动分享口令。
-- **垂直滑块触感与高光校准**：0%（静音）、50%（平衡）、100%（满格）边界配备刻度触感微震动反馈；百分比指示器采用动态反转胶囊盾牌，消除浅色模式对比度盲区。
-- **平滑对数淡出与低耗保活**：睡眠定时器到期前呈自然对数/二次幂曲线平滑衰减至静音；底层通知按需去抖唤醒，保证熄屏深度休眠。
+### 1. 椒盐美学交互 (SaltUI Aesthetic)
+- **包豪斯声学自适应图标**：以「包豪斯声学 · 琴弦点线面」(D-14) 为官方自适应图标体系，午夜蓝黑底座融合垂直声学微轴与三道利落琴弦声波；支持 Android 13+ Material You 壁纸动态取色，同步归档 Teenage Engineering 风格备选资源 (D-16)。
+- **顶栏极简呼吸感**：顶栏随手势自然滑入滑出，释放全屏垂直沉浸视野；移除冗余按钮，左上角品牌标题区嵌入极简版本微胶囊与触感水波纹，轻触即开关于与开源许可抽屉。
+- **全设备响应式自适应网格**：采用 `GridCells.Adaptive(minSize = 160.dp)` 配合全宽通栏布局；普通手机竖屏稳定呈现 2 列黄金比例，折叠屏展开态、平板或横屏模式下自动平滑延展为 3~4 列精致方格，杜绝拉伸畸变。
+- **原生高斯虚化与物理弹簧抽屉**：全站弹窗统一为大圆角底部抽屉（`SaltBottomSheet`），配备 `dampingRatio = 0.82f` 的细腻进退场物理弹簧；抽屉展开时主屏背景平滑过渡至 `14.dp` 原生高斯失焦（Android 12+ GPU 硬件加速），质感通透纯净。
+- **实色微质感悬浮舱**：底部常驻播控胶囊采用 100% 不透明实色表面（深色 `#1E2026` / 浅色 `#F2F4F7`）搭配细微高光描边与 130.dp 底部避让，彻底杜绝半透明背景导致的卡片文字穿透叠字。
+
+### 2. 专业多轨混音引擎 (Audio Architecture)
+- **15 款高品质无缝自然音**：雨水、自然、生活、纯噪五维分类胶囊（Filter Chips）即时无缝过滤，包含 CC0 慢波助眠棕色噪音 (Brown Noise)；音源全部采用无缝 OGG 格式。
+- **轻量播放器池 (ExoPlayer Pool)**：每轨独立音量控制与静音开关，绕过硬件 DSP 单流 Offload 限制，走系统 PCM 纯净多路混音管线。
+- **感知平滑淡出休眠**：休眠倒计时结束前采用对数/二次幂曲线平滑衰减至静音，贴合人耳感知，杜绝截断爆音与心惊。
+- **前台保活与集中焦点调度**：基于 `MediaSessionService` 实现常驻通知栏快捷控制，耳机拔出自动暂停，统一监听音频焦点（来电暂停、短通知 Ducking 避让），超低功耗深度休眠。
+
+### 3. 场景预设与口令分享 (Presets & Sharing)
+- **方案自由管理**：内置「深夜暴雨」、「海边小木屋」等经典预设，支持一键将当前混音保存为自定义预设；自定义方案倒序置顶，支持删除二次确认防误触，提供「↺ 恢复默认」一键复原机制。
+- **Base64 口令秒级互通**：长按预设触感复制分享口令；应用冷/热启动自动识别剪贴板预设口令并弹出轻量胶囊一键导入。
 
 ---
 
@@ -28,22 +31,22 @@
 
 | 层次 / 模块 | 技术选型 | 说明 |
 | :--- | :--- | :--- |
-| **开发语言** | **Kotlin 2.0.21** | 官方 Compose 编译器插件，强类型协程与 Flow |
-| **构建系统** | **Gradle 8.9 + AGP 8.7.2** | Version Catalogs (`libs.versions.toml`) 集中依赖管理 |
-| **运行基线** | **JDK 21 LTS** / **Target API 35** | Min SDK 26, Compile SDK 35 (Android 15) |
-| **UI 视觉框架** | **SaltUI 3.x** (`io.github.moriafly:salt-ui`) | 统一的椒盐风格组件、主题配色与圆角布局 |
-| **音频混音引擎** | **AndroidX Media3 1.4.1** | ExoPlayer 多轨混音池，独立音量增益，禁用 Audio Offload |
-| **系统媒体控制** | **MediaSessionService** | 虚拟主控协调器，统一前台服务、常驻通知栏与耳机拔出监听 |
-| **数据持久化** | **Jetpack DataStore Preferences** | 轻量化状态记忆，自动还原上次音轨音量与自定义预设 |
-| **序列化引擎** | **Kotlinx Serialization JSON** | 强类型无缝序列化场景预设与状态 |
+| **开发语言** | **Kotlin 2.0.21** | 官方 Compose 编译器插件，强类型协程与 Flow 驱动 |
+| **构建体系** | **Gradle 8.9 + AGP 8.7.2** | Version Catalogs (`libs.versions.toml`) 集中版本管理 |
+| **运行基线** | **JDK 21 LTS** / **Target API 35** | Min SDK 26 (Android 8.0), Compile & Target SDK 35 (Android 15) |
+| **UI 视觉框架** | **SaltUI 3.x** (`io.github.moriafly:salt-ui`) | 椒盐设计规范、圆角抽屉、自适应深浅模式 |
+| **音频引擎** | **AndroidX Media3 1.4.1** | `ExoPlayer` 多轨混音池，无缝循环，禁用 Audio Offload |
+| **媒体控制** | **MediaSessionService** | 统一前台服务、锁屏通知栏与系统音频焦点调度 |
+| **状态持久化** | **Jetpack DataStore Preferences** | 轻量化混音记忆与预设序列化存储 |
+| **序列化引擎** | **Kotlinx Serialization JSON** | 强类型安全 JSON 序列化 |
 
 ---
 
 ## 音源资产与合规开源 (Sound Assets)
 
-本项目所有自然声音频资产均来源于开源项目 [Blanket](https://github.com/rafaelmardojai/blanket) 以及 Freesound / Wikimedia Commons，格式全部为 **OGG Vorbis**，经过无缝交叉淡化循环处理：
+本项目自然声音频资产均经过无缝循环处理，遵循各自的 CC0 / CC-BY 开源许可：
 
-- 细雨 (`rain.ogg`) · CC BY 4.0
+- 细雨 (`rain.ogg`) · CC BY 4.0 (Blanket / Rafael Mardojai)
 - 雷雨 (`storm.ogg`) · CC BY 3.0
 - 林风 (`wind.ogg`) · CC0 1.0
 - 溪流 (`stream.ogg`) · CC0 1.0
@@ -59,37 +62,28 @@
 - 都市 (`city.ogg`) · CC BY 3.0
 - 棕色噪音 (`brown_noise.ogg`) · CC0 1.0
 
-详细版权与原作者署名参见 [SOUNDS_LICENSING.md](SOUNDS_LICENSING.md)。
+详细原作者署名与许可文本参见 [SOUNDS_LICENSING.md](SOUNDS_LICENSING.md)。
 
 ---
 
 ## 本地构建与运行 (Build & Run)
 
-### 前置要求
-1. **JDK 21 LTS**（已配置或通过 `gradle.properties` 指定 `org.gradle.java.home`）
-2. **Android SDK**（API 35 平台与构建工具）
+### 前置环境
+- **JDK 21 LTS**
+- **Android SDK**（API 35 平台与构建工具）
 
-### 构建步骤
+### 构建命令
 ```bash
-# 1. 克隆仓库
-git clone https://github.com/Kulahala/SaltAmbience.git
-cd SaltAmbience
-
-# 2. 配置 local.properties（指定 SDK 路径）
-echo "sdk.dir=C\:\\Program Files (x86)\\Android\\android-sdk" > local.properties
-
-# 3. 运行单元测试
+# 运行单元测试
 ./gradlew testDebugUnitTest
 
-# 4. 编译 Debug APK
-./gradlew assembleDebug
+# 编译 Release 安装包
+./gradlew assembleRelease
 ```
-
-编译成功后，APK 产物位于：
-`app/build/outputs/apk/debug/app-debug.apk`
+产物位置：`app/build/outputs/apk/release/app-release.apk`
 
 ---
 
 ## 开源协议
 
-本项目代码遵循 MIT 协议开源。音频资源版权归属原作者，遵循各自的 CC0 / CC-BY 协议。
+本项目源码基于 [MIT License](LICENSE) 开源。音频资源版权归属原作者，遵循各自的 CC 协议。
