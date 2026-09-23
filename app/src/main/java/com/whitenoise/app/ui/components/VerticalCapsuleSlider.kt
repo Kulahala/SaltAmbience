@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -56,8 +57,9 @@ fun VerticalCapsuleSlider(
     value: Float, // 0.0f to 1.0f
     onValueChange: (Float) -> Unit,
     title: String,
-    icon: String,
+    icon: String = "",
     modifier: Modifier = Modifier,
+    trackId: String? = null,
     isMuted: Boolean = false,
     enabled: Boolean = true,
     width: Dp = 68.dp,
@@ -223,13 +225,29 @@ fun VerticalCapsuleSlider(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = icon,
-                    fontSize = 24.sp,
-                    modifier = Modifier.then(
-                        if (isMuted) Modifier.alpha(0.4f) else Modifier
+                if (trackId != null) {
+                    BauhausSoundIcon(
+                        trackId = trackId,
+                        isPlaying = !isMuted && effectiveValue > 0f,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .then(if (isMuted) Modifier.alpha(0.4f) else Modifier)
                     )
-                )
+                } else if (icon.isNotBlank()) {
+                    Text(
+                        text = icon,
+                        fontSize = 24.sp,
+                        modifier = Modifier.then(
+                            if (isMuted) Modifier.alpha(0.4f) else Modifier
+                        )
+                    )
+                } else {
+                    BauhausSoundIcon(
+                        trackId = "master",
+                        isPlaying = true,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
 

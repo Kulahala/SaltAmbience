@@ -103,35 +103,54 @@ fun BottomPlayerBar(
                     .clickable { onOpenMixer() }
                     .padding(vertical = 4.dp, horizontal = 4.dp)
             ) {
-                // Top line: active badges / emojis + count
-                val titleText = when {
-                    activeTracks.isNotEmpty() -> {
-                        val emojis = activeTracks.take(4).joinToString(" ") { it.iconEmoji }
-                        if (playbackState.isMasterPlaying) {
-                            "$emojis · ${activeTracks.size}轨混音中"
-                        } else {
-                            "$emojis · ${activeTracks.size}轨已暂停"
+                // Top line: active Bauhaus acoustic badges + count
+                if (activeTracks.isNotEmpty()) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            activeTracks.take(4).forEach { track ->
+                                BauhausSoundIcon(
+                                    trackId = track.id,
+                                    isPlaying = playbackState.isMasterPlaying,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (playbackState.isMasterPlaying) "${activeTracks.size}轨混音中" else "${activeTracks.size}轨已暂停",
+                            style = SaltTheme.textStyles.main,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = SaltTheme.colors.text
+                        )
                     }
-                    playbackState.activeTrackCount > 0 -> {
+                } else {
+                    val titleText = if (playbackState.activeTrackCount > 0) {
                         if (playbackState.isMasterPlaying) {
                             "${playbackState.activeTrackCount} 轨混音中"
                         } else {
                             "${playbackState.activeTrackCount} 轨已暂停"
                         }
+                    } else {
+                        "轻触音效开始混音"
                     }
-                    else -> "轻触音效开始混音"
+                    Text(
+                        text = titleText,
+                        style = SaltTheme.textStyles.main,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = SaltTheme.colors.text
+                    )
                 }
-
-                Text(
-                    text = titleText,
-                    style = SaltTheme.textStyles.main,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = SaltTheme.colors.text
-                )
 
                 Spacer(modifier = Modifier.height(2.dp))
 

@@ -44,11 +44,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // Unified AudioMixerEngine singleton
     val engine: AudioMixerEngine = AudioMixerEngine.getInstance(application)
 
-    private val _tracks = MutableStateFlow(SoundRepository.ALL_TRACKS)
-    val tracks: StateFlow<List<SoundTrack>> = _tracks.asStateFlow()
-
-    private val _playbackState = MutableStateFlow(PlaybackState())
-    val playbackState: StateFlow<PlaybackState> = _playbackState.asStateFlow()
+    // Direct zero-latency state exposure from AudioMixerEngine
+    val tracks: StateFlow<List<SoundTrack>> = engine.tracksState
+    val playbackState: StateFlow<PlaybackState> = engine.playbackState
 
     val presets: StateFlow<List<Preset>> = presetRepository.allPresetsFlow.stateIn(
         scope = viewModelScope,
@@ -138,13 +136,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             isPreferencesRestored = true
         }
 
-        // Fast immediate emission to UI
-        viewModelScope.launch {
-            engine.tracksState.collectLatest { list ->
-                _tracks.value = list
-            }
-        }
-
         // Debounced persistence to avoid disk I/O thrashing during slider dragging
         viewModelScope.launch {
             engine.tracksState
@@ -154,13 +145,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         preferencesManager.saveTracksState(list)
                     }
                 }
-        }
-
-        // Fast immediate emission of playback state to UI
-        viewModelScope.launch {
-            engine.playbackState.collectLatest { state ->
-                _playbackState.value = state
-            }
         }
 
         // Debounced master volume persistence

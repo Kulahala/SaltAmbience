@@ -62,6 +62,7 @@ import kotlinx.coroutines.flow.collectLatest
 import com.whitenoise.app.core.model.Preset
 import com.whitenoise.app.core.model.SoundCategory
 import com.whitenoise.app.ui.components.AboutBottomSheet
+import com.whitenoise.app.ui.components.BauhausSoundIcon
 import com.whitenoise.app.ui.components.BottomPlayerBar
 import com.whitenoise.app.ui.components.DeletePresetConfirmBottomSheet
 import com.whitenoise.app.ui.components.ImportPresetBottomSheet
@@ -586,9 +587,18 @@ fun HomeScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
-                                        Text(
-                                            text = category.iconEmoji,
-                                            fontSize = 12.sp
+                                        val categoryIconId = when (category) {
+                                            SoundCategory.ALL -> "master"
+                                            SoundCategory.RAIN -> "rain"
+                                            SoundCategory.NATURE -> "wind"
+                                            SoundCategory.LIFE -> "coffee_shop"
+                                            SoundCategory.NOISE -> "white_noise"
+                                        }
+                                        BauhausSoundIcon(
+                                            trackId = categoryIconId,
+                                            isPlaying = isSelected,
+                                            modifier = Modifier.size(13.dp),
+                                            tint = if (isSelected) SaltTheme.colors.highlight else SaltTheme.colors.text.copy(alpha = 0.55f)
                                         )
                                         Text(
                                             text = category.title,

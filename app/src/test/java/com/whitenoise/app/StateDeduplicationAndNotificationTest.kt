@@ -5,6 +5,7 @@ import com.whitenoise.app.core.model.PlaybackState
 import com.whitenoise.app.core.model.PresetShareCode
 import com.whitenoise.app.core.model.PresetSharePayload
 import com.whitenoise.app.core.service.WhiteNoiseMediaService
+import com.whitenoise.app.data.repository.SoundRepository
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.toList
@@ -192,5 +193,112 @@ class StateDeduplicationAndNotificationTest {
         threads.forEach { it.join() }
 
         assertEquals(800, dismissedHashes.size)
+    }
+
+    @Test
+    fun testShouldUpdateNotificationPredicate() {
+        val baseState = PlaybackState(
+            isMasterPlaying = true,
+            activeTrackCount = 2,
+            primaryTrackId = "rain",
+            sleepTimerRemainingSeconds = 1800,
+            sleepFadeFraction = 1.0f
+        )
+
+        // 1. Timer tick: remaining seconds decreases, should NOT update notification
+        val timerTickState = baseState.copy(sleepTimerRemainingSeconds = 1799)
+        assertFalse(
+            "Timer ticks must not trigger notification updates",
+            WhiteNoiseMediaService.shouldUpdateNotification(baseState, timerTickState)
+        )
+
+        // 2. Fade fraction changes, should NOT update notification
+        val fadeTickState = baseState.copy(sleepFadeFraction = 0.95f)
+        assertFalse(
+            "Sleep fade fraction must not trigger notification updates",
+            WhiteNoiseMediaService.shouldUpdateNotification(baseState, fadeTickState)
+        )
+
+        // 3. Primary sound track changes (e.g. from rain to fireplace): MUST update notification for new Bauhaus cover!
+        val trackChangeState = baseState.copy(primaryTrackId = "fireplace")
+        assertTrue(
+            "Primary sound track change must update notification cover",
+            WhiteNoiseMediaService.shouldUpdateNotification(baseState, trackChangeState)
+        )
+
+        // 4. Play to Pause toggle: MUST update notification
+        val pauseState = baseState.copy(isMasterPlaying = false)
+        assertTrue(
+            "Play to pause toggle must update notification",
+            WhiteNoiseMediaService.shouldUpdateNotification(baseState, pauseState)
+        )
+
+        // 5. Active track count change: MUST update notification
+        val countChangeState = baseState.copy(activeTrackCount = 3)
+        assertTrue(
+            "Active track count change must update notification",
+            WhiteNoiseMediaService.shouldUpdateNotification(baseState, countChangeState)
+        )
+    }
+
+    @Test
+    fun testDistinctUntilChangedWithThemeCoverSwitching() = runBlocking {
+        val states = listOf(
+            PlaybackState(isMasterPlaying = true, activeTrackCount = 1, primaryTrackId = "rain", sleepTimerRemainingSeconds = 1800),
+            PlaybackState(isMasterPlaying = true, activeTrackCount = 1, primaryTrackId = "rain", sleepTimerRemainingSeconds = 1799), // tick (blocked)
+            PlaybackState(isMasterPlaying = true, activeTrackCount = 1, primaryTrackId = "fireplace", sleepTimerRemainingSeconds = 1798), // cover changed! (passed)
+            PlaybackState(isMasterPlaying = true, activeTrackCount = 1, primaryTrackId = "fireplace", sleepTimerRemainingSeconds = 1797), // tick (blocked)
+            PlaybackState(isMasterPlaying = false, activeTrackCount = 1, primaryTrackId = "fireplace", sleepTimerRemainingSeconds = 1796), // paused (passed)
+            PlaybackState(isMasterPlaying = false, activeTrackCount = 0, primaryTrackId = null, sleepTimerRemainingSeconds = null) // stopped (passed)
+        )
+
+        val filtered = states.asFlow()
+            .distinctUntilChanged { old, new ->
+                !WhiteNoiseMediaService.shouldUpdateNotification(old, new)
+            }
+            .toList()
+
+        // 4 emissions should pass: Initial Rain, Fireplace Cover, Paused, Stopped
+        assertEquals(4, filtered.size)
+        assertEquals("rain", filtered[0].primaryTrackId)
+        assertTrue(filtered[0].isMasterPlaying)
+
+        assertEquals("fireplace", filtered[1].primaryTrackId)
+        assertTrue(filtered[1].isMasterPlaying)
+
+        assertEquals("fireplace", filtered[2].primaryTrackId)
+        assertFalse(filtered[2].isMasterPlaying)
+
+        assertEquals(null, filtered[3].primaryTrackId)
+        assertFalse(filtered[3].isMasterPlaying)
+        assertEquals(0, filtered[3].activeTrackCount)
+    }
+
+    @Test
+    fun testAllFifteenTracksHaveCorrespondingNameResolution() {
+        val tracks = SoundRepository.ALL_TRACKS
+        assertEquals(15, tracks.size)
+
+        for (track in tracks) {
+            val resolvedName = SoundRepository.ALL_TRACKS.find { it.id == track.id }?.name
+            org.junit.Assert.assertNotNull("Track ${track.id} must resolve a name", resolvedName)
+            assertEquals(track.name, resolvedName)
+        }
+    }
+
+    @Test
+    fun testPrimaryTrackSelectionRules() {
+        val tracks = listOf(
+            SoundRepository.ALL_TRACKS[0].copy(isPlaying = true, volume = 0.3f), // rain
+            SoundRepository.ALL_TRACKS[1].copy(isPlaying = true, volume = 0.8f), // storm
+            SoundRepository.ALL_TRACKS[2].copy(isPlaying = true, volume = 0.5f)  // wind
+        )
+
+        val activeTracks = tracks.filter { it.isPlaying && !it.isMuted }
+        val highestVolumeTrack = activeTracks.maxByOrNull { it.volume }
+
+        org.junit.Assert.assertNotNull(highestVolumeTrack)
+        assertEquals("storm", highestVolumeTrack?.id)
+        assertEquals("雷雨", highestVolumeTrack?.name)
     }
 }

@@ -258,7 +258,7 @@ fun MixerBottomSheet(
                             value = masterVolume,
                             onValueChange = onMasterVolumeChange,
                             title = "主音量",
-                            icon = "🎧",
+                            trackId = "master",
                             activeColor = SaltTheme.colors.highlight
                         )
 
@@ -268,7 +268,7 @@ fun MixerBottomSheet(
                                 value = if (track.isMuted) 0f else track.volume,
                                 onValueChange = { onTrackVolumeChange(track.id, it) },
                                 title = track.name,
-                                icon = track.iconEmoji,
+                                trackId = track.id,
                                 isMuted = track.isMuted,
                                 activeColor = SaltTheme.colors.highlight,
                                 onIconClick = { onToggleTrackMute(track.id) }

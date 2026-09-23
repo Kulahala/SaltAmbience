@@ -274,20 +274,29 @@ fun ImportPresetBottomSheet(
                         ) {
                             currentPayload.volumes.forEach { (trackId, volume) ->
                                 val track = SoundRepository.ALL_TRACKS.find { it.id == trackId }
-                                val emoji = track?.iconEmoji ?: "🎵"
                                 val name = track?.name ?: trackId
                                 Box(
                                     modifier = Modifier
                                         .clip(CircleShape)
                                         .background(SaltTheme.colors.subBackground)
-                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
                                 ) {
-                                    Text(
-                                        text = "$emoji $name ${(volume * 100).toInt()}%",
-                                        fontSize = 11.sp,
-                                        style = SaltTheme.textStyles.sub,
-                                        color = SaltTheme.colors.text.copy(alpha = 0.8f)
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        BauhausSoundIcon(
+                                            trackId = trackId,
+                                            isPlaying = true,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Text(
+                                            text = "$name ${(volume * 100).toInt()}%",
+                                            fontSize = 11.sp,
+                                            style = SaltTheme.textStyles.sub,
+                                            color = SaltTheme.colors.text.copy(alpha = 0.8f)
+                                        )
+                                    }
                                 }
                             }
                         }

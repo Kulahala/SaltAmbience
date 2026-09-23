@@ -6,5 +6,6 @@ data class PlaybackState(
     val activeTrackCount: Int = 0,
     val sleepTimerRemainingSeconds: Long? = null,
     val isSleepTimerRunning: Boolean = false,
-    val sleepFadeFraction: Float = 1.0f
+    val sleepFadeFraction: Float = 1.0f,
+    val primaryTrackId: String? = null
 )

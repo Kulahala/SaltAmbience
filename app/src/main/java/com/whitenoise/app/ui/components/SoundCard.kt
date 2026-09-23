@@ -87,9 +87,10 @@ fun SoundTileCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = track.iconEmoji,
-                    fontSize = 32.sp
+                BauhausSoundIcon(
+                    trackId = track.id,
+                    isPlaying = track.isPlaying,
+                    modifier = Modifier.size(32.dp)
                 )
 
                 if (track.isPlaying) {

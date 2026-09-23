@@ -161,20 +161,29 @@ fun DeletePresetConfirmBottomSheet(
                     ) {
                         displayPreset.trackVolumes.forEach { (trackId, vol) ->
                             val track = SoundRepository.ALL_TRACKS.find { it.id == trackId }
-                            val emoji = track?.iconEmoji ?: "🎵"
                             val name = track?.name ?: trackId
                             Box(
                                 modifier = Modifier
                                     .clip(CircleShape)
                                     .background(SaltTheme.colors.background)
-                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
-                                Text(
-                                    text = "$emoji $name ${(vol * 100).toInt()}%",
-                                    fontSize = 11.sp,
-                                    style = SaltTheme.textStyles.sub,
-                                    color = SaltTheme.colors.text.copy(alpha = 0.75f)
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    BauhausSoundIcon(
+                                        trackId = trackId,
+                                        isPlaying = false,
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                    Text(
+                                        text = "$name ${(vol * 100).toInt()}%",
+                                        fontSize = 11.sp,
+                                        style = SaltTheme.textStyles.sub,
+                                        color = SaltTheme.colors.text.copy(alpha = 0.75f)
+                                    )
+                                }
                             }
                         }
                     }

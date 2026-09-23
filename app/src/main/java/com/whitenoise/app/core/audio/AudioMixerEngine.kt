@@ -6,9 +6,12 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Build
 import android.util.Log
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import com.whitenoise.app.core.model.PlaybackState
 import com.whitenoise.app.core.model.Preset
@@ -26,6 +29,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AudioMixerEngine private constructor(private val context: Context) {
 
@@ -62,11 +66,32 @@ class AudioMixerEngine private constructor(private val context: Context) {
     private var sleepTimerJob: Job? = null
     private var totalSleepDurationSeconds: Long = 0L
 
+    // Tracks initialized with anti-loop fatigue (Scheme A offset & Scheme B drift) in the current session
+    private val activeSessionTracks = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+    // Tracks whose initial random seek is pending until STATE_READY because duration was C.TIME_UNSET
+    private val pendingInitialSeekTracks = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
     // Audio Focus
     private var audioFocusRequest: AudioFocusRequest? = null
+    @Volatile
     private var hasAudioFocus = false
+    private var focusJob: Job? = null
 
     var onSleepTimerCompleted: (() -> Unit)? = null
+
+    // Low latency load control specifically tuned for local asset audio:
+    // bufferForPlaybackMs = 50ms ensures virtually instantaneous audio start without waiting for network buffers
+    private val lowLatencyLoadControl by lazy {
+        DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                /* minBufferMs = */ 1000,
+                /* maxBufferMs = */ 2000,
+                /* bufferForPlaybackMs = */ 50,
+                /* bufferForPlaybackAfterRebufferMs = */ 100
+            )
+            .setPrioritizeTimeOverSizeThresholds(true)
+            .build()
+    }
 
     init {
         setupAudioFocus()
@@ -113,6 +138,7 @@ class AudioMixerEngine private constructor(private val context: Context) {
             .build()
     }
 
+    @Synchronized
     private fun requestAudioFocus(): Boolean {
         if (hasAudioFocus) return true
         val request = audioFocusRequest ?: return false
@@ -121,6 +147,7 @@ class AudioMixerEngine private constructor(private val context: Context) {
         return hasAudioFocus
     }
 
+    @Synchronized
     private fun abandonAudioFocus() {
         if (hasAudioFocus) {
             audioFocusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
@@ -130,8 +157,36 @@ class AudioMixerEngine private constructor(private val context: Context) {
         isDucked = false
     }
 
+    private fun dispatchAsyncRequestAudioFocus() {
+        focusJob?.cancel()
+        focusJob = scope.launch(Dispatchers.IO) {
+            val granted = requestAudioFocus()
+            if (!isActive) return@launch
+            if (!_playbackState.value.isMasterPlaying) {
+                abandonAudioFocus()
+                return@launch
+            }
+            if (!granted) {
+                withContext(Dispatchers.Main) {
+                    if (_playbackState.value.isMasterPlaying) {
+                        pauseAllInternal()
+                        _playbackState.update { it.copy(isMasterPlaying = false) }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun dispatchAsyncAbandonAudioFocus() {
+        focusJob?.cancel()
+        focusJob = scope.launch(Dispatchers.IO) {
+            abandonAudioFocus()
+        }
+    }
+
     /**
      * Set master playing state. If true, starts playing all enabled tracks; if false, pauses them.
+     * Uses 0ms optimistic state update so UI controls flip immediately without waiting for hardware/Binder.
      */
     fun setMasterPlaying(play: Boolean) {
         val currentTracks = _tracksState.value
@@ -140,27 +195,32 @@ class AudioMixerEngine private constructor(private val context: Context) {
         if (play && !hasActiveTracks) {
             // If master play is requested but no track is active, enable default track (e.g. rain)
             val updated = currentTracks.map { track ->
-                if (track.id == "rain") track.copy(isPlaying = true) else track
+                if (track.id == "rain") track.copy(isPlaying = true, isMuted = false) else track
             }
             _tracksState.value = updated
         }
 
-        if (play) {
-            if (!_playbackState.value.isSleepTimerRunning) {
-                _playbackState.update { it.copy(sleepFadeFraction = 1.0f) }
-            }
-            requestAudioFocus()
-            resumeAllActiveInternal()
-        } else {
-            pauseAllInternal()
-            abandonAudioFocus()
-        }
+        val activeTracks = _tracksState.value.filter { it.isPlaying && !it.isMuted }
+        val activeCount = activeTracks.size
+        val primaryId = activeTracks.maxByOrNull { it.volume }?.id
 
+        // 1. Optimistic 0ms UI flip
         _playbackState.update {
             it.copy(
                 isMasterPlaying = play,
-                activeTrackCount = _tracksState.value.count { t -> t.isPlaying && !t.isMuted }
+                activeTrackCount = activeCount,
+                primaryTrackId = primaryId,
+                sleepFadeFraction = if (play && !it.isSleepTimerRunning) 1.0f else it.sleepFadeFraction
             )
+        }
+
+        // 2. Play or pause players immediately & non-blocking Binder IPC
+        if (play) {
+            resumeAllActiveInternal()
+            dispatchAsyncRequestAudioFocus()
+        } else {
+            pauseAllInternal()
+            dispatchAsyncAbandonAudioFocus()
         }
     }
 
@@ -174,34 +234,58 @@ class AudioMixerEngine private constructor(private val context: Context) {
     }
 
     /**
-     * Toggle track playing state
+     * Toggle track playing state with 0ms optimistic UI flip
      */
     fun setTrackPlaying(trackId: String, isPlaying: Boolean) {
+        val wasMasterPlaying = _playbackState.value.isMasterPlaying
+
         _tracksState.update { list ->
             list.map { if (it.id == trackId) it.copy(isPlaying = isPlaying) else it }
         }
+
+        val activeTracks = _tracksState.value.filter { it.isPlaying && !it.isMuted }
+        val activeCount = activeTracks.size
+        val primaryId = activeTracks.maxByOrNull { it.volume }?.id
+
         val track = _tracksState.value.find { it.id == trackId } ?: return
 
         if (isPlaying) {
             val player = getOrCreatePlayer(track)
-            if (!_playbackState.value.isMasterPlaying) {
+            val actualVolume = calculateVolumeForTrack(track)
+            player.volume = actualVolume
+
+            // Turning on track: initialize random offset and speed drift
+            applyRandomStartAndDrift(track, player)
+            activeSessionTracks.add(track.id)
+
+            if (!wasMasterPlaying) {
+                // If master was paused, turning on a track initiates master play, resuming all active tracks together
                 setMasterPlaying(true)
             } else {
-                val actualVolume = calculateVolumeForTrack(track)
-                player.volume = actualVolume
-                requestAudioFocus()
+                _playbackState.update {
+                    it.copy(
+                        activeTrackCount = activeCount,
+                        primaryTrackId = primaryId
+                    )
+                }
                 player.playWhenReady = true
+                dispatchAsyncRequestAudioFocus()
             }
         } else {
+            activeSessionTracks.remove(trackId)
+            pendingInitialSeekTracks.remove(trackId)
             playerPool[trackId]?.playWhenReady = false
-        }
-
-        val activeCount = _tracksState.value.count { it.isPlaying && !it.isMuted }
-        _playbackState.update { it.copy(activeTrackCount = activeCount) }
-
-        if (activeCount == 0 && _playbackState.value.isMasterPlaying) {
-            // Auto pause master when all tracks are turned off
-            setMasterPlaying(false)
+            if (activeCount == 0 && wasMasterPlaying) {
+                // Auto pause master when all tracks are turned off
+                setMasterPlaying(false)
+            } else {
+                _playbackState.update {
+                    it.copy(
+                        activeTrackCount = activeCount,
+                        primaryTrackId = primaryId
+                    )
+                }
+            }
         }
     }
 
@@ -221,9 +305,24 @@ class AudioMixerEngine private constructor(private val context: Context) {
         val track = _tracksState.value.find { it.id == trackId } ?: return
         playerPool[trackId]?.let { player ->
             player.volume = calculateVolumeForTrack(track)
+            if (track.isPlaying && !track.isMuted && _playbackState.value.isMasterPlaying) {
+                if (!activeSessionTracks.contains(track.id)) {
+                    applyRandomStartAndDrift(track, player)
+                    activeSessionTracks.add(track.id)
+                }
+                player.playWhenReady = true
+            }
         }
+        val activeTracks = _tracksState.value.filter { t -> t.isPlaying && !t.isMuted }
+        val primaryId = activeTracks.maxByOrNull { it.volume }?.id
         _playbackState.update {
-            it.copy(activeTrackCount = _tracksState.value.count { t -> t.isPlaying && !t.isMuted })
+            it.copy(
+                activeTrackCount = activeTracks.size,
+                primaryTrackId = primaryId
+            )
+        }
+        if (activeTracks.isNotEmpty() && _playbackState.value.isMasterPlaying) {
+            dispatchAsyncRequestAudioFocus()
         }
     }
 
@@ -237,9 +336,26 @@ class AudioMixerEngine private constructor(private val context: Context) {
         val track = _tracksState.value.find { it.id == trackId } ?: return
         playerPool[trackId]?.let { player ->
             player.volume = calculateVolumeForTrack(track)
+            if (track.isPlaying && !track.isMuted && _playbackState.value.isMasterPlaying) {
+                if (!activeSessionTracks.contains(track.id)) {
+                    applyRandomStartAndDrift(track, player)
+                    activeSessionTracks.add(track.id)
+                }
+                player.playWhenReady = true
+            } else if (isMuted) {
+                player.playWhenReady = false
+            }
         }
+        val activeTracks = _tracksState.value.filter { t -> t.isPlaying && !t.isMuted }
+        val primaryId = activeTracks.maxByOrNull { it.volume }?.id
         _playbackState.update {
-            it.copy(activeTrackCount = _tracksState.value.count { t -> t.isPlaying && !t.isMuted })
+            it.copy(
+                activeTrackCount = activeTracks.size,
+                primaryTrackId = primaryId
+            )
+        }
+        if (activeTracks.isNotEmpty() && _playbackState.value.isMasterPlaying) {
+            dispatchAsyncRequestAudioFocus()
         }
     }
 
@@ -258,28 +374,39 @@ class AudioMixerEngine private constructor(private val context: Context) {
             }
         }
 
+        val activeTracks = _tracksState.value.filter { it.isPlaying && !it.isMuted }
+        val activeCount = activeTracks.size
+        val primaryId = activeTracks.maxByOrNull { it.volume }?.id
+
+        _playbackState.update {
+            it.copy(
+                isMasterPlaying = activeCount > 0,
+                activeTrackCount = activeCount,
+                primaryTrackId = primaryId
+            )
+        }
+
         // Apply to players
         _tracksState.value.forEach { track ->
             if (track.isPlaying) {
                 val player = getOrCreatePlayer(track)
                 player.volume = calculateVolumeForTrack(track)
-                if (_playbackState.value.isMasterPlaying) {
-                    player.playWhenReady = true
-                }
+                // Preset activation: randomize start offset and speed drift for a fresh scene experience
+                applyRandomStartAndDrift(track, player)
+                activeSessionTracks.add(track.id)
+                player.playWhenReady = true
             } else {
+                activeSessionTracks.remove(track.id)
+                pendingInitialSeekTracks.remove(track.id)
                 playerPool[track.id]?.playWhenReady = false
             }
         }
 
-        val activeCount = _tracksState.value.count { it.isPlaying && !it.isMuted }
-        _playbackState.update {
-            it.copy(
-                isMasterPlaying = true,
-                activeTrackCount = activeCount
-            )
+        if (activeCount > 0) {
+            dispatchAsyncRequestAudioFocus()
+        } else {
+            dispatchAsyncAbandonAudioFocus()
         }
-        requestAudioFocus()
-        resumeAllActiveInternal()
     }
 
     /**
@@ -291,10 +418,12 @@ class AudioMixerEngine private constructor(private val context: Context) {
             list.map { it.copy(isPlaying = false) }
         }
         playerPool.values.forEach { it.playWhenReady = false }
+        activeSessionTracks.clear()
+        pendingInitialSeekTracks.clear()
         _playbackState.update {
-            it.copy(isMasterPlaying = false, activeTrackCount = 0)
+            it.copy(isMasterPlaying = false, activeTrackCount = 0, primaryTrackId = null)
         }
-        abandonAudioFocus()
+        dispatchAsyncAbandonAudioFocus()
     }
 
     /**
@@ -389,10 +518,32 @@ class AudioMixerEngine private constructor(private val context: Context) {
                 }
             }
         }
+        val activeTracks = _tracksState.value.filter { t -> t.isPlaying && !t.isMuted }
+        val primaryId = activeTracks.maxByOrNull { it.volume }?.id
         _playbackState.update {
-            it.copy(activeTrackCount = _tracksState.value.count { t -> t.isPlaying && !t.isMuted })
+            it.copy(
+                activeTrackCount = activeTracks.size,
+                primaryTrackId = primaryId
+            )
         }
-        // Don't auto-play on initial restore; user taps Play to begin
+        // Pre-warm ExoPlayers in memory so they are in STATE_READY and start instantly on play
+        val active = _tracksState.value.filter { it.isPlaying }
+        if (active.isNotEmpty()) {
+            active.forEach { track ->
+                val player = getOrCreatePlayer(track)
+                player.volume = calculateVolumeForTrack(track)
+                applyRandomStartAndDrift(track, player)
+                activeSessionTracks.add(track.id)
+                player.playWhenReady = false
+            }
+        } else {
+            // Pre-warm fallback default track "rain" for cold starts (player instance & buffers prepared)
+            _tracksState.value.find { it.id == "rain" }?.let { rainTrack ->
+                val player = getOrCreatePlayer(rainTrack)
+                player.volume = calculateVolumeForTrack(rainTrack)
+                player.playWhenReady = false
+            }
+        }
     }
 
     private fun getOrCreatePlayer(track: SoundTrack): ExoPlayer {
@@ -404,11 +555,25 @@ class AudioMixerEngine private constructor(private val context: Context) {
 
             ExoPlayer.Builder(context)
                 .setAudioAttributes(audioAttributes, /* handleAudioFocus = */ false)
+                .setLoadControl(lowLatencyLoadControl)
                 .build().apply {
                     val uri = "asset:///sounds/${track.assetFileName}"
                     setMediaItem(MediaItem.fromUri(uri))
                     repeatMode = Player.REPEAT_MODE_ONE
                     addListener(object : Player.Listener {
+                        override fun onPlaybackStateChanged(playbackState: Int) {
+                            if (playbackState == Player.STATE_READY) {
+                                if (pendingInitialSeekTracks.remove(track.id)) {
+                                    val dur = LoopFatigueHelper.getEffectiveDuration(track.id, duration)
+                                    if (dur > 0L) {
+                                        val offset = LoopFatigueHelper.calculateRandomStartOffset(dur)
+                                        seekTo(offset)
+                                        Log.d(TAG, "Deferred random seek applied for ${track.id} at STATE_READY: ${offset}ms (duration: ${dur}ms)")
+                                    }
+                                }
+                            }
+                        }
+
                         override fun onPlayerError(error: PlaybackException) {
                             Log.e(TAG, "Playback error for ${track.id}: ${error.message}", error)
                         }
@@ -444,6 +609,11 @@ class AudioMixerEngine private constructor(private val context: Context) {
             if (track.isPlaying && !track.isMuted) {
                 val player = getOrCreatePlayer(track)
                 player.volume = calculateVolumeForTrack(track)
+                // If track hasn't been initialized in this playback session, apply random start & micro-speed drift
+                if (!activeSessionTracks.contains(track.id)) {
+                    applyRandomStartAndDrift(track, player)
+                    activeSessionTracks.add(track.id)
+                }
                 player.playWhenReady = true
             } else {
                 playerPool[track.id]?.playWhenReady = false
@@ -456,6 +626,8 @@ class AudioMixerEngine private constructor(private val context: Context) {
     }
 
     fun releasePlayers() {
+        activeSessionTracks.clear()
+        pendingInitialSeekTracks.clear()
         playerPool.values.forEach { player ->
             try {
                 player.stop()
@@ -466,6 +638,33 @@ class AudioMixerEngine private constructor(private val context: Context) {
         }
         playerPool.clear()
     }
+
+    /**
+     * Applies Scheme A (Random Start Offset) and Scheme B (Micro-Speed Drift) to a track's player.
+     * Called when a track is first activated/turned on or when switching presets.
+     */
+    private fun applyRandomStartAndDrift(track: SoundTrack, player: ExoPlayer) {
+        // Scheme B: Natural micro-speed drift [0.98f, 1.02f] with speed == pitch (resampling mode, no FFT artifacts)
+        val playbackParams = LoopFatigueHelper.createDriftPlaybackParameters()
+        player.playbackParameters = playbackParams
+
+        // Scheme A: Safe random start offset
+        val effectiveDuration = LoopFatigueHelper.getEffectiveDuration(track.id, player.duration)
+        if (effectiveDuration > 0L) {
+            val offset = LoopFatigueHelper.calculateRandomStartOffset(effectiveDuration)
+            player.seekTo(offset)
+            pendingInitialSeekTracks.remove(track.id)
+            Log.d(TAG, "Applied start offset: ${offset}ms / ${effectiveDuration}ms and drift: ${playbackParams.speed}x for track '${track.id}'")
+        } else {
+            // Duration not known yet, defer seek to STATE_READY
+            pendingInitialSeekTracks.add(track.id)
+            Log.d(TAG, "Duration unset for track '${track.id}', queued initial seek for STATE_READY")
+        }
+    }
+
+    internal fun isTrackInActiveSession(trackId: String): Boolean = activeSessionTracks.contains(trackId)
+    internal fun isInitialSeekPending(trackId: String): Boolean = pendingInitialSeekTracks.contains(trackId)
+    internal fun getPlayer(trackId: String): ExoPlayer? = playerPool[trackId]
 
     fun release() {
         cancelSleepTimer()

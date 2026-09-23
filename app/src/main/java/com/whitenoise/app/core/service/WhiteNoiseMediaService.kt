@@ -20,13 +20,16 @@ import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.MediaStyleNotificationHelper
 import com.whitenoise.app.MainActivity
+import com.whitenoise.app.R
 import com.whitenoise.app.core.audio.AudioMixerEngine
 import com.whitenoise.app.core.model.PlaybackState
+import com.whitenoise.app.data.repository.SoundRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -85,6 +88,12 @@ class WhiteNoiseMediaService : MediaSessionService() {
                     "已暂停"
                 }
             }
+        }
+
+        fun shouldUpdateNotification(old: PlaybackState, new: PlaybackState): Boolean {
+            return old.isMasterPlaying != new.isMasterPlaying ||
+                old.activeTrackCount != new.activeTrackCount ||
+                old.primaryTrackId != new.primaryTrackId
         }
     }
 
@@ -155,16 +164,15 @@ class WhiteNoiseMediaService : MediaSessionService() {
     }
 
     private fun setupMediaSession() {
-        // Coordinator player proxies playback commands to AudioMixerEngine
-        val basePlayer = ExoPlayer.Builder(applicationContext).build().apply {
-            val metadata = MediaMetadata.Builder()
-                .setTitle("SaltAmbience 自然混音")
-                .setArtist("椒盐美学 · 多轨自然声")
-                .build()
-            val dummyItem = MediaItem.Builder()
-                .setUri("asset:///sounds/white_noise.ogg")
-                .setMediaMetadata(metadata)
-                .build()
+        // Coordinator player proxies playback commands to AudioMixerEngine with low-latency load control
+        val lowLatencyControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(500, 1000, 50, 100)
+            .setPrioritizeTimeOverSizeThresholds(true)
+            .build()
+        val basePlayer = ExoPlayer.Builder(applicationContext)
+            .setLoadControl(lowLatencyControl)
+            .build().apply {
+            val dummyItem = MediaItem.fromUri("asset:///sounds/white_noise.ogg")
             setMediaItem(dummyItem)
             volume = 0f
             repeatMode = Player.REPEAT_MODE_ONE
@@ -213,7 +221,7 @@ class WhiteNoiseMediaService : MediaSessionService() {
         serviceScope.launch {
             audioEngine.playbackState
                 .distinctUntilChanged { old, new ->
-                    old.isMasterPlaying == new.isMasterPlaying && old.activeTrackCount == new.activeTrackCount
+                    !shouldUpdateNotification(old, new)
                 }
                 .collectLatest { state ->
                     val player = coordinatorExoPlayer
@@ -280,6 +288,35 @@ class WhiteNoiseMediaService : MediaSessionService() {
         val isPlaying = state.isMasterPlaying
         val subtext = formatNotificationSubtext(isPlaying, state.activeTrackCount)
 
+        val activeTracks = audioEngine.tracksState.value.filter { it.isPlaying && !it.isMuted }
+        val primaryTrack = activeTracks.find { it.id == state.primaryTrackId }
+            ?: activeTracks.maxByOrNull { it.volume }
+            ?: activeTracks.firstOrNull()
+
+        val trackId = primaryTrack?.id ?: state.primaryTrackId
+        val soundName = primaryTrack?.name ?: SoundRepository.ALL_TRACKS.find { it.id == trackId }?.name
+
+        // Generate dynamic high-res Bauhaus acoustic artwork bitmap & bytes
+        val (coverBitmap, artworkBytes) = BauhausArtworkGenerator.getOrCreateArtwork(
+            context = this,
+            trackId = trackId,
+            soundName = soundName,
+            activeCount = state.activeTrackCount,
+            isPlaying = isPlaying
+        )
+
+        // Update MediaSession coordinator player metadata
+        val title = (primaryTrack?.name ?: soundName)?.let { "$it · SaltAmbience" } ?: "SaltAmbience 自然混音"
+        val updatedMetadata = MediaMetadata.Builder()
+            .setTitle(title)
+            .setArtist("椒盐美学 · 多轨自然声")
+            .setAlbumTitle("SaltAmbience 声学空间")
+            .setArtworkData(artworkBytes, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+            .build()
+        coordinatorExoPlayer?.let { player ->
+            player.playlistMetadata = updatedMetadata
+        }
+
         val playPauseIntent = Intent(this, WhiteNoiseMediaService::class.java).apply {
             action = if (isPlaying) ACTION_PAUSE else ACTION_PLAY
         }
@@ -304,8 +341,9 @@ class WhiteNoiseMediaService : MediaSessionService() {
         val playPauseTitle = if (isPlaying) "暂停" else "播放"
 
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_media_play)
-            .setContentTitle("SaltAmbience 自然混音")
+            .setSmallIcon(R.drawable.ic_launcher_monochrome)
+            .setLargeIcon(coverBitmap)
+            .setContentTitle(title)
             .setContentText(subtext)
             .setContentIntent(contentIntent)
             .setOngoing(isPlaying)
