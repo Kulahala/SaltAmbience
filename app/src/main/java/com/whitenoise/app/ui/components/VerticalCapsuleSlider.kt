@@ -19,9 +19,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -31,7 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,8 +71,34 @@ fun VerticalCapsuleSlider(
     val shape = RoundedCornerShape(cornerRadius)
 
     var isDragging by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    var lastHapticZone by remember { mutableIntStateOf(-1) }
 
     val effectiveValue = if (isMuted) 0f else value.coerceIn(0f, 1f)
+
+    fun updateValueWithNotches(rawRatio: Float) {
+        val clamped = rawRatio.coerceIn(0f, 1f)
+        val snappedVal = when {
+            clamped <= 0.015f -> 0f
+            clamped >= 0.985f -> 1f
+            kotlin.math.abs(clamped - 0.5f) <= 0.015f -> 0.5f
+            else -> clamped
+        }
+
+        val currentZone = when {
+            snappedVal == 0f -> 0
+            snappedVal == 0.5f -> 50
+            snappedVal == 1f -> 100
+            else -> -1
+        }
+
+        if (currentZone != -1 && currentZone != lastHapticZone) {
+            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        }
+        lastHapticZone = currentZone
+
+        currentOnValueChange(snappedVal)
+    }
 
     // Direct 1:1 tracking during drag with zero latency; smooth tween for taps and external state updates
     val animatedFill by animateFloatAsState(
@@ -98,8 +128,7 @@ fun VerticalCapsuleSlider(
                     detectTapGestures { offset ->
                         val totalH = size.height.toFloat()
                         if (totalH > 0f) {
-                            val newVal = ((totalH - offset.y) / totalH).coerceIn(0f, 1f)
-                            currentOnValueChange(newVal)
+                            updateValueWithNotches((totalH - offset.y) / totalH)
                         }
                     }
                 }
@@ -108,20 +137,25 @@ fun VerticalCapsuleSlider(
                     detectVerticalDragGestures(
                         onDragStart = { offset ->
                             isDragging = true
+                            lastHapticZone = -1
                             val totalH = size.height.toFloat()
                             if (totalH > 0f) {
-                                val newVal = ((totalH - offset.y) / totalH).coerceIn(0f, 1f)
-                                currentOnValueChange(newVal)
+                                updateValueWithNotches((totalH - offset.y) / totalH)
                             }
                         },
-                        onDragEnd = { isDragging = false },
-                        onDragCancel = { isDragging = false },
+                        onDragEnd = {
+                            isDragging = false
+                            lastHapticZone = -1
+                        },
+                        onDragCancel = {
+                            isDragging = false
+                            lastHapticZone = -1
+                        },
                         onVerticalDrag = { change, _ ->
                             change.consume()
                             val totalH = size.height.toFloat()
                             if (totalH > 0f) {
-                                val newVal = ((totalH - change.position.y) / totalH).coerceIn(0f, 1f)
-                                currentOnValueChange(newVal)
+                                updateValueWithNotches((totalH - change.position.y) / totalH)
                             }
                         }
                     )
@@ -136,23 +170,43 @@ fun VerticalCapsuleSlider(
                     .background(activeColor)
             )
 
-            // Top: Percentage Indicator
+            // Top: Percentage Indicator with pill background badge to prevent reading blind spots
             val percentageText = when {
                 isMuted -> "静音"
                 effectiveValue <= 0.001f -> "0%"
                 else -> "${(effectiveValue * 100).roundToInt()}%"
             }
 
-            Text(
-                text = percentageText,
-                style = SaltTheme.textStyles.sub,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 12.sp,
-                color = if (animatedFill > 0.82f) Color.White else SaltTheme.colors.text,
+            val isFilledOverText = animatedFill >= 0.85f
+
+            Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(top = 12.dp)
-            )
+                    .padding(top = 10.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isFilledOverText) {
+                            Color.Black.copy(alpha = 0.28f)
+                        } else {
+                            SaltTheme.colors.background
+                        }
+                    )
+                    .border(
+                        width = 0.5.dp,
+                        color = if (isFilledOverText) Color.White.copy(alpha = 0.15f) else SaltTheme.colors.text.copy(alpha = 0.08f),
+                        shape = CircleShape
+                    )
+                    .padding(horizontal = 7.dp, vertical = 2.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = percentageText,
+                    style = SaltTheme.textStyles.sub,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    color = if (isFilledOverText) Color.White else SaltTheme.colors.text
+                )
+            }
 
             // Bottom: Sound Emoji / Master Headphone Icon
             Box(

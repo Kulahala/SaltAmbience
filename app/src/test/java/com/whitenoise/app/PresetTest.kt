@@ -165,4 +165,58 @@ class PresetTest {
         }
         assertEquals("深夜暴雨(导入2)", finalName)
     }
+
+    @Test
+    fun testPresetMatchesTracks() {
+        val preset = Preset(
+            id = "test_preset",
+            name = "测试预设",
+            trackVolumes = mapOf(
+                "rain" to 0.8f,
+                "storm" to 0.6f,
+                "wind" to 0.35f
+            )
+        )
+
+        // 1. Exact match
+        assertTrue(preset.matchesTracks(mapOf("rain" to 0.8f, "storm" to 0.6f, "wind" to 0.35f)))
+
+        // 2. Slight floating point tolerance (< 0.02f)
+        assertTrue(preset.matchesTracks(mapOf("rain" to 0.805f, "storm" to 0.595f, "wind" to 0.352f)))
+
+        // 3. Volume mismatch (> 0.02f)
+        assertEquals(false, preset.matchesTracks(mapOf("rain" to 0.5f, "storm" to 0.6f, "wind" to 0.35f)))
+
+        // 4. Missing one track
+        assertEquals(false, preset.matchesTracks(mapOf("rain" to 0.8f, "storm" to 0.6f)))
+
+        // 5. Extra active track
+        assertEquals(false, preset.matchesTracks(mapOf("rain" to 0.8f, "storm" to 0.6f, "wind" to 0.35f, "waves" to 0.4f)))
+
+        // 6. Empty active tracks
+        assertEquals(false, preset.matchesTracks(emptyMap()))
+
+        // 7. Empty preset tracks
+        val emptyPreset = Preset(id = "empty", name = "空预设", trackVolumes = emptyMap())
+        assertEquals(false, emptyPreset.matchesTracks(mapOf("rain" to 0.8f)))
+        assertEquals(false, emptyPreset.matchesTracks(emptyMap()))
+
+        // 8. Preset containing 0.0f volume entries
+        val presetWithZero = Preset(
+            id = "with_zero",
+            name = "含静音轨预设",
+            trackVolumes = mapOf(
+                "rain" to 0.8f,
+                "storm" to 0.6f,
+                "wind" to 0.35f,
+                "stream" to 0.0f
+            )
+        )
+        assertTrue(presetWithZero.matchesTracks(mapOf("rain" to 0.8f, "storm" to 0.6f, "wind" to 0.35f)))
+
+        // 9. Preset with only 0.0f tracks should not match anything
+        val allZeroPreset = Preset(id = "all_zero", name = "全0预设", trackVolumes = mapOf("rain" to 0.0f))
+        assertEquals(false, allZeroPreset.matchesTracks(mapOf("rain" to 0.8f)))
+        assertEquals(false, allZeroPreset.matchesTracks(emptyMap()))
+    }
 }

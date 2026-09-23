@@ -2,17 +2,22 @@ package com.whitenoise.app.ui.components
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,13 +52,17 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import com.moriafly.salt.ui.SaltTheme
 import com.moriafly.salt.ui.Text
 import com.whitenoise.app.core.audio.VolumeCalculator
@@ -109,6 +119,17 @@ fun SleepTimerBottomSheet(
 
     val shortcutMinutes = listOf(15, 30, 45, 60, 90)
 
+    val coroutineScope = rememberCoroutineScope()
+    val animatedOffsetY = remember { Animatable(0f) }
+    val density = LocalDensity.current
+    val dismissThreshold = with(density) { 70.dp.toPx() }
+
+    LaunchedEffect(isVisible) {
+        if (isVisible) {
+            animatedOffsetY.snapTo(0f)
+        }
+    }
+
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter
@@ -139,8 +160,9 @@ fun SleepTimerBottomSheet(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(elevation = 20.dp, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                    .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                    .offset { IntOffset(0, animatedOffsetY.value.roundToInt().coerceAtLeast(0)) }
+                    .shadow(elevation = 20.dp, shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                    .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                     .background(SaltTheme.colors.background)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
@@ -160,6 +182,31 @@ fun SleepTimerBottomSheet(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .pointerInput(Unit) {
+                                detectVerticalDragGestures(
+                                    onDragStart = { /* started */ },
+                                    onDragEnd = {
+                                        if (animatedOffsetY.value > dismissThreshold) {
+                                            onDismiss()
+                                        } else {
+                                            coroutineScope.launch {
+                                                animatedOffsetY.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+                                            }
+                                        }
+                                    },
+                                    onDragCancel = {
+                                        coroutineScope.launch {
+                                            animatedOffsetY.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+                                        }
+                                    },
+                                    onVerticalDrag = { change, dragAmount ->
+                                        change.consume()
+                                        coroutineScope.launch {
+                                            animatedOffsetY.snapTo((animatedOffsetY.value + dragAmount).coerceAtLeast(0f))
+                                        }
+                                    }
+                                )
+                            }
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null
@@ -172,7 +219,7 @@ fun SleepTimerBottomSheet(
                                 .width(36.dp)
                                 .height(4.dp)
                                 .clip(CircleShape)
-                                .background(SaltTheme.colors.subText.copy(alpha = 0.25f))
+                                .background(SaltTheme.colors.text.copy(alpha = 0.2f))
                         )
                     }
 

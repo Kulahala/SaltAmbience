@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -47,18 +48,22 @@ import android.widget.Toast
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.flow.collectLatest
-import com.whitenoise.app.ui.components.AboutDialog
+import com.whitenoise.app.core.model.Preset
+import com.whitenoise.app.ui.components.AboutBottomSheet
 import com.whitenoise.app.ui.components.BottomPlayerBar
-import com.whitenoise.app.ui.components.ImportPresetDialog
+import com.whitenoise.app.ui.components.DeletePresetConfirmBottomSheet
+import com.whitenoise.app.ui.components.ImportPresetBottomSheet
 import com.whitenoise.app.ui.components.MixerBottomSheet
-import com.whitenoise.app.ui.components.SavePresetDialog
+import com.whitenoise.app.ui.components.SavePresetBottomSheet
 import com.whitenoise.app.ui.components.SleepTimerBottomSheet
 import com.whitenoise.app.ui.components.SoundTileCard
-import com.whitenoise.app.ui.components.ThemeSelectionDialog
+import com.whitenoise.app.ui.components.ThemeSelectionBottomSheet
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -82,6 +87,15 @@ fun HomeScreen(
     val detectedPayload by viewModel.clipboardDetectedPayload.collectAsState()
     val themeMode by viewModel.themeMode.collectAsState()
     val isPresetHintDismissed by viewModel.isPresetHintDismissed.collectAsState()
+
+    var presetPendingDelete by remember { mutableStateOf<Preset?>(null) }
+
+    // Map of currently active tracks (playing, unmuted, positive volume) for preset match detection
+    val activeTracksMap = remember(tracks) {
+        tracks
+            .filter { it.isPlaying && !it.isMuted && it.volume > 0.001f }
+            .associate { it.id to it.volume }
+    }
 
     // Observe Toast feedback events
     LaunchedEffect(Unit) {
@@ -305,10 +319,19 @@ fun HomeScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             presets.forEach { preset ->
+                                val isPresetActive = remember(preset, activeTracksMap) { preset.matchesTracks(activeTracksMap) }
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(14.dp))
-                                        .background(SaltTheme.colors.subBackground)
+                                        .border(
+                                            width = 1.5.dp,
+                                            color = if (isPresetActive) SaltTheme.colors.highlight else Color.Transparent,
+                                            shape = RoundedCornerShape(14.dp)
+                                        )
+                                        .background(
+                                            if (isPresetActive) SaltTheme.colors.highlight.copy(alpha = 0.10f)
+                                            else SaltTheme.colors.subBackground
+                                        )
                                         .combinedClickable(
                                             onClick = { viewModel.applyPreset(preset) },
                                             onLongClick = {
@@ -323,15 +346,15 @@ fun HomeScreen(
                                             Text(
                                                 text = preset.name,
                                                 style = SaltTheme.textStyles.main,
-                                                fontWeight = FontWeight.Medium,
-                                                color = SaltTheme.colors.text
+                                                fontWeight = if (isPresetActive) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (isPresetActive) SaltTheme.colors.highlight else SaltTheme.colors.text
                                             )
                                             if (preset.description.isNotBlank()) {
                                                 Text(
                                                     text = preset.description,
                                                     style = SaltTheme.textStyles.sub,
                                                     fontSize = 11.sp,
-                                                    color = SaltTheme.colors.text.copy(alpha = 0.65f)
+                                                    color = if (isPresetActive) SaltTheme.colors.highlight.copy(alpha = 0.85f) else SaltTheme.colors.text.copy(alpha = 0.65f)
                                                 )
                                             }
                                         }
@@ -340,16 +363,17 @@ fun HomeScreen(
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Box(
                                                 modifier = Modifier
+                                                    .size(28.dp)
                                                     .clip(CircleShape)
                                                     .background(SaltTheme.colors.text.copy(alpha = 0.08f))
-                                                    .clickable { viewModel.deletePreset(preset.id) }
-                                                    .padding(4.dp),
+                                                    .clickable { presetPendingDelete = preset },
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Text(
                                                     text = "✕",
                                                     color = SaltTheme.colors.text.copy(alpha = 0.55f),
-                                                    fontSize = 11.sp
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold
                                                 )
                                             }
                                         }
@@ -500,35 +524,37 @@ fun HomeScreen(
             onCancelTimer = { viewModel.cancelSleepTimer() }
         )
 
-        if (showAboutDialog) {
-            AboutDialog(
-                onDismiss = { viewModel.setShowAboutDialog(false) }
-            )
-        }
+        AboutBottomSheet(
+            isVisible = showAboutDialog,
+            onDismiss = { viewModel.setShowAboutDialog(false) }
+        )
 
-        if (showSavePresetDialog) {
-            SavePresetDialog(
-                onSave = { name -> viewModel.saveCurrentAsPreset(name) },
-                onDismiss = { viewModel.setShowSavePresetDialog(false) }
-            )
-        }
+        SavePresetBottomSheet(
+            isVisible = showSavePresetDialog,
+            onSave = { name -> viewModel.saveCurrentAsPreset(name) },
+            onDismiss = { viewModel.setShowSavePresetDialog(false) }
+        )
 
-        if (showThemeDialog) {
-            ThemeSelectionDialog(
-                currentMode = themeMode,
-                onSelectMode = { mode -> viewModel.setThemeMode(mode) },
-                onDismiss = { viewModel.setShowThemeDialog(false) }
-            )
-        }
+        ThemeSelectionBottomSheet(
+            isVisible = showThemeDialog,
+            currentMode = themeMode,
+            onSelectMode = { mode -> viewModel.setThemeMode(mode) },
+            onDismiss = { viewModel.setShowThemeDialog(false) }
+        )
 
-        if (showImportDialog) {
-            ImportPresetDialog(
-                initialPayload = detectedPayload,
-                onImport = { payload, applyImmediately ->
-                    viewModel.importPreset(payload, applyImmediately)
-                },
-                onDismiss = { viewModel.setShowImportDialog(false) }
-            )
-        }
+        ImportPresetBottomSheet(
+            isVisible = showImportDialog,
+            initialPayload = detectedPayload,
+            onImport = { payload, applyImmediately ->
+                viewModel.importPreset(payload, applyImmediately)
+            },
+            onDismiss = { viewModel.setShowImportDialog(false) }
+        )
+
+        DeletePresetConfirmBottomSheet(
+            preset = presetPendingDelete,
+            onConfirm = { preset -> viewModel.deletePreset(preset.id) },
+            onDismiss = { presetPendingDelete = null }
+        )
     }
 }

@@ -49,20 +49,22 @@ fun BottomPlayerBar(
     onMasterVolumeChange: (Float) -> Unit = {}
 ) {
     val shape = RoundedCornerShape(26.dp)
+    val isDark = SaltTheme.configs.isDarkTheme
+    val borderColor = if (isDark) Color.White.copy(alpha = 0.08f) else SaltTheme.colors.text.copy(alpha = 0.06f)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(horizontal = 16.dp, vertical = 10.dp)
-            .shadow(elevation = 12.dp, shape = shape)
+            .shadow(elevation = 14.dp, shape = shape)
             .clip(shape)
             .border(
                 width = 1.dp,
-                color = SaltTheme.colors.subBackground.copy(alpha = 0.8f),
+                color = borderColor,
                 shape = shape
             )
-            .background(SaltTheme.colors.background)
+            .background(SaltTheme.colors.subBackground)
             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         Row(
@@ -77,7 +79,7 @@ fun BottomPlayerBar(
                     .clip(CircleShape)
                     .background(
                         if (playbackState.isMasterPlaying) SaltTheme.colors.highlight
-                        else SaltTheme.colors.subBackground
+                        else SaltTheme.colors.background
                     )
                     .clickable { onToggleMasterPlay() },
                 contentAlignment = Alignment.Center
@@ -157,7 +159,7 @@ fun BottomPlayerBar(
                     .clip(CircleShape)
                     .background(
                         if (playbackState.isSleepTimerRunning) SaltTheme.colors.highlight.copy(alpha = 0.16f)
-                        else SaltTheme.colors.subBackground
+                        else SaltTheme.colors.background
                     )
                     .clickable { onOpenSleepTimer() }
                     .padding(horizontal = 9.dp, vertical = 7.dp),

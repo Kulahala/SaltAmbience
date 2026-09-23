@@ -10,6 +10,20 @@ data class Preset(
     val trackVolumes: Map<String, Float>,
     val isDefault: Boolean = false
 ) {
+    /**
+     * Check if this preset's track configuration matches currently active tracks.
+     * Matches if all active tracks have identical keys and their volumes match within a 0.02f tolerance.
+     */
+    fun matchesTracks(activeTracks: Map<String, Float>): Boolean {
+        val nonZeroPresetTracks = trackVolumes.filterValues { it > 0.001f }
+        if (activeTracks.isEmpty() || nonZeroPresetTracks.isEmpty()) return false
+        if (activeTracks.keys != nonZeroPresetTracks.keys) return false
+        return nonZeroPresetTracks.all { (trackId, targetVol) ->
+            val currentVol = activeTracks[trackId] ?: 0f
+            kotlin.math.abs(currentVol - targetVol) < 0.02f
+        }
+    }
+
     companion object {
         val DEFAULT_PRESETS = listOf(
             Preset(
