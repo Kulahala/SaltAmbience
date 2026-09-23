@@ -125,6 +125,8 @@ app/src/main/java/com/whitenoise/app/
 | **Stage 3** | SaltUI 界面与播控交互 | **[x] 已达成 (Passed)** | 构建 SaltUI 椒盐风格 `HomeScreen`、音效网格卡片 `SoundCard`、`SaltSlider` 精细调节、底部胶囊播控 `BottomPlayerBar`、休眠抽屉 `SleepTimerDialog`、致谢弹窗 `AboutDialog`；`MainViewModel` 状态流打通。 |
 | **Stage 4** | 预设持久化与音频资产接入 | **[x] 已达成 (Passed)** | 接入 8 款来自 Blanket 项目的高品质无缝循环自然音 OGG（细雨、雷雨、林风、溪流、篝火、鸟鸣、夏夜、纯白噪）至 `assets/sounds/`；配套编写 `SOUNDS_LICENSING.md`；接入 DataStore Preferences 记忆混音与预设状态，修复首次订阅状态覆写 Bug。 |
 | **Stage 5** | 全链路验收与最终打包 | **[x] 已达成 (Passed)** | 10 项单元测试全量通过；生成全功能最终 Debug APK（34.8MB）；初始化 Git 并在确保 `.gitignore` 安全（严防私密信息泄漏）前提下推送到远程仓库 `https://github.com/Kulahala/SaltAmbience.git`。 |
+| **Stage 6 (P0)** | 底层能耗止血与核心状态机修复 | **[x] 已达成 (Passed)** | 阻断通知每秒重复推流（`distinctUntilChanged`）与休眠淡出前无效音量计算；修复暂停文案与音频焦点释放；拦截冷启动幽灵通知；实现剪贴板口令关闭记忆与服务销毁守护；22 项单测全绿。 |
+| **Stage 7 (P1)** | 视觉交互闭环与全站抽屉化 (v1.5.0) | **[x] 已达成 (Passed)** | 全站居中弹窗统一重构为 SaltUI 底部抽屉规范（`SaltBottomSheet`）并接入向下滑动拖拽关闭手势；彻底解决输入法软键盘挤压；重塑深色模式悬浮底栏景深；实现预设激活态高亮与删除二次确认；胶囊滑块触感微震动与对比度反转盾牌；25 项单测全绿，产出 Release 与 Debug APK。 |
 
 ---
 
@@ -136,6 +138,8 @@ flowchart LR
     S2 --> S3["Stage 3: SaltUI 混音界面与播控 [已通过]"]
     S3 --> S4["Stage 4: 预设持久化与音频资产接入 [已通过]"]
     S4 --> S5["Stage 5: 真实构建与收尾审查 [已通过]"]
+    S5 --> S6["Stage 6 (P0): 底层能耗与状态机修复 [已通过]"]
+    S6 --> S7["Stage 7 (P1): 视觉交互抽屉化闭环 (v1.5.0) [已通过]"]
 ```
 
 ### Stage 1: 工程脚手架与编译基线
@@ -173,6 +177,22 @@ flowchart LR
 - **交付记录**：
   - 10 项单元测试全部通过（`VolumeCalculatorTest` 6 项，`PresetTest` 4 项）；
   - 输出全量 APK（34.8MB）；完成 Git 初始化与安全推送至 GitHub `Kulahala/SaltAmbience`。
+
+### Stage 6 (P0): 底层能耗止血与核心状态机修复
+- **目标**：阻断 3600 次/小时无效通知唤醒与音量计算空转；修复暂停通知文案倒错与焦点泄露；增加冷启动防幽灵通知门禁；剪贴板关闭记忆与生命周期守护。
+- **门禁标准**：单元测试覆盖状态迁移与并发，`assembleDebug` 成功。
+- **交付记录**：
+  - `WhiteNoiseMediaService.kt`：`distinctUntilChanged` 过滤，`hasStartedForeground` 门禁，`onTaskRemoved` 销毁；
+  - `AudioMixerEngine.kt`：淡出窗口音量更新拦截，`abandonAudioFocus()` 规范释放与标记清除；
+  - 22 项单测全绿。
+
+### Stage 7 (P1): 视觉交互闭环与全站抽屉化 (v1.5.0)
+- **目标**：统一弹窗为 SaltUI 底部抽屉规范；解决软键盘挤压；增加下拉滑动关闭手势；深色底栏立体景深；预设激活高亮与删除防误触；滑块刻度触感微震动与对比度反转盾牌。
+- **门禁标准**：25 项单元测试 100% 通过，Debug 与 Release APK 编译成功。
+- **交付记录**：
+  - `SaltBottomSheet.kt`、`ImportPresetBottomSheet.kt`、`SavePresetBottomSheet.kt`、`ThemeSelectionBottomSheet.kt`、`AboutBottomSheet.kt`、`DeletePresetConfirmBottomSheet.kt`；
+  - `BottomPlayerBar.kt` 深色微透高光；`VerticalCapsuleSlider.kt` 0/50/100 刻度微震动与动态对比度盾牌；
+  - 版本号递增为 `v1.5.0` (versionCode 8)。
 
 ---
 
