@@ -1,5 +1,7 @@
 package com.whitenoise.app.ui.components
 
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -12,9 +14,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,6 +32,24 @@ import com.moriafly.salt.ui.Text
 fun AboutDialog(
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
+    val versionName = remember(context) {
+        try {
+            val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getPackageInfo(
+                    context.packageName,
+                    PackageManager.PackageInfoFlags.of(0)
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getPackageInfo(context.packageName, 0)
+            }
+            packageInfo.versionName ?: "1.4.2"
+        } catch (e: Exception) {
+            "1.4.2"
+        }
+    }
+
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
@@ -51,7 +73,7 @@ fun AboutDialog(
 
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "v1.4.0 · 椒盐美学自然声音混音器",
+                    text = "v$versionName · 椒盐美学自然声音混音器",
                     style = SaltTheme.textStyles.sub,
                     color = SaltTheme.colors.text.copy(alpha = 0.65f)
                 )
@@ -68,7 +90,7 @@ fun AboutDialog(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "本项目音效资产源自 Rafael Mardojai 的开源项目 Blanket，经过无缝交叉淡化循环处理：\n\n" +
+                            text = "本项目音效资产源自 Rafael Mardojai 的开源项目 Blanket 及社区公共领域贡献，经过无缝交叉淡化循环处理（全量 14 款音效）：\n\n" +
                                     "• 细雨 (Rain) - alex36917 (CC BY 4.0)\n" +
                                     "• 雷雨 (Storm) - Digifish music (CC BY 3.0)\n" +
                                     "• 林风 (Wind) - felix.blume (CC0 1.0)\n" +
@@ -76,7 +98,13 @@ fun AboutDialog(
                                     "• 篝火 (Fireplace) - ezwa (Public Domain)\n" +
                                     "• 鸟鸣 (Birds) - kvgarlic (CC0 1.0)\n" +
                                     "• 夏夜 (Summer Night) - Lisa Redfern (Public Domain)\n" +
-                                    "• 白噪音 (White Noise) - Jorge Stolfi (CC BY-SA 3.0)\n\n" +
+                                    "• 白噪音 (White Noise) - Jorge Stolfi (CC BY-SA 3.0)\n" +
+                                    "• 海浪 (Waves) - Luftrum (CC BY 3.0)\n" +
+                                    "• 咖啡馆 (Coffee Shop) - stephan (Public Domain)\n" +
+                                    "• 列车 (Train) - SDLx (CC BY 3.0)\n" +
+                                    "• 小舟 (Boat) - Falcet (CC0 1.0)\n" +
+                                    "• 粉红噪 (Pink Noise) - Omegatron (CC BY-SA 3.0)\n" +
+                                    "• 都市 (City) - gezortenplotz (CC BY 3.0)\n\n" +
                                     "完整许可条款已归档至 SOUNDS_LICENSING.md。\n\n" +
                                     "技术基座：\n" +
                                     "• SaltUI 3.x 设计规范\n" +

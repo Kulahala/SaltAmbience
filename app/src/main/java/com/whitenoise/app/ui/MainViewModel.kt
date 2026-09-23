@@ -81,6 +81,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // Detected clipboard preset payload for banner
     private val _clipboardDetectedPayload = MutableStateFlow<PresetSharePayload?>(null)
     val clipboardDetectedPayload: StateFlow<PresetSharePayload?> = _clipboardDetectedPayload.asStateFlow()
+    private val dismissedShareCodeHashes = java.util.concurrent.ConcurrentHashMap.newKeySet<Int>()
 
     val isPresetHintDismissed: StateFlow<Boolean> = preferencesManager.presetHintDismissedFlow.stateIn(
         scope = viewModelScope,
@@ -260,6 +261,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun dismissClipboardBanner() {
+        _clipboardDetectedPayload.value?.let { payload ->
+            dismissedShareCodeHashes.add(payload.hashCode())
+        }
         _clipboardDetectedPayload.value = null
     }
 
@@ -276,6 +280,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val clipboard = getApplication<Application>().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText("SaltAmbience混音方案", shareText)
             clipboard.setPrimaryClip(clip)
+            PresetShareCode.parseShareText(shareText)?.let {
+                dismissedShareCodeHashes.add(it.hashCode())
+            }
             viewModelScope.launch {
                 _toastMessage.emit("已复制【${preset.name}】混音口令，可直接发给微信好友！")
             }
@@ -288,8 +295,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun inspectClipboard(clipboardText: String?) {
         if (clipboardText.isNullOrBlank()) return
-        val payload = PresetShareCode.parseShareText(clipboardText)
-        if (payload != null && payload != _clipboardDetectedPayload.value) {
+        val payload = PresetShareCode.parseShareText(clipboardText) ?: return
+        if (dismissedShareCodeHashes.contains(payload.hashCode())) return
+        if (payload != _clipboardDetectedPayload.value) {
             _clipboardDetectedPayload.value = payload
         }
     }
@@ -302,6 +310,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 engine.applyPreset(createdPreset)
             }
             _showImportDialog.value = false
+            dismissedShareCodeHashes.add(payload.hashCode())
             _clipboardDetectedPayload.value = null
             _toastMessage.emit("成功导入混音方案【${createdPreset.name}】！")
         }

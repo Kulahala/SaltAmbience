@@ -32,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 class WhiteNoiseMediaService : MediaSessionService() {
@@ -47,6 +48,44 @@ class WhiteNoiseMediaService : MediaSessionService() {
 
         var instance: WhiteNoiseMediaService? = null
             private set
+
+        enum class NotificationAction {
+            START_FOREGROUND,
+            UPDATE_PAUSED,
+            REMOVE_NOTIFICATION
+        }
+
+        fun decideNotificationAction(
+            hasStartedForeground: Boolean,
+            isMasterPlaying: Boolean,
+            activeTrackCount: Int
+        ): NotificationAction {
+            return if (isMasterPlaying) {
+                NotificationAction.START_FOREGROUND
+            } else {
+                if (hasStartedForeground && activeTrackCount > 0) {
+                    NotificationAction.UPDATE_PAUSED
+                } else {
+                    NotificationAction.REMOVE_NOTIFICATION
+                }
+            }
+        }
+
+        fun formatNotificationSubtext(isMasterPlaying: Boolean, activeTrackCount: Int): String {
+            return if (isMasterPlaying) {
+                if (activeTrackCount > 0) {
+                    "正在混音播放 $activeTrackCount 种自然声"
+                } else {
+                    "未选择音效"
+                }
+            } else {
+                if (activeTrackCount > 0) {
+                    "已暂停 · $activeTrackCount 轨待续"
+                } else {
+                    "已暂停"
+                }
+            }
+        }
     }
 
     inner class LocalBinder : Binder() {
@@ -75,6 +114,8 @@ class WhiteNoiseMediaService : MediaSessionService() {
         }
     }
 
+    private var hasStartedForeground = false
+
     override fun onCreate() {
         super.onCreate()
         Log.i(TAG, "WhiteNoiseMediaService onCreate")
@@ -88,6 +129,7 @@ class WhiteNoiseMediaService : MediaSessionService() {
 
         audioEngine.onSleepTimerCompleted = {
             Log.i(TAG, "Sleep timer finished in service. Stopping foreground and service.")
+            hasStartedForeground = false
             stopForeground(STOP_FOREGROUND_REMOVE)
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager?.cancel(NOTIFICATION_ID)
@@ -100,7 +142,14 @@ class WhiteNoiseMediaService : MediaSessionService() {
         when (intent?.action) {
             ACTION_PLAY -> audioEngine.setMasterPlaying(true)
             ACTION_PAUSE -> audioEngine.setMasterPlaying(false)
-            ACTION_STOP -> audioEngine.stopAll()
+            ACTION_STOP -> {
+                hasStartedForeground = false
+                audioEngine.stopAll()
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                val notificationManager = getSystemService(NotificationManager::class.java)
+                notificationManager?.cancel(NOTIFICATION_ID)
+                stopSelf()
+            }
         }
         return START_STICKY
     }
@@ -136,7 +185,12 @@ class WhiteNoiseMediaService : MediaSessionService() {
 
             override fun stop() {
                 super.stop()
+                hasStartedForeground = false
                 audioEngine.stopAll()
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                val notificationManager = getSystemService(NotificationManager::class.java)
+                notificationManager?.cancel(NOTIFICATION_ID)
+                stopSelf()
             }
         }
 
@@ -157,34 +211,48 @@ class WhiteNoiseMediaService : MediaSessionService() {
 
     private fun observeEngineState() {
         serviceScope.launch {
-            audioEngine.playbackState.collectLatest { state ->
-                val player = coordinatorExoPlayer
-                if (player != null && player.playWhenReady != state.isMasterPlaying) {
-                    player.playWhenReady = state.isMasterPlaying
+            audioEngine.playbackState
+                .distinctUntilChanged { old, new ->
+                    old.isMasterPlaying == new.isMasterPlaying && old.activeTrackCount == new.activeTrackCount
                 }
+                .collectLatest { state ->
+                    val player = coordinatorExoPlayer
+                    if (player != null && player.playWhenReady != state.isMasterPlaying) {
+                        player.playWhenReady = state.isMasterPlaying
+                    }
 
-                val notificationManager = getSystemService(NotificationManager::class.java)
-                if (state.isMasterPlaying) {
-                    val notification = buildForegroundNotification(state)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        startForeground(
-                            NOTIFICATION_ID,
-                            notification,
-                            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
-                        )
-                    } else {
-                        startForeground(NOTIFICATION_ID, notification)
-                    }
-                } else {
-                    if (state.activeTrackCount > 0) {
-                        stopForeground(STOP_FOREGROUND_DETACH)
-                        notificationManager?.notify(NOTIFICATION_ID, buildForegroundNotification(state))
-                    } else {
-                        stopForeground(STOP_FOREGROUND_REMOVE)
-                        notificationManager?.cancel(NOTIFICATION_ID)
+                    val notificationManager = getSystemService(NotificationManager::class.java)
+                    val action = decideNotificationAction(
+                        hasStartedForeground = hasStartedForeground,
+                        isMasterPlaying = state.isMasterPlaying,
+                        activeTrackCount = state.activeTrackCount
+                    )
+
+                    when (action) {
+                        NotificationAction.START_FOREGROUND -> {
+                            hasStartedForeground = true
+                            val notification = buildForegroundNotification(state)
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                startForeground(
+                                    NOTIFICATION_ID,
+                                    notification,
+                                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+                                )
+                            } else {
+                                startForeground(NOTIFICATION_ID, notification)
+                            }
+                        }
+                        NotificationAction.UPDATE_PAUSED -> {
+                            stopForeground(STOP_FOREGROUND_DETACH)
+                            notificationManager?.notify(NOTIFICATION_ID, buildForegroundNotification(state))
+                        }
+                        NotificationAction.REMOVE_NOTIFICATION -> {
+                            hasStartedForeground = false
+                            stopForeground(STOP_FOREGROUND_REMOVE)
+                            notificationManager?.cancel(NOTIFICATION_ID)
+                        }
                     }
                 }
-            }
         }
     }
 
@@ -210,12 +278,7 @@ class WhiteNoiseMediaService : MediaSessionService() {
         )
 
         val isPlaying = state.isMasterPlaying
-        val activeCount = state.activeTrackCount
-        val subtext = if (activeCount > 0) {
-            "正在混音播放 $activeCount 种自然声"
-        } else {
-            "已暂停"
-        }
+        val subtext = formatNotificationSubtext(isPlaying, state.activeTrackCount)
 
         val playPauseIntent = Intent(this, WhiteNoiseMediaService::class.java).apply {
             action = if (isPlaying) ACTION_PAUSE else ACTION_PLAY
@@ -292,6 +355,19 @@ class WhiteNoiseMediaService : MediaSessionService() {
     override fun onBind(intent: Intent?): IBinder? {
         super.onBind(intent)
         return binder
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        Log.i(TAG, "onTaskRemoved called")
+        if (!audioEngine.playbackState.value.isMasterPlaying) {
+            Log.i(TAG, "App swiped away while not playing, stopping service.")
+            hasStartedForeground = false
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager?.cancel(NOTIFICATION_ID)
+            stopSelf()
+        }
     }
 
     override fun onDestroy() {

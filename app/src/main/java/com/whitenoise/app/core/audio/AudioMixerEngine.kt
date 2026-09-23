@@ -122,9 +122,12 @@ class AudioMixerEngine private constructor(private val context: Context) {
     }
 
     private fun abandonAudioFocus() {
-        if (!hasAudioFocus) return
-        audioFocusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
-        hasAudioFocus = false
+        if (hasAudioFocus) {
+            audioFocusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
+            hasAudioFocus = false
+        }
+        pausedDueToAudioFocus = false
+        isDucked = false
     }
 
     /**
@@ -150,6 +153,7 @@ class AudioMixerEngine private constructor(private val context: Context) {
             resumeAllActiveInternal()
         } else {
             pauseAllInternal()
+            abandonAudioFocus()
         }
 
         _playbackState.update {
@@ -327,7 +331,9 @@ class AudioMixerEngine private constructor(private val context: Context) {
                         sleepFadeFraction = fadeMultiplier
                     )
                 }
-                updateAllVolumes()
+                if (remaining <= fadeDuration) {
+                    updateAllVolumes()
+                }
             }
 
             if (isActive && remaining <= 0L) {
