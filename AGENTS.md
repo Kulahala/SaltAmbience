@@ -106,6 +106,11 @@ app/src/main/java/com/whitenoise/app/
   - 音效卡片：大图标 + 音轨名称 + 独立静音/播放开关 + 精细音量滑块（基于 SaltTheme 配色封装的 Slider）；
   - 预设切换与口令分享：一键载入场景方案（如“深夜暴雨”、“森林露营”），列表末尾支持快速将当前混音保存为新预设；长按预设卡片即触感复制 Base64 分享口令，支持剪贴板自动识别并一键导入；
   - 播控栏：底部常驻或悬浮胶囊，提供“一键全停”、“主音量调节”和“定时关闭”入口。
+- **应用图标契约 (Adaptive Icon Contract)**：
+  - 弃用系统内置占位符（`@android:drawable/ic_media_play`），建立标准的 Android 8.0+ 官方自适应矢量图标体系（`res/drawable/` + `res/mipmap-anydpi-v26/`）；
+  - 画布规范：108×108 dp，核心视觉限制在直径 72 dp 安全区内，适配原生圆形（Pixel）、方圆形（One UI）、圆角矩形（MIUI/ColorOS）；
+  - **首选方案（D-14）**：包豪斯声学琴弦点线面（午夜冷调蓝黑底座 + 垂直基准轴 + 纯白/海盐冰青三道琴弦曲线 + 双纯圆点），配套 `ic_launcher_monochrome.xml` 支持 Android 13+ Material You 壁纸动态取色；
+  - **备选方案（D-16）**：Teenage Engineering 风格哑光石墨点阵刻度圆轨 + 暖杏提示点（`ic_launcher_d16`）。
 
 ### 3.4 状态持久化契约
 - 使用轻量 **Jetpack DataStore Preferences** 记录用户退出前的音轨音量状态与自定义场景预设；

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 包豪斯琴弦声波 1：上层海盐纯白琴弦 (Pure White String) -->
+    <path
+        android:pathData="M 26.00,43.50 L 27.40,43.60 L 28.80,43.90 L 30.20,44.37 L 31.60,44.98 L 33.00,45.68 L 34.40,46.43 L 35.80,47.17 L 37.20,47.83 L 38.60,48.37 L 40.00,48.74 L 41.40,48.90 L 42.80,48.82 L 44.20,48.49 L 45.60,47.92 L 47.00,47.12 L 48.40,46.13 L 49.80,44.98 L 51.20,43.73 L 52.60,42.45 L 54.00,41.18 L 55.40,40.00 L 56.80,38.96 L 58.20,38.11 L 59.60,37.48 L 61.00,37.10 L 62.40,36.98 L 63.80,37.11 L 65.20,37.48 L 66.60,38.05 L 68.00,38.77 L 69.40,39.60 L 70.80,40.48 L 72.20,41.35 L 73.60,42.15 L 75.00,42.83 L 76.40,43.35 L 77.80,43.69 L 79.20,43.83 L 80.60,43.76 L 82.00,43.50"
+        android:strokeWidth="3.4"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- 包豪斯琴弦声波 2：中层海盐冰青核心主弦 (Salt Cyan Main String) -->
+    <path
+        android:pathData="M 26.00,53.50 L 27.40,54.07 L 28.80,54.74 L 30.20,55.44 L 31.60,56.13 L 33.00,56.72 L 34.40,57.17 L 35.80,57.42 L 37.20,57.44 L 38.60,57.21 L 40.00,56.71 L 41.40,55.96 L 42.80,54.99 L 44.20,53.83 L 45.60,52.54 L 47.00,51.18 L 48.40,49.82 L 49.80,48.53 L 51.20,47.37 L 52.60,46.41 L 54.00,45.69 L 55.40,45.26 L 56.80,45.12 L 58.20,45.29 L 59.60,45.74 L 61.00,46.45 L 62.40,47.38 L 63.80,48.47 L 65.20,49.64 L 66.60,50.85 L 68.00,52.02 L 69.40,53.08 L 70.80,53.98 L 72.20,54.68 L 73.60,55.15 L 75.00,55.38 L 76.40,55.36 L 77.80,55.13 L 79.20,54.70 L 80.60,54.14 L 82.00,53.50"
+        android:strokeWidth="3.8"
+        android:strokeColor="#4DD0E1"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- 包豪斯琴弦声波 3：下层溪流浅蓝辅弦 (Stream Blue Harmony String) -->
+    <path
+        android:pathData="M 26.00,63.50 L 27.40,64.02 L 28.80,64.47 L 30.20,64.80 L 31.60,64.98 L 33.00,64.96 L 34.40,64.75 L 35.80,64.34 L 37.20,63.74 L 38.60,62.99 L 40.00,62.10 L 41.40,61.14 L 42.80,60.16 L 44.20,59.20 L 45.60,58.33 L 47.00,57.60 L 48.40,57.05 L 49.80,56.71 L 51.20,56.62 L 52.60,56.78 L 54.00,57.18 L 55.40,57.80 L 56.80,58.63 L 58.20,59.61 L 59.60,60.69 L 61.00,61.82 L 62.40,62.94 L 63.80,63.99 L 65.20,64.93 L 66.60,65.71 L 68.00,66.30 L 69.40,66.68 L 70.80,66.84 L 72.20,66.79 L 73.60,66.55 L 75.00,66.16 L 76.40,65.66 L 77.80,65.09 L 79.20,64.50 L 80.60,63.96 L 82.00,63.50"
+        android:strokeWidth="3.2"
+        android:strokeColor="#B381D4FA"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- 左上方包豪斯主音核 (Bauhaus Primary Circle) -->
+    <path
+        android:pathData="M 39,33 m -2.8,0 a 2.8,2.8 0 1,0 5.6,0 a 2.8,2.8 0 1,0 -5.6,0"
+        android:fillColor="#FFFFFF" />
+
+    <!-- 右下方包豪斯辅律动点 (Bauhaus Accent Circle) -->
+    <path
+        android:pathData="M 69,73 m -2.2,0 a 2.2,2.2 0 1,0 4.4,0 a 2.2,2.2 0 1,0 -4.4,0"
+        android:fillColor="#4DD0E1" />
+
+</vector>
