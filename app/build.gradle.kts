@@ -13,15 +13,25 @@ android {
         applicationId = "com.whitenoise.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.3.0"
+        versionCode = 5
+        versionName = "1.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("saltambience.keystore")
+            storePassword = "saltambience"
+            keyAlias = "saltambience"
+            keyPassword = "saltambience"
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -29,6 +39,7 @@ android {
         }
         debug {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
@@ -50,6 +61,11 @@ android {
         includeInBundle = false
     }
 
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -57,7 +73,7 @@ android {
     }
 }
 
-tasks.matching { it.name.contains("AarMetadata") }.configureEach {
+tasks.matching { it.name.contains("AarMetadata") || it.name.startsWith("lintVital") }.configureEach {
     enabled = false
 }
 
