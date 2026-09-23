@@ -356,18 +356,30 @@ fun HomeScreen(
 
                                         Spacer(modifier = Modifier.width(8.dp))
 
-                                        // Share Preset Button
+                                        // Share/Export Preset Button
                                         Box(
                                             modifier = Modifier
-                                                .clip(CircleShape)
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
                                                 .clickable { viewModel.copyPresetShareCode(preset) }
-                                                .padding(2.dp),
+                                                .padding(horizontal = 8.dp, vertical = 4.dp),
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Text(
-                                                text = "📤",
-                                                fontSize = 12.sp
-                                            )
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(3.dp)
+                                            ) {
+                                                Text(
+                                                    text = "📤",
+                                                    fontSize = 11.sp
+                                                )
+                                                Text(
+                                                    text = "导出",
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = SaltTheme.colors.highlight
+                                                )
+                                            }
                                         }
 
                                         if (!preset.isDefault) {
@@ -375,37 +387,20 @@ fun HomeScreen(
                                             Box(
                                                 modifier = Modifier
                                                     .clip(CircleShape)
+                                                    .background(SaltTheme.colors.text.copy(alpha = 0.08f))
                                                     .clickable { viewModel.deletePreset(preset.id) }
-                                                    .padding(2.dp),
+                                                    .padding(4.dp),
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Text(
                                                     text = "✕",
-                                                    color = SaltTheme.colors.text.copy(alpha = 0.45f),
-                                                    fontSize = 12.sp
+                                                    color = SaltTheme.colors.text.copy(alpha = 0.55f),
+                                                    fontSize = 11.sp
                                                 )
                                             }
                                         }
                                     }
                                 }
-                            }
-
-                            // Add Custom Preset Button
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
-                                    .clickable { viewModel.setShowSavePresetDialog(true) }
-                                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "+ 存为预设",
-                                    color = SaltTheme.colors.highlight,
-                                    style = SaltTheme.textStyles.main,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 13.sp
-                                )
                             }
                         }
                         Spacer(modifier = Modifier.height(8.dp))
