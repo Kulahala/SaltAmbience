@@ -49,9 +49,9 @@ fun AboutBottomSheet(
                 @Suppress("DEPRECATION")
                 context.packageManager.getPackageInfo(context.packageName, 0)
             }
-            packageInfo.versionName ?: "1.5.0"
+            packageInfo.versionName ?: "1.6.0"
         } catch (e: Exception) {
-            "1.5.0"
+            "1.6.0"
         }
     }
 
