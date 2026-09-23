@@ -82,6 +82,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _clipboardDetectedPayload = MutableStateFlow<PresetSharePayload?>(null)
     val clipboardDetectedPayload: StateFlow<PresetSharePayload?> = _clipboardDetectedPayload.asStateFlow()
 
+    val isPresetHintDismissed: StateFlow<Boolean> = preferencesManager.presetHintDismissedFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = false
+    )
+
     // Toast event flow for UI feedback
     private val _toastMessage = MutableSharedFlow<String>()
     val toastMessage: SharedFlow<String> = _toastMessage.asSharedFlow()
@@ -255,6 +261,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun dismissClipboardBanner() {
         _clipboardDetectedPayload.value = null
+    }
+
+    fun dismissPresetHint() {
+        viewModelScope.launch {
+            preferencesManager.setPresetHintDismissed(true)
+        }
     }
 
     fun copyPresetShareCode(preset: Preset) {

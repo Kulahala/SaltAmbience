@@ -3,6 +3,7 @@ package com.whitenoise.app.data.datastore
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -29,6 +30,17 @@ class PreferencesManager(private val context: Context) {
         private val KEY_CUSTOM_PRESETS = stringPreferencesKey("custom_presets_json")
         private val KEY_ACTIVE_TRACKS_STATE = stringPreferencesKey("active_tracks_state_json")
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
+        private val KEY_PRESET_HINT_DISMISSED = booleanPreferencesKey("preset_hint_dismissed")
+    }
+
+    val presetHintDismissedFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[KEY_PRESET_HINT_DISMISSED] ?: false
+    }
+
+    suspend fun setPresetHintDismissed(dismissed: Boolean = true) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_PRESET_HINT_DISMISSED] = dismissed
+        }
     }
 
     val themeModeFlow: Flow<com.whitenoise.app.core.model.ThemeMode> = context.dataStore.data.map { preferences ->

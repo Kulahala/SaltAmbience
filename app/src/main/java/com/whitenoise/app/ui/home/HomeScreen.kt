@@ -1,8 +1,12 @@
 package com.whitenoise.app.ui.home
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,6 +60,7 @@ import com.whitenoise.app.ui.components.SleepTimerBottomSheet
 import com.whitenoise.app.ui.components.SoundTileCard
 import com.whitenoise.app.ui.components.ThemeSelectionDialog
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
     viewModel: MainViewModel,
@@ -63,6 +68,7 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val haptic = LocalHapticFeedback.current
 
     val tracks by viewModel.tracks.collectAsState()
     val playbackState by viewModel.playbackState.collectAsState()
@@ -75,6 +81,7 @@ fun HomeScreen(
     val showImportDialog by viewModel.showImportDialog.collectAsState()
     val detectedPayload by viewModel.clipboardDetectedPayload.collectAsState()
     val themeMode by viewModel.themeMode.collectAsState()
+    val isPresetHintDismissed by viewModel.isPresetHintDismissed.collectAsState()
 
     // Observe Toast feedback events
     LaunchedEffect(Unit) {
@@ -265,58 +272,27 @@ fun HomeScreen(
                                 color = SaltTheme.colors.text
                             )
 
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                // 📥 导入按钮
-                                Box(
-                                    modifier = Modifier
-                                        .clip(CircleShape)
-                                        .background(SaltTheme.colors.subBackground)
-                                        .clickable { viewModel.setShowImportDialog(true) }
-                                        .padding(horizontal = 10.dp, vertical = 5.dp),
-                                    contentAlignment = Alignment.Center
+                            // 📥 导入按钮
+                            Box(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(SaltTheme.colors.subBackground)
+                                    .clickable { viewModel.setShowImportDialog(true) }
+                                    .padding(horizontal = 10.dp, vertical = 5.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Text(text = "📥", fontSize = 11.sp)
-                                        Text(
-                                            text = "导入",
-                                            style = SaltTheme.textStyles.sub,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = SaltTheme.colors.text.copy(alpha = 0.8f)
-                                        )
-                                    }
-                                }
-
-                                // ➕ 保存当前
-                                Box(
-                                    modifier = Modifier
-                                        .clip(CircleShape)
-                                        .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
-                                        .clickable { viewModel.setShowSavePresetDialog(true) }
-                                        .padding(horizontal = 10.dp, vertical = 5.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(3.dp)
-                                    ) {
-                                        Text(
-                                            text = "+",
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = SaltTheme.colors.highlight
-                                        )
-                                        Text(
-                                            text = "保存当前",
-                                            style = SaltTheme.textStyles.sub,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = SaltTheme.colors.highlight
-                                        )
-                                    }
+                                    Text(text = "📥", fontSize = 11.sp)
+                                    Text(
+                                        text = "导入",
+                                        style = SaltTheme.textStyles.sub,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = SaltTheme.colors.text.copy(alpha = 0.8f)
+                                    )
                                 }
                             }
                         }
@@ -333,7 +309,13 @@ fun HomeScreen(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(14.dp))
                                         .background(SaltTheme.colors.subBackground)
-                                        .clickable { viewModel.applyPreset(preset) }
+                                        .combinedClickable(
+                                            onClick = { viewModel.applyPreset(preset) },
+                                            onLongClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                viewModel.copyPresetShareCode(preset)
+                                            }
+                                        )
                                         .padding(horizontal = 14.dp, vertical = 10.dp)
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -354,36 +336,8 @@ fun HomeScreen(
                                             }
                                         }
 
-                                        Spacer(modifier = Modifier.width(8.dp))
-
-                                        // Share/Export Preset Button
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
-                                                .clickable { viewModel.copyPresetShareCode(preset) }
-                                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(3.dp)
-                                            ) {
-                                                Text(
-                                                    text = "📤",
-                                                    fontSize = 11.sp
-                                                )
-                                                Text(
-                                                    text = "导出",
-                                                    fontSize = 11.sp,
-                                                    fontWeight = FontWeight.Medium,
-                                                    color = SaltTheme.colors.highlight
-                                                )
-                                            }
-                                        }
-
                                         if (!preset.isDefault) {
-                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
                                             Box(
                                                 modifier = Modifier
                                                     .clip(CircleShape)
@@ -399,6 +353,69 @@ fun HomeScreen(
                                                 )
                                             }
                                         }
+                                    }
+                                }
+                            }
+
+                            // 恢复末尾的 "+ 存为预设" 卡片
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
+                                    .clickable { viewModel.setShowSavePresetDialog(true) }
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "+ 存为预设",
+                                    color = SaltTheme.colors.highlight,
+                                    style = SaltTheme.textStyles.main,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
+
+                        // 预设长按提示框（支持关闭后不再显示）
+                        if (!isPresetHintDismissed) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 4.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(SaltTheme.colors.subBackground)
+                                    .padding(horizontal = 10.dp, vertical = 6.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(text = "💡", fontSize = 11.sp)
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "长按预设卡片可快速复制并导出分享口令",
+                                            style = SaltTheme.textStyles.sub,
+                                            fontSize = 11.sp,
+                                            color = SaltTheme.colors.text.copy(alpha = 0.65f)
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(CircleShape)
+                                            .clickable { viewModel.dismissPresetHint() }
+                                            .padding(4.dp)
+                                    ) {
+                                        Text(
+                                            text = "✕",
+                                            fontSize = 11.sp,
+                                            color = SaltTheme.colors.text.copy(alpha = 0.45f)
+                                        )
                                     }
                                 }
                             }
