@@ -372,4 +372,55 @@ class LoopFatigueAvoidanceTest {
             activeSessionTracks.size
         )
     }
+
+    @Test
+    fun testPlayerStateReadyGuardPreventsPrematureSeekOnAssetTracks() {
+        val pendingInitialSeekTracks = mutableSetOf<String>()
+        var appliedSeekOffsetMs = -1L
+
+        // Emulates new AudioMixerEngine.applyRandomStartAndDrift logic
+        fun applyRandomStartAndDriftSim(trackId: String, isStateReady: Boolean, playerDurationMs: Long?) {
+            if (isStateReady) {
+                val dur = LoopFatigueHelper.getEffectiveDuration(trackId, playerDurationMs)
+                if (dur > 0L) {
+                    val offset = LoopFatigueHelper.calculateRandomStartOffset(dur, 0.5f)
+                    if (offset > 0L) appliedSeekOffsetMs = offset
+                    pendingInitialSeekTracks.remove(trackId)
+                }
+            } else {
+                pendingInitialSeekTracks.add(trackId)
+            }
+        }
+
+        fun onPlayerStateReadySim(trackId: String, durationMs: Long) {
+            if (pendingInitialSeekTracks.remove(trackId)) {
+                val dur = LoopFatigueHelper.getEffectiveDuration(trackId, durationMs)
+                if (dur > 0L) {
+                    val offset = LoopFatigueHelper.calculateRandomStartOffset(dur, 0.5f)
+                    if (offset > 0L) appliedSeekOffsetMs = offset
+                }
+            }
+        }
+
+        // Test with known asset track (e.g. stream) that is NOT yet STATE_READY upon prepare()
+        applyRandomStartAndDriftSim("stream", isStateReady = false, playerDurationMs = C.TIME_UNSET)
+        // Must NOT seek immediately even though asset duration is known
+        assertEquals("Must NOT seek while player is buffering/unready", -1L, appliedSeekOffsetMs)
+        assertTrue("Track must be queued for STATE_READY", pendingInitialSeekTracks.contains("stream"))
+
+        // When STATE_READY is delivered by ExoPlayer
+        onPlayerStateReadySim("stream", 145_529L)
+        assertFalse("Track must be removed from pending set", pendingInitialSeekTracks.contains("stream"))
+        assertTrue("Seek offset must now be applied", appliedSeekOffsetMs > 0L)
+
+        // When a track is reactivated while already in STATE_READY (e.g. pre-warmed player)
+        var immediateSeekOffset = -1L
+        fun applyImmediateSeekSim(trackId: String) {
+            val dur = LoopFatigueHelper.getEffectiveDuration(trackId, 124_578L)
+            val offset = LoopFatigueHelper.calculateRandomStartOffset(dur, 0.5f)
+            immediateSeekOffset = offset
+        }
+        applyImmediateSeekSim("rain")
+        assertTrue("Pre-warmed track in STATE_READY seeks immediately", immediateSeekOffset > 0L)
+    }
 }

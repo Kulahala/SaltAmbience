@@ -567,7 +567,9 @@ class AudioMixerEngine private constructor(private val context: Context) {
                                     val dur = LoopFatigueHelper.getEffectiveDuration(track.id, duration)
                                     if (dur > 0L) {
                                         val offset = LoopFatigueHelper.calculateRandomStartOffset(dur)
-                                        seekTo(offset)
+                                        if (offset > 0L) {
+                                            seekTo(offset)
+                                        }
                                         Log.d(TAG, "Deferred random seek applied for ${track.id} at STATE_READY: ${offset}ms (duration: ${dur}ms)")
                                     }
                                 }
@@ -645,20 +647,32 @@ class AudioMixerEngine private constructor(private val context: Context) {
      */
     private fun applyRandomStartAndDrift(track: SoundTrack, player: ExoPlayer) {
         // Scheme B: Natural micro-speed drift [0.98f, 1.02f] with speed == pitch (resampling mode, no FFT artifacts)
-        val playbackParams = LoopFatigueHelper.createDriftPlaybackParameters()
-        player.playbackParameters = playbackParams
+        try {
+            val playbackParams = LoopFatigueHelper.createDriftPlaybackParameters()
+            player.playbackParameters = playbackParams
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to apply playback parameters for ${track.id}: ${e.message}")
+            player.playbackParameters = PlaybackParameters.DEFAULT
+        }
 
         // Scheme A: Safe random start offset
-        val effectiveDuration = LoopFatigueHelper.getEffectiveDuration(track.id, player.duration)
-        if (effectiveDuration > 0L) {
-            val offset = LoopFatigueHelper.calculateRandomStartOffset(effectiveDuration)
-            player.seekTo(offset)
-            pendingInitialSeekTracks.remove(track.id)
-            Log.d(TAG, "Applied start offset: ${offset}ms / ${effectiveDuration}ms and drift: ${playbackParams.speed}x for track '${track.id}'")
+        // CRITICAL GUARD: Seeking before Player.STATE_READY (while STATE_IDLE or STATE_BUFFERING) stalls
+        // or crashes ExoPlayer's OGG Vorbis decoder on local assets.
+        // Therefore, if the player is not yet STATE_READY, seek MUST be safely deferred to onPlaybackStateChanged(STATE_READY).
+        if (player.playbackState == Player.STATE_READY) {
+            val effectiveDuration = LoopFatigueHelper.getEffectiveDuration(track.id, player.duration)
+            if (effectiveDuration > 0L) {
+                val offset = LoopFatigueHelper.calculateRandomStartOffset(effectiveDuration)
+                if (offset > 0L) {
+                    player.seekTo(offset)
+                }
+                pendingInitialSeekTracks.remove(track.id)
+                Log.d(TAG, "Applied start offset: ${offset}ms / ${effectiveDuration}ms for track '${track.id}' (already STATE_READY)")
+            }
         } else {
-            // Duration not known yet, defer seek to STATE_READY
+            // Duration and Vorbis codebooks not ready yet, defer seek to STATE_READY in Player.Listener
             pendingInitialSeekTracks.add(track.id)
-            Log.d(TAG, "Duration unset for track '${track.id}', queued initial seek for STATE_READY")
+            Log.d(TAG, "Player not ready for track '${track.id}' (state: ${player.playbackState}), queued initial seek for STATE_READY")
         }
     }
 
