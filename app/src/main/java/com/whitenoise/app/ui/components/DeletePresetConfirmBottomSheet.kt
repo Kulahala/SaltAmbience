@@ -89,7 +89,7 @@ fun DeletePresetConfirmBottomSheet(
 
                     Column {
                         Text(
-                            text = "删除自定义预设",
+                            text = if (displayPreset.isDefault) "删除默认预设" else "删除自定义预设",
                             style = SaltTheme.textStyles.main,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
@@ -97,7 +97,7 @@ fun DeletePresetConfirmBottomSheet(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "删除后将无法恢复该混音方案",
+                            text = if (displayPreset.isDefault) "删除后可在场景方案末尾一键原样恢复" else "删除后将无法恢复该混音方案",
                             style = SaltTheme.textStyles.sub,
                             fontSize = 12.sp,
                             color = SaltTheme.colors.text.copy(alpha = 0.65f)

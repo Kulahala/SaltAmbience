@@ -127,6 +127,7 @@ app/src/main/java/com/whitenoise/app/
 | **Stage 5** | 全链路验收与最终打包 | **[x] 已达成 (Passed)** | 10 项单元测试全量通过；生成全功能最终 Debug APK（34.8MB）；初始化 Git 并在确保 `.gitignore` 安全（严防私密信息泄漏）前提下推送到远程仓库 `https://github.com/Kulahala/SaltAmbience.git`。 |
 | **Stage 6 (P0)** | 底层能耗止血与核心状态机修复 | **[x] 已达成 (Passed)** | 阻断通知每秒重复推流（`distinctUntilChanged`）与休眠淡出前无效音量计算；修复暂停文案与音频焦点释放；拦截冷启动幽灵通知；实现剪贴板口令关闭记忆与服务销毁守护；22 项单测全绿。 |
 | **Stage 7 (P1)** | 视觉交互闭环与全站抽屉化 (v1.5.0) | **[x] 已达成 (Passed)** | 全站居中弹窗统一重构为 SaltUI 底部抽屉规范（`SaltBottomSheet`）并接入向下滑动拖拽关闭手势；彻底解决输入法软键盘挤压；重塑深色模式悬浮底栏景深；实现预设激活态高亮与删除二次确认；胶囊滑块触感微震动与对比度反转盾牌；25 项单测全绿，产出 Release 与 Debug APK。 |
+| **Stage 8** | 分类导航、棕色噪音与预设全自由管理 | **[x] 已达成 (Passed)** | 自定义预设置顶与最新倒序排列；默认预设软删除与一键“↺ 恢复默认”后悔药机制；引入 CC0 慢波助眠「棕色噪音 (Brown Noise)」(🪐 brown_noise.ogg) 扩充至 15 款音源；音效矩阵 5 维胶囊过滤标签 (Filter Chips) 交互与微触感反馈；30 项单测全绿。 |
 
 ---
 
@@ -140,6 +141,7 @@ flowchart LR
     S4 --> S5["Stage 5: 真实构建与收尾审查 [已通过]"]
     S5 --> S6["Stage 6 (P0): 底层能耗与状态机修复 [已通过]"]
     S6 --> S7["Stage 7 (P1): 视觉交互抽屉化闭环 (v1.5.0) [已通过]"]
+    S7 --> S8["Stage 8: 分类导航、棕噪与预设全自由管理 [已通过]"]
 ```
 
 ### Stage 1: 工程脚手架与编译基线
@@ -193,6 +195,16 @@ flowchart LR
   - `SaltBottomSheet.kt`、`ImportPresetBottomSheet.kt`、`SavePresetBottomSheet.kt`、`ThemeSelectionBottomSheet.kt`、`AboutBottomSheet.kt`、`DeletePresetConfirmBottomSheet.kt`；
   - `BottomPlayerBar.kt` 深色微透高光；`VerticalCapsuleSlider.kt` 0/50/100 刻度微震动与动态对比度盾牌；
   - 版本号递增为 `v1.5.0` (versionCode 8)。
+
+### Stage 8: 音效分类导航、棕色噪音扩充与预设全自由管理
+- **目标**：自定义预设置顶与最新倒序排列；默认预设支持软删除与一键“↺ 恢复默认”后悔药机制；引入 CC0 慢波助眠「棕色噪音 (Brown Noise)」(🪐 brown_noise.ogg) 扩充至 15 款音源；音效矩阵 5 维胶囊过滤标签 (Filter Chips) 交互与微触感反馈。
+- **门禁标准**：30 项单元测试 100% 通过，assembleDebug 编译成功。
+- **交付记录**：
+  - `PresetRepository.kt`：`customPresets.reversed() + visibleDefaults` 组装与软删除/恢复契约；
+  - `PreferencesManager.kt`：`deletedDefaultPresetIdsFlow`、`addDeletedDefaultPresetId`、`resetDeletedDefaultPresets`；
+  - `HomeScreen.kt`：预设删除按钮全覆盖、后悔药胶囊按钮、横向滑动分类过滤胶囊与即时无缝过滤；
+  - `SoundCategory.kt`：`ALL` / `RAIN` / `NATURE` / `LIFE` / `NOISE` 5 维分类枚举与单测覆盖；
+  - `brown_noise.ogg`：10s CC0 无缝慢波循环音频接入，更新 `SoundTrack`、`SoundRepository`、`AboutBottomSheet` 及两处 `SOUNDS_LICENSING.md`。
 
 ---
 

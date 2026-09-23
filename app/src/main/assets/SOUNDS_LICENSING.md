@@ -18,6 +18,7 @@ All audio assets in **SaltAmbience (WhiteNoise-Android)** are sourced from the o
 | **小舟 (Boat)** | `boat.ogg` | [Falcet / sounds / 439365](https://freesound.org/people/Falcet/sounds/439365/) | Falcet | Porrumentzio | CC0 1.0 (Public Domain) |
 | **粉红噪 (Pink Noise)** | `pink_noise.ogg` | [Omegatron / Pink_noise](https://commons.wikimedia.org/wiki/File:Pink_noise.ogg) | Omegatron | - | CC BY-SA 3.0 |
 | **都市 (City)** | `city.ogg` | [gezortenplotz / sounds / 44796](https://freesound.org/people/gezortenplotz/sounds/44796/) | gezortenplotz | Porrumentzio | CC BY 3.0 |
+| **棕色噪音 (Brown Noise)** | `brown_noise.ogg` | [Omegatron / Brown_noise](https://commons.wikimedia.org/wiki/File:Brown_noise.ogg) | Omegatron | - | CC BY-SA 3.0 |
 
 > (*) Editing implies cross-fade loop processing according to Blanket audio loop guidelines.
 > Special thanks to [Rafael Mardojai](https://github.com/rafaelmardojai) and the Blanket community for curating and looping these natural sounds.

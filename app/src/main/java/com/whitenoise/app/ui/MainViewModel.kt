@@ -56,6 +56,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         initialValue = Preset.DEFAULT_PRESETS
     )
 
+    val hasDeletedDefaultPresets: StateFlow<Boolean> = preferencesManager.deletedDefaultPresetIdsFlow
+        .map { it.isNotEmpty() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000L),
+            initialValue = false
+        )
+
     val themeMode: StateFlow<com.whitenoise.app.core.model.ThemeMode> = preferencesManager.themeModeFlow.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
@@ -223,10 +231,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun deletePreset(presetId: String) {
+    fun deletePreset(preset: Preset) {
         viewModelScope.launch {
-            val currentCustom = preferencesManager.customPresetsFlow.first()
-            presetRepository.deleteCustomPreset(presetId, currentCustom)
+            if (preset.isDefault) {
+                presetRepository.deleteDefaultPreset(preset.id)
+                _toastMessage.emit("已移除默认方案【${preset.name}】")
+            } else {
+                val currentCustom = preferencesManager.customPresetsFlow.first()
+                presetRepository.deleteCustomPreset(preset.id, currentCustom)
+                _toastMessage.emit("已删除混音方案【${preset.name}】")
+            }
+        }
+    }
+
+    fun deletePreset(presetId: String) {
+        val defaultPreset = Preset.DEFAULT_PRESETS.find { it.id == presetId }
+        if (defaultPreset != null) {
+            deletePreset(defaultPreset)
+        } else {
+            viewModelScope.launch {
+                val currentCustom = preferencesManager.customPresetsFlow.first()
+                val custom = currentCustom.find { it.id == presetId }
+                presetRepository.deleteCustomPreset(presetId, currentCustom)
+                if (custom != null) {
+                    _toastMessage.emit("已删除混音方案【${custom.name}】")
+                }
+            }
+        }
+    }
+
+    fun restoreDefaultPresets() {
+        viewModelScope.launch {
+            presetRepository.restoreDefaultPresets()
+            _toastMessage.emit("已恢复所有默认预设方案")
         }
     }
 

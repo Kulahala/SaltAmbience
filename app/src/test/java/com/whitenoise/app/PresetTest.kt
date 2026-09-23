@@ -109,7 +109,8 @@ class PresetTest {
             "train" to "🚂",
             "boat" to "🛶",
             "pink_noise" to "🌸",
-            "city" to "🏙️"
+            "city" to "🏙️",
+            "brown_noise" to "🪐"
         )
 
         for ((id, expectedEmoji) in expectedEmojis) {

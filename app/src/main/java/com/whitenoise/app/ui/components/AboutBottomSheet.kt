@@ -118,7 +118,7 @@ fun AboutBottomSheet(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "本项目音效资产源自 Rafael Mardojai 的开源项目 Blanket 及社区公共领域贡献，经过无缝交叉淡化循环处理（全量 14 款音效）：\n\n" +
+                        text = "本项目音效资产源自 Rafael Mardojai 的开源项目 Blanket 及社区公共领域贡献，经过无缝交叉淡化循环处理（全量 15 款音效）：\n\n" +
                                 "• 细雨 (Rain) - alex36917 (CC BY 4.0)\n" +
                                 "• 雷雨 (Storm) - Digifish music (CC BY 3.0)\n" +
                                 "• 林风 (Wind) - felix.blume (CC0 1.0)\n" +
@@ -132,7 +132,8 @@ fun AboutBottomSheet(
                                 "• 列车 (Train) - SDLx (CC BY 3.0)\n" +
                                 "• 小舟 (Boat) - Falcet (CC0 1.0)\n" +
                                 "• 粉红噪 (Pink Noise) - Omegatron (CC BY-SA 3.0)\n" +
-                                "• 都市 (City) - gezortenplotz (CC BY 3.0)\n\n" +
+                                "• 都市 (City) - gezortenplotz (CC BY 3.0)\n" +
+                                "• 棕色噪音 (Brown Noise) - Omegatron (CC BY-SA 3.0)\n\n" +
                                 "完整许可条款已归档至 SOUNDS_LICENSING.md。\n\n" +
                                 "技术基座：\n" +
                                 "• SaltUI 3.x 设计规范\n" +

@@ -101,6 +101,13 @@ object SoundRepository {
             subtitle = "遥远微茫的城市街道夜声",
             assetFileName = "city.ogg",
             volume = 0.45f
+        ),
+        SoundTrack(
+            id = "brown_noise",
+            name = "棕色噪音",
+            subtitle = "深沉厚重的低频慢波瀑布声",
+            assetFileName = "brown_noise.ogg",
+            volume = 0.5f
         )
     )
 

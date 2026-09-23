@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.whitenoise.app.core.model.Preset
 import com.whitenoise.app.core.model.SoundTrack
@@ -31,6 +32,30 @@ class PreferencesManager(private val context: Context) {
         private val KEY_ACTIVE_TRACKS_STATE = stringPreferencesKey("active_tracks_state_json")
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         private val KEY_PRESET_HINT_DISMISSED = booleanPreferencesKey("preset_hint_dismissed")
+        private val KEY_DELETED_DEFAULT_PRESETS = stringSetPreferencesKey("deleted_default_preset_ids")
+    }
+
+    val deletedDefaultPresetIdsFlow: Flow<Set<String>> = context.dataStore.data.map { preferences ->
+        preferences[KEY_DELETED_DEFAULT_PRESETS] ?: emptySet()
+    }
+
+    suspend fun saveDeletedDefaultPresetIds(ids: Set<String>) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_DELETED_DEFAULT_PRESETS] = ids
+        }
+    }
+
+    suspend fun addDeletedDefaultPresetId(presetId: String) {
+        context.dataStore.edit { preferences ->
+            val current = preferences[KEY_DELETED_DEFAULT_PRESETS] ?: emptySet()
+            preferences[KEY_DELETED_DEFAULT_PRESETS] = current + presetId
+        }
+    }
+
+    suspend fun resetDeletedDefaultPresets() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(KEY_DELETED_DEFAULT_PRESETS)
+        }
     }
 
     val presetHintDismissedFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->

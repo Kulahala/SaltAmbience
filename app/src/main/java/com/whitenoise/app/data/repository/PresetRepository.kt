@@ -4,23 +4,54 @@ import com.whitenoise.app.core.model.Preset
 import com.whitenoise.app.core.model.PresetSharePayload
 import com.whitenoise.app.data.datastore.PreferencesManager
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import java.util.UUID
 
-class PresetRepository(private val preferencesManager: PreferencesManager) {
+class PresetRepository(
+    private val preferencesManager: PreferencesManager? = null,
+    customPresetsFlowProvider: Flow<List<Preset>>? = null,
+    deletedDefaultIdsFlowProvider: Flow<Set<String>>? = null
+) {
+    constructor(preferencesManager: PreferencesManager) : this(
+        preferencesManager = preferencesManager,
+        customPresetsFlowProvider = preferencesManager.customPresetsFlow,
+        deletedDefaultIdsFlowProvider = preferencesManager.deletedDefaultPresetIdsFlow
+    )
 
-    val allPresetsFlow: Flow<List<Preset>> = preferencesManager.customPresetsFlow.map { customPresets ->
-        Preset.DEFAULT_PRESETS + customPresets
+    private val effectiveCustomPresetsFlow: Flow<List<Preset>> =
+        customPresetsFlowProvider
+            ?: preferencesManager?.customPresetsFlow
+            ?: flowOf(emptyList())
+
+    private val effectiveDeletedDefaultIdsFlow: Flow<Set<String>> =
+        deletedDefaultIdsFlowProvider
+            ?: preferencesManager?.deletedDefaultPresetIdsFlow
+            ?: flowOf(emptySet())
+
+    val allPresetsFlow: Flow<List<Preset>> = combine(
+        effectiveCustomPresetsFlow,
+        effectiveDeletedDefaultIdsFlow
+    ) { customPresets, deletedDefaultIds ->
+        assemblePresets(customPresets, deletedDefaultIds)
     }
 
     suspend fun saveCustomPreset(preset: Preset, currentCustomPresets: List<Preset>) {
         val updated = currentCustomPresets.filterNot { it.id == preset.id } + preset
-        preferencesManager.saveCustomPresets(updated)
+        preferencesManager?.saveCustomPresets(updated)
     }
 
     suspend fun deleteCustomPreset(presetId: String, currentCustomPresets: List<Preset>) {
         val updated = currentCustomPresets.filterNot { it.id == presetId }
-        preferencesManager.saveCustomPresets(updated)
+        preferencesManager?.saveCustomPresets(updated)
+    }
+
+    suspend fun deleteDefaultPreset(presetId: String) {
+        preferencesManager?.addDeletedDefaultPresetId(presetId)
+    }
+
+    suspend fun restoreDefaultPresets() {
+        preferencesManager?.resetDeletedDefaultPresets()
     }
 
     /**
@@ -56,5 +87,16 @@ class PresetRepository(private val preferencesManager: PreferencesManager) {
 
         saveCustomPreset(newPreset, currentCustomPresets)
         return newPreset
+    }
+
+    companion object {
+        fun assemblePresets(
+            customPresets: List<Preset>,
+            deletedDefaultIds: Set<String>,
+            defaultPresets: List<Preset> = Preset.DEFAULT_PRESETS
+        ): List<Preset> {
+            val visibleDefaults = defaultPresets.filterNot { it.id in deletedDefaultIds }
+            return customPresets.reversed() + visibleDefaults
+        }
     }
 }

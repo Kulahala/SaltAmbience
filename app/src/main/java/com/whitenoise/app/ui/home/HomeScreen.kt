@@ -55,6 +55,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.flow.collectLatest
 import com.whitenoise.app.core.model.Preset
+import com.whitenoise.app.core.model.SoundCategory
 import com.whitenoise.app.ui.components.AboutBottomSheet
 import com.whitenoise.app.ui.components.BottomPlayerBar
 import com.whitenoise.app.ui.components.DeletePresetConfirmBottomSheet
@@ -78,6 +79,7 @@ fun HomeScreen(
     val tracks by viewModel.tracks.collectAsState()
     val playbackState by viewModel.playbackState.collectAsState()
     val presets by viewModel.presets.collectAsState()
+    val hasDeletedDefaultPresets by viewModel.hasDeletedDefaultPresets.collectAsState()
 
     val showSleepDialog by viewModel.showSleepTimerDialog.collectAsState()
     val showAboutDialog by viewModel.showAboutDialog.collectAsState()
@@ -89,6 +91,7 @@ fun HomeScreen(
     val isPresetHintDismissed by viewModel.isPresetHintDismissed.collectAsState()
 
     var presetPendingDelete by remember { mutableStateOf<Preset?>(null) }
+    var selectedCategory by remember { mutableStateOf(SoundCategory.ALL) }
 
     // Map of currently active tracks (playing, unmuted, positive volume) for preset match detection
     val activeTracksMap = remember(tracks) {
@@ -359,23 +362,21 @@ fun HomeScreen(
                                             }
                                         }
 
-                                        if (!preset.isDefault) {
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(28.dp)
-                                                    .clip(CircleShape)
-                                                    .background(SaltTheme.colors.text.copy(alpha = 0.08f))
-                                                    .clickable { presetPendingDelete = preset },
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Text(
-                                                    text = "✕",
-                                                    color = SaltTheme.colors.text.copy(alpha = 0.55f),
-                                                    fontSize = 12.sp,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                            }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Box(
+                                            modifier = Modifier
+                                                .size(28.dp)
+                                                .clip(CircleShape)
+                                                .background(SaltTheme.colors.text.copy(alpha = 0.08f))
+                                                .clickable { presetPendingDelete = preset },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "✕",
+                                                color = SaltTheme.colors.text.copy(alpha = 0.55f),
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
                                         }
                                     }
                                 }
@@ -397,6 +398,45 @@ fun HomeScreen(
                                     fontWeight = FontWeight.SemiBold,
                                     fontSize = 13.sp
                                 )
+                            }
+
+                            // 恢复默认预设 (后悔药胶囊按钮)
+                            if (hasDeletedDefaultPresets) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(SaltTheme.colors.subBackground)
+                                        .border(
+                                            width = 1.dp,
+                                            color = SaltTheme.colors.text.copy(alpha = 0.12f),
+                                            shape = RoundedCornerShape(14.dp)
+                                        )
+                                        .clickable {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            viewModel.restoreDefaultPresets()
+                                        }
+                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Text(
+                                            text = "↺",
+                                            color = SaltTheme.colors.text.copy(alpha = 0.70f),
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "恢复默认",
+                                            color = SaltTheme.colors.text.copy(alpha = 0.70f),
+                                            style = SaltTheme.textStyles.main,
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                }
                             }
                         }
 
@@ -448,34 +488,95 @@ fun HomeScreen(
                     }
                 }
 
-                // Section 2: Sound Matrix Header (Span 2)
+                // Section 2: Sound Matrix Header & Category Filter (Span 2)
                 item(span = { GridItemSpan(2) }) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 4.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "音效矩阵",
-                            style = SaltTheme.textStyles.main,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            color = SaltTheme.colors.text
-                        )
-                        Text(
-                            text = if (activeTracks.isNotEmpty()) "已开启 ${activeTracks.size} 轨" else "轻触卡片开启混音",
-                            style = SaltTheme.textStyles.sub,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 12.sp,
-                            color = if (activeTracks.isNotEmpty()) SaltTheme.colors.highlight else SaltTheme.colors.text.copy(alpha = 0.65f)
-                        )
+                    Column {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "音效矩阵",
+                                style = SaltTheme.textStyles.main,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = SaltTheme.colors.text
+                            )
+                            Text(
+                                text = if (activeTracks.isNotEmpty()) "已开启 ${activeTracks.size} 轨" else "轻触卡片开启混音",
+                                style = SaltTheme.textStyles.sub,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 12.sp,
+                                color = if (activeTracks.isNotEmpty()) SaltTheme.colors.highlight else SaltTheme.colors.text.copy(alpha = 0.65f)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        // Category Filter Chips
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState())
+                                .padding(horizontal = 2.dp, vertical = 2.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            SoundCategory.entries.forEach { category ->
+                                val isSelected = category == selectedCategory
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(
+                                            if (isSelected) SaltTheme.colors.highlight.copy(alpha = 0.12f)
+                                            else SaltTheme.colors.subBackground
+                                        )
+                                        .border(
+                                            width = 1.dp,
+                                            color = if (isSelected) SaltTheme.colors.highlight.copy(alpha = 0.45f) else Color.Transparent,
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+                                        .clickable {
+                                            if (selectedCategory != category) {
+                                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                selectedCategory = category
+                                            }
+                                        }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Text(
+                                            text = category.iconEmoji,
+                                            fontSize = 12.sp
+                                        )
+                                        Text(
+                                            text = category.title,
+                                            style = SaltTheme.textStyles.sub,
+                                            fontSize = 12.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isSelected) SaltTheme.colors.highlight else SaltTheme.colors.text.copy(alpha = 0.75f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
+                val displayedTracks = if (selectedCategory == SoundCategory.ALL) {
+                    tracks
+                } else {
+                    tracks.filter { selectedCategory.matches(it.id) }
+                }
+
                 // Bento Sound Tiles (2 columns)
-                items(tracks, key = { it.id }) { track ->
+                items(displayedTracks, key = { it.id }) { track ->
                     SoundTileCard(
                         track = track,
                         onTogglePlay = { viewModel.toggleTrackPlay(track.id) }

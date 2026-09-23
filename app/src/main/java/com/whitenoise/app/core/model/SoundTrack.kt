@@ -37,6 +37,13 @@ data class SoundTrack(
             "boat" -> "🛶"
             "pink_noise" -> "🌸"
             "city" -> "🏙️"
+            "brown_noise" -> "🪐"
             else -> "🎵"
         }
+
+    /**
+     * Category classification for matrix filtering.
+     */
+    val category: SoundCategory
+        get() = SoundCategory.fromTrackId(id)
 }
