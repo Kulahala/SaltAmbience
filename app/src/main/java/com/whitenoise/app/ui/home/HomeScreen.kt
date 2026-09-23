@@ -24,6 +24,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,7 +38,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import android.os.Build
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -131,21 +136,46 @@ fun HomeScreen(
 
     val activeTracks = remember(tracks) { tracks.filter { it.isPlaying } }
 
+    val isAnySheetOpen = showMixerSheet || showSleepDialog || showAboutDialog ||
+        showSavePresetDialog || showThemeDialog || showImportDialog || (presetPendingDelete != null)
+
+    // Smooth backdrop blur (14.dp provides elegant legibility reduction without excessive GPU convolution overhead)
+    val animatedBlurRadius by animateDpAsState(
+        targetValue = if (isAnySheetOpen && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) 14.dp else 0.dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "HomeScreenBackdropBlur"
+    )
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(SaltTheme.colors.background)
     ) {
-        // 2-Column Bento Grid as Main Scroll Container (Header scrolls away naturally)
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 130.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        // Main Screen Content (Pure Backdrop Blur on modal open, no artificial scaling/corner warping)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .then(
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && animatedBlurRadius > 0.dp) {
+                        Modifier.blur(animatedBlurRadius)
+                    } else {
+                        Modifier
+                    }
+                )
         ) {
-            // Section 0: App Bar Header (Span 2)
-            item(span = { GridItemSpan(2) }) {
+            // Adaptive Bento Grid as Main Scroll Container (Multi-device responsive: 2 columns on phone, 3-4 on tablet/landscape)
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 160.dp),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 130.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+            // Section 0: App Bar Header (Full width span)
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -154,12 +184,39 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text(
-                            text = "SaltAmbience",
-                            style = SaltTheme.textStyles.largeTitle,
-                            color = SaltTheme.colors.text
-                        )
+                    // Left Brand Header with subtle version badge (Tapping opens About dialog with haptic feedback)
+                    Column(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                viewModel.setShowAboutDialog(true)
+                            }
+                            .padding(horizontal = 6.dp, vertical = 4.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "SaltAmbience",
+                                style = SaltTheme.textStyles.largeTitle,
+                                color = SaltTheme.colors.text
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(SaltTheme.colors.subBackground)
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "v1.6.1",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = SaltTheme.colors.text.copy(alpha = 0.65f)
+                                )
+                            }
+                        }
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "椒盐美学 · 多轨自然声混音",
@@ -168,53 +225,31 @@ fun HomeScreen(
                         )
                     }
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    // Top Right: Compact Theme Switch Button (About moved to Title Header)
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(SaltTheme.colors.subBackground)
+                            .clickable { viewModel.setShowThemeDialog(true) }
+                            .padding(horizontal = 12.dp, vertical = 7.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        // Theme Switch Button
-                        Box(
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .background(SaltTheme.colors.subBackground)
-                                .clickable { viewModel.setShowThemeDialog(true) }
-                                .padding(horizontal = 10.dp, vertical = 7.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = themeMode.iconEmoji,
-                                    fontSize = 13.sp
-                                )
-                                Text(
-                                    text = when (themeMode) {
-                                        com.whitenoise.app.core.model.ThemeMode.SYSTEM -> "系统"
-                                        com.whitenoise.app.core.model.ThemeMode.LIGHT -> "浅色"
-                                        com.whitenoise.app.core.model.ThemeMode.DARK -> "深色"
-                                    },
-                                    style = SaltTheme.textStyles.sub,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = SaltTheme.colors.text.copy(alpha = 0.75f)
-                                )
-                            }
-                        }
-
-                        // About Button
-                        Box(
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .background(SaltTheme.colors.subBackground)
-                                .clickable { viewModel.setShowAboutDialog(true) }
-                                .padding(horizontal = 14.dp, vertical = 7.dp),
-                            contentAlignment = Alignment.Center
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                text = "关于",
+                                text = themeMode.iconEmoji,
+                                fontSize = 13.sp
+                            )
+                            Text(
+                                text = when (themeMode) {
+                                    com.whitenoise.app.core.model.ThemeMode.SYSTEM -> "系统"
+                                    com.whitenoise.app.core.model.ThemeMode.LIGHT -> "浅色"
+                                    com.whitenoise.app.core.model.ThemeMode.DARK -> "深色"
+                                },
                                 style = SaltTheme.textStyles.sub,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = SaltTheme.colors.text.copy(alpha = 0.75f)
                             )
@@ -223,9 +258,9 @@ fun HomeScreen(
                 }
             }
 
-            // Lightweight detected clipboard banner (Span 2)
+            // Lightweight detected clipboard banner (Full width span)
             if (detectedPayload != null) {
-                item(span = { GridItemSpan(2) }) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -271,8 +306,8 @@ fun HomeScreen(
                     }
                 }
             }
-                // Section 1: Presets (Span 2)
-                item(span = { GridItemSpan(2) }) {
+                // Section 1: Presets (Full width span)
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     Column {
                         Row(
                             modifier = Modifier
@@ -488,8 +523,8 @@ fun HomeScreen(
                     }
                 }
 
-                // Section 2: Sound Matrix Header & Category Filter (Span 2)
-                item(span = { GridItemSpan(2) }) {
+                // Section 2: Sound Matrix Header & Category Filter (Full width span)
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     Column {
                         Row(
                             modifier = Modifier
@@ -584,21 +619,22 @@ fun HomeScreen(
                 }
             }
 
-        // Floating Compact Mini Pill Player Bar
-        BottomPlayerBar(
-            playbackState = playbackState,
-            activeTracks = activeTracks,
-            onToggleMasterPlay = { viewModel.toggleMasterPlay() },
-            onOpenMixer = {
-                viewModel.setShowSleepTimerDialog(false)
-                showMixerSheet = true
-            },
-            onOpenSleepTimer = {
-                showMixerSheet = false
-                viewModel.setShowSleepTimerDialog(true)
-            },
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
+            // Floating Compact Mini Pill Player Bar
+            BottomPlayerBar(
+                playbackState = playbackState,
+                activeTracks = activeTracks,
+                onToggleMasterPlay = { viewModel.toggleMasterPlay() },
+                onOpenMixer = {
+                    viewModel.setShowSleepTimerDialog(false)
+                    showMixerSheet = true
+                },
+                onOpenSleepTimer = {
+                    showMixerSheet = false
+                    viewModel.setShowSleepTimerDialog(true)
+                },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
 
         // Expandable HyperOS / iOS Style Multi-Track Mixer Bottom Sheet
         MixerBottomSheet(

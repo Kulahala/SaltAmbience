@@ -214,15 +214,18 @@ flowchart LR
   - `brown_noise.ogg`：10s CC0 无缝慢波循环音频接入，更新 `SoundTrack`、`SoundRepository`、`AboutBottomSheet` 及两处 `SOUNDS_LICENSING.md`；
   - 版本号递增为 `v1.6.0` (versionCode 9)。
 
-### Stage 9: 视觉交互闭环与图标重塑 (v1.6.1)
-- **目标**：落地包豪斯声学琴弦 (D-14) 官方自适应矢量图标并归档 D-16 备选；重构底部悬浮播控条为 100% 实色表面杜绝半透穿透叠字；垫高底部安全内边距至 130.dp 消除音效卡片被遮挡；顶栏随手势自然平滑滚动释放全屏视野。
+### Stage 9: 视觉交互闭环、图标重塑与大屏自适应 (v1.6.1)
+- **目标**：落地包豪斯声学琴弦 (D-14) 官方自适应矢量图标并归档 D-16 备选；重构底部悬浮播控条为 100% 实色表面杜绝半透穿透叠字；垫高底部安全内边距至 130.dp 消除音效卡片被遮挡；顶栏随手势自然平滑滚动释放全屏视野；二级抽屉落地非线性物理弹簧动效、玄武岩冷炭黑立体悬浮与纯净原生高斯模糊（Backdrop Blur，14.dp 规避离屏渲染掉帧）；顶栏做减法移除右上角冗余关于按钮，左上角品牌标题区嵌入 v1.6.1 微徽章作为触感入口；全站网格升级为多设备自适应 `GridCells.Adaptive(minSize = 160.dp)` 配合 `GridItemSpan(maxLineSpan)` 全宽跨度，完美兼容平板、大折叠屏与横屏。
 - **门禁标准**：33 项单元测试 100% 通过，assembleRelease 与 assembleDebug 编译成功。
 - **交付记录**：
   - `ic_launcher_background.xml` + `ic_launcher_foreground.xml` + `ic_launcher_monochrome.xml` (D-14 实装，支持 Android 13+ 主题取色)；
   - `ic_launcher_background_d16.xml` + `ic_launcher_foreground_d16.xml` + `ic_launcher_d16.xml` (D-16 备选归档)；
   - `BottomPlayerBar.kt`：背景采用 100% 实色表面（深色 `#1E2026` / 浅色 `#F2F4F7`），内部按键独立景深，彻底杜绝半透明背景导致的卡片文字穿透叠字；
   - `HomeScreen.kt`：移除外层静态 Column，Header 移入 `LazyVerticalGrid` 头部随手势自然滚动，释放全屏垂直沉浸视野；`contentPadding.bottom` 增加至 130.dp 确保末行卡片完全露在底栏上方；
-  - 版本号递增为 `v1.6.1` (versionCode 10)。
+  - `SaltBottomSheet.kt` & `MixerBottomSheet.kt`：落地进场物理弹簧 `spring(dampingRatio = 0.82f, stiffness = 380f)` 与快速加速退场；抽屉面板采用玄武岩冷炭黑 `#1B1D24` 搭配 `1.dp` 柔光描边拉开纵深；
+  - `HomeScreen.kt`：抽屉打开时主屏背景平滑渐变至 `14.dp` 高斯毛玻璃失焦（Android 12+ GPU 硬件加速，低版本平滑降级），彻底剔除造成渲染卡顿与视觉突兀的多余缩放内凹；
+  - `HomeScreen.kt`：升级为 `GridCells.Adaptive(minSize = 160.dp)`，将 4 处通栏区域升级为 `GridItemSpan(maxLineSpan)`，自适应手机 2 列、平板/折叠屏 3~4 列；右上角移除关于按钮，左上角标题区嵌入 `v1.6.1` 微胶囊触感入口；
+  - 版本号维护为 `v1.6.1` (versionCode 10)。
 
 ---
 

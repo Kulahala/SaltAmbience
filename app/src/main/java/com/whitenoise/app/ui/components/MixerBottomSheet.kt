@@ -3,13 +3,17 @@ package com.whitenoise.app.ui.components
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -82,6 +86,10 @@ fun MixerBottomSheet(
     val animatedOffsetY = remember { Animatable(0f) }
     val density = LocalDensity.current
     val dismissThreshold = with(density) { 70.dp.toPx() }
+    val isDark = SaltTheme.configs.isDarkTheme
+    val shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    val sheetBackgroundColor = if (isDark) Color(0xFF1B1D24) else SaltTheme.colors.background
+    val sheetBorderColor = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.04f)
 
     LaunchedEffect(isVisible) {
         if (isVisible) {
@@ -93,16 +101,16 @@ fun MixerBottomSheet(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter
     ) {
-        // Semi-transparent scrim
+        // Semi-transparent scrim with nonlinear fade
         AnimatedVisibility(
             visible = isVisible,
-            enter = fadeIn(),
-            exit = fadeOut()
+            enter = fadeIn(animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing)),
+            exit = fadeOut(animationSpec = tween(durationMillis = 200, easing = FastOutLinearInEasing))
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.45f))
+                    .background(Color.Black.copy(alpha = if (isDark) 0.55f else 0.40f))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
@@ -110,19 +118,33 @@ fun MixerBottomSheet(
             )
         }
 
-        // Sliding Bottom Sheet
+        // Sliding Bottom Sheet with Physics Spring Entry
         AnimatedVisibility(
             visible = isVisible,
-            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+            enter = slideInVertically(
+                animationSpec = spring(
+                    dampingRatio = 0.82f,
+                    stiffness = 380f
+                ),
+                initialOffsetY = { it }
+            ) + fadeIn(
+                animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing)
+            ),
+            exit = slideOutVertically(
+                animationSpec = tween(durationMillis = 220, easing = FastOutLinearInEasing),
+                targetOffsetY = { it }
+            ) + fadeOut(
+                animationSpec = tween(durationMillis = 180, easing = FastOutLinearInEasing)
+            )
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .offset { IntOffset(0, animatedOffsetY.value.roundToInt().coerceAtLeast(0)) }
-                    .shadow(elevation = 20.dp, shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-                    .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-                    .background(SaltTheme.colors.background)
+                    .shadow(elevation = 24.dp, shape = shape)
+                    .clip(shape)
+                    .border(width = 1.dp, color = sheetBorderColor, shape = shape)
+                    .background(sheetBackgroundColor)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
