@@ -48,6 +48,7 @@ fun AboutBottomSheet(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     val versionName = remember(context) {
         try {
             val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -160,14 +161,17 @@ fun AboutBottomSheet(
                                 "• 粉红噪 (Pink Noise) - Omegatron (CC BY-SA 3.0)\n" +
                                 "• 都市 (City) - gezortenplotz (CC BY 3.0)\n" +
                                 "• 棕色噪音 (Brown Noise) - Omegatron (CC BY-SA 3.0)\n" +
-                                "• 电风扇 (Fan) - Moodist / MAZE (MIT / CC0)\n" +
-                                "• 钟表 (Clock) - Moodist / MAZE (MIT / CC0)\n" +
-                                "• 机械键盘 (Keyboard) - Moodist / MAZE (MIT / CC0)\n" +
-                                "• 风铃 (Wind Chimes) - Moodist / MAZE (MIT / CC0)\n" +
-                                "• 雨打屋檐 (Rain Roof) - Moodist / MAZE (MIT / CC0)\n" +
-                                "• 深海水声 (Underwater) - Moodist / MAZE (MIT / CC0)\n" +
+                                "• 电风扇 (Fan) - Moodist / MAZE (Pixabay / CC0)\n" +
+                                "• 钟表 (Clock) - Moodist / MAZE (Pixabay / CC0)\n" +
+                                "• 机械键盘 (Keyboard) - Moodist / MAZE (Pixabay / CC0)\n" +
+                                "• 风铃 (Wind Chimes) - Moodist / MAZE (Pixabay / CC0)\n" +
+                                "• 雨打屋檐 (Rain Roof) - Moodist / MAZE (Pixabay / CC0)\n" +
+                                "• 深海水声 (Underwater) - Moodist / MAZE (Pixabay / CC0)\n" +
                                 "• 科学绿噪 (Green Noise) - SaltAmbience (CC0 1.0 自研算法)\n\n" +
                                 "完整许可条款已归档至 SOUNDS_LICENSING.md。\n\n" +
+                                "致敬与致谢：\n" +
+                                "• 感谢 Moriafly 开源贡献的 SaltUI 椒盐美学设计规范\n" +
+                                "• 感谢 Rafael Mardojai (Blanket) 与 remvze (Moodist) 整理的高品质自然音源\n\n" +
                                 "技术基座：\n" +
                                 "• SaltUI 3.x 设计规范\n" +
                                 "• AndroidX Media3 ExoPlayer 多轨引擎\n" +
@@ -181,22 +185,52 @@ fun AboutBottomSheet(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // Action Button (Fixed at bottom)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(SaltTheme.colors.subBackground)
-                    .clickable { onDismiss() }
-                    .padding(vertical = 12.dp),
-                contentAlignment = Alignment.Center
+            // Action Buttons: Open Project GitHub & Dismiss
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text(
-                    text = "我知道了",
-                    style = SaltTheme.textStyles.main,
-                    fontWeight = FontWeight.Medium,
-                    color = SaltTheme.colors.highlight
-                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SaltTheme.colors.subBackground)
+                        .clickable {
+                            try {
+                                uriHandler.openUri("https://github.com/Kulahala/SaltAmbience")
+                            } catch (e: Exception) {
+                                // Ignore
+                            }
+                        }
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "项目主页 (GitHub)",
+                        style = SaltTheme.textStyles.main,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = SaltTheme.colors.text
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
+                        .clickable { onDismiss() }
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "我知道了",
+                        style = SaltTheme.textStyles.main,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = SaltTheme.colors.highlight
+                    )
+                }
             }
         }
     }

@@ -19,17 +19,36 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("saltambience.keystore")
-            storePassword = "saltambience"
-            keyAlias = "saltambience"
-            keyPassword = "saltambience"
+            val envKeystore = System.getenv("KEYSTORE_PATH")
+            val envStorePass = System.getenv("KEYSTORE_PASSWORD") ?: System.getenv("STORE_PASSWORD")
+            val envKeyAlias = System.getenv("KEY_ALIAS")
+            val envKeyPass = System.getenv("KEY_PASSWORD")
+
+            val localKeystore = file("saltambience.keystore")
+
+            if (!envKeystore.isNullOrEmpty() && file(envKeystore).exists()) {
+                storeFile = file(envKeystore)
+                storePassword = envStorePass
+                keyAlias = envKeyAlias
+                keyPassword = envKeyPass
+            } else if (localKeystore.exists()) {
+                storeFile = localKeystore
+                storePassword = envStorePass ?: "saltambience"
+                keyAlias = envKeyAlias ?: "saltambience"
+                keyPassword = envKeyPass ?: "saltambience"
+            }
         }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release")
+            val releaseConfig = signingConfigs.getByName("release")
+            if (releaseConfig.storeFile != null && releaseConfig.storeFile?.exists() == true) {
+                signingConfig = releaseConfig
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -37,7 +56,6 @@ android {
         }
         debug {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release")
         }
     }
 

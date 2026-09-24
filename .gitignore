@@ -29,5 +29,9 @@ Thumbs.db
 *.apk
 *.aab
 
+# Keystores & Signing Keys
+*.keystore
+*.jks
+
 # Temporary download scripts
 download_sounds.py

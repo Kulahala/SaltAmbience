@@ -4,6 +4,9 @@
 
 让连绵细雨、山涧清泉、夜风与林野鸟鸣在耳畔交织，助你专注沉浸、安抚身心、深度入眠。
 
+> **致敬与独立声明 (Attribution & Disclaimer)**：  
+> SaltAmbience（椒盐白噪音）为独立开发者开源作品，视觉设计深受 **Moriafly** 的 **SaltUI 椒盐美学** 设计哲学启发并采用其开源 UI 组件库开发。本项目与「椒盐音乐 (Salt Player)」及 Moriafly 官方团队无商业附属或隶属关系。感谢 Moriafly 为开源社区贡献的极致设计规范！
+
 ---
 
 ## 核心设计与特性
@@ -17,7 +20,7 @@
 - **纯实色防叠字悬浮舱**：吸顶顶栏与底部常驻播控胶囊全面采用 100% 不透明实色表面（深色 `#121212` / `#1E2026`，浅色 `#FAFAFA` / `#F2F4F7`）搭配细微 1.dp 边缘高光描边与 130.dp 底部避让，彻底杜绝半透明背景导致的卡片文字穿透叠字；0 掉帧、0 额外能耗。
 
 ### 2. 专业多轨混音引擎 (Audio Architecture)
-- **15 款高品质无缝自然音**：雨水、自然、生活、纯噪五维分类胶囊（Filter Chips）即时无缝过滤，包含 CC0 慢波助眠棕色噪音 (Brown Noise)；音源全部采用无缝 OGG 格式。
+- **全量 22 款高品质无缝自然音**：雨水、自然、生活、纯噪四维分类胶囊（Filter Chips）即时无缝过滤，包含 CC0 慢波助眠棕色噪音 (Brown Noise) 及自研科学绿噪；全部音源均经过采样级正余弦等能量交叉淡化无缝循环处理。
 - **防循环疲劳声学微动态**：引入「起播随机时间戳偏置」（打破固定开头记忆）与「±2% 自然微速差纯净重采样」（打破机械节拍公倍数与相位死锁），多轨混音相对相位持续滑动，长时聆听如大自然般永不单调。
 - **零时延瞬发响应引擎**：定制 50ms 本地超低延迟缓冲控制（`lowLatencyLoadControl`），配合 UI 0ms 乐观翻转与音频焦点异步协程调度，消除体感起播与暂停延迟。
 - **锁屏通知黑胶艺术大封面**：动态渲染 512×512 包豪斯黑胶声学艺术大封面注入系统锁屏与媒体通知中心，消灭粗糙拉伸白三角，实时联动当前播放主题。
@@ -28,6 +31,10 @@
 ### 3. 场景预设与口令分享 (Presets & Sharing)
 - **方案自由管理**：内置「深夜暴雨」、「海边小木屋」等经典预设，支持一键将当前混音保存为自定义预设；自定义方案倒序置顶，支持删除二次确认防误触，提供「↺ 恢复默认」一键复原机制。
 - **Base64 口令秒级互通**：长按预设触感复制分享口令；应用冷/热启动自动识别剪贴板预设口令并弹出轻量胶囊一键导入。
+
+### 4. 极致隐私与功耗守护 (Privacy & Performance)
+- **零网络权限**：代码与 Manifest 清单中 `0` 个网络权限，不申请 `INTERNET`，没有任何数据上传、埋点统计或广告组件，纯粹离线运行。
+- **屏幕常亮守护**：设置中心内置床头/桌面看护开关，在播放中可按需保持屏幕微光常亮。
 
 ---
 
@@ -48,25 +55,32 @@
 
 ## 音源资产与合规开源 (Sound Assets)
 
-本项目自然声音频资产均经过无缝循环处理，遵循各自的 CC0 / CC-BY 开源许可：
+本项目自然声音频资产均经过采样级无缝循环处理，遵循各自的 CC0 / CC-BY / Pixabay 开源许可：
 
-- 细雨 (`rain.ogg`) · CC BY 4.0 (Blanket / Rafael Mardojai)
-- 雷雨 (`storm.ogg`) · CC BY 3.0
-- 林风 (`wind.ogg`) · CC0 1.0
-- 溪流 (`stream.ogg`) · CC0 1.0
+- 细雨 (`rain.ogg`) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (Blanket / Rafael Mardojai)
+- 雷雨 (`storm.ogg`) · [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
+- 林风 (`wind.ogg`) · [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
+- 溪流 (`stream.ogg`) · [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 - 篝火 (`fireplace.ogg`) · Public Domain
-- 鸟鸣 (`birds.ogg`) · CC0 1.0
+- 鸟鸣 (`birds.ogg`) · [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 - 夏夜 (`summer_night.ogg`) · Public Domain
-- 纯白噪 (`white_noise.ogg`) · CC BY-SA 3.0
-- 海浪 (`waves.ogg`) · CC BY 3.0
+- 纯白噪 (`white_noise.ogg`) · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)
+- 海浪 (`waves.ogg`) · [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
 - 咖啡馆 (`coffee_shop.ogg`) · Public Domain
-- 列车 (`train.ogg`) · CC BY 3.0
-- 小舟 (`boat.ogg`) · CC0 1.0
-- 粉红噪 (`pink_noise.ogg`) · CC BY-SA 3.0
-- 都市 (`city.ogg`) · CC BY 3.0
-- 棕色噪音 (`brown_noise.ogg`) · CC0 1.0
+- 列车 (`train.ogg`) · [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
+- 小舟 (`boat.ogg`) · [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
+- 粉红噪 (`pink_noise.ogg`) · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)
+- 都市 (`city.ogg`) · [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
+- 棕色噪音 (`brown_noise.ogg`) · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)
+- 电风扇 (`fan.ogg`) · [Pixabay / CC0](https://github.com/remvze/moodist) (Moodist / MAZE)
+- 钟表 (`clock.ogg`) · [Pixabay / CC0](https://github.com/remvze/moodist) (Moodist / MAZE)
+- 机械键盘 (`keyboard.ogg`) · [Pixabay / CC0](https://github.com/remvze/moodist) (Moodist / MAZE)
+- 风铃 (`wind_chimes.ogg`) · [Pixabay / CC0](https://github.com/remvze/moodist) (Moodist / MAZE)
+- 雨打屋檐 (`rain_roof.ogg`) · [Pixabay / CC0](https://github.com/remvze/moodist) (Moodist / MAZE)
+- 深海水声 (`underwater.ogg`) · [Pixabay / CC0](https://github.com/remvze/moodist) (Moodist / MAZE)
+- 科学绿噪 (`green_noise.ogg`) · [CC0 1.0](https://github.com/Kulahala/SaltAmbience) (SaltAmbience 自研算法)
 
-详细原作者署名与许可文本参见 [SOUNDS_LICENSING.md](SOUNDS_LICENSING.md)。
+详细原作者署名、源链接与独立分发限制参见 [SOUNDS_LICENSING.md](SOUNDS_LICENSING.md)。
 
 ---
 
@@ -88,6 +102,7 @@
 
 ---
 
-## 开源协议
+## 开源协议 (License)
 
-本项目源码基于 [MIT License](LICENSE) 开源。音频资源版权归属原作者，遵循各自的 CC 协议。
+本项目软件源码基于 [MIT License](LICENSE) 开源。  
+媒体与音频资产保留各自独立的 Creative Commons、Public Domain 及 Pixabay 许可条款，详见 [SOUNDS_LICENSING.md](SOUNDS_LICENSING.md)。

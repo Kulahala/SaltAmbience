@@ -161,6 +161,7 @@ app/src/main/java/com/whitenoise/app/
 | **Stage 19** | 设置中心抽屉 (SettingsBottomSheet)、后台播放保活与屏幕常亮控制 (v1.8.0) | **[x] 已达成** | 落地包豪斯齿轮矢量图标 (`BauhausUiSymbol.Settings`) 与高光调色；自研纯 Compose 阻尼物理弹簧跑道开关 (`SaltSwitch`) 配备 `TextHandleMove` 微震；Bento 分组设置抽屉（后台播放保活开关、常亮看护开关、内嵌三段式外观模式胶囊、开源致谢与重置方案入口）；`HomeScreen` 联动 Activity Window Flag 与 Lifecycle ON_STOP 暂停；72 项单测与 Release 构建 100% 全绿。 |
 | **Stage 20** | 音效生态全量扩充至 22 款、声学无缝工坊与专属包豪斯矢量符号 (v1.9.0) | **[x] 已达成** | 扩充电风扇、钟表、机械键盘、风铃、雨打屋檐、深海水声、科学绿噪等 7 款无缝音源（全站扩充至 22 款自然音）；Python + FFmpeg 7.1 实现采样级等能量交叉淡化无缝循环；手绘 7 款专属包豪斯极简矢量符号 (`BauhausSoundIcon`) 与自然语义调色；更新防疲劳时间戳偏置库；72 项单测全绿，Release 打包全绿。 |
 | **Stage 21** | 交互入口去冗余、设置抽屉收敛与致谢包豪斯胶囊滚动条 (v1.9.1) | **[x] 已达成** | 砍掉左上角 Brand 标题隐式点击暗门，收敛至右上角设置；砍掉设置中重复盲目的重置预设，交由方案库闭环；开源致谢副标更新为 22 款；关于抽屉加入 340dp 高度约束与纯原生包豪斯微光细胶囊滚动条；72 项单测全绿，Release 打包全绿。 |
+| **Stage 22** | 仓库公开合规性整改、分层多重许可与签名体系安全解耦 (v1.9.1-compliance) | **[x] 已达成** | 补齐根目录分层 MIT LICENSE (包含媒体音频独立排除例外)；重构 SOUNDS_LICENSING.md 补齐 CC 官方 URL 及 Pixabay 独立分发免责；README 补充 Moriafly/SaltPlayer 致敬免责及零权限隐私特性；端内关于抽屉增加 GitHub 主页直达；从 Git 解耦 keystore 并配置环境变量/优雅降级；72 项单测全绿，Debug/Release 构建全绿。 |
 
 ---
 
