@@ -117,7 +117,7 @@ fun AboutBottomSheet(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "本项目音效资产源自 Rafael Mardojai 的开源项目 Blanket 及社区公共领域贡献，经过无缝交叉淡化循环处理（全量 15 款音效）：\n\n" +
+                        text = "本项目音效资产源自 Rafael Mardojai 的开源项目 Blanket、Moodist 及社区公共领域贡献，全部经过采样级无缝交叉淡化循环处理（全量 22 款音效）：\n\n" +
                                 "• 细雨 (Rain) - alex36917 (CC BY 4.0)\n" +
                                 "• 雷雨 (Storm) - Digifish music (CC BY 3.0)\n" +
                                 "• 林风 (Wind) - felix.blume (CC0 1.0)\n" +
@@ -132,7 +132,14 @@ fun AboutBottomSheet(
                                 "• 小舟 (Boat) - Falcet (CC0 1.0)\n" +
                                 "• 粉红噪 (Pink Noise) - Omegatron (CC BY-SA 3.0)\n" +
                                 "• 都市 (City) - gezortenplotz (CC BY 3.0)\n" +
-                                "• 棕色噪音 (Brown Noise) - Omegatron (CC BY-SA 3.0)\n\n" +
+                                "• 棕色噪音 (Brown Noise) - Omegatron (CC BY-SA 3.0)\n" +
+                                "• 电风扇 (Fan) - Moodist / MAZE (MIT / CC0)\n" +
+                                "• 钟表 (Clock) - Moodist / MAZE (MIT / CC0)\n" +
+                                "• 机械键盘 (Keyboard) - Moodist / MAZE (MIT / CC0)\n" +
+                                "• 风铃 (Wind Chimes) - Moodist / MAZE (MIT / CC0)\n" +
+                                "• 雨打屋檐 (Rain Roof) - Moodist / MAZE (MIT / CC0)\n" +
+                                "• 深海水声 (Underwater) - Moodist / MAZE (MIT / CC0)\n" +
+                                "• 科学绿噪 (Green Noise) - SaltAmbience (CC0 1.0 自研算法)\n\n" +
                                 "完整许可条款已归档至 SOUNDS_LICENSING.md。\n\n" +
                                 "技术基座：\n" +
                                 "• SaltUI 3.x 设计规范\n" +

@@ -13,8 +13,8 @@ android {
         applicationId = "com.whitenoise.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 19
-        versionName = "1.7.8"
+        versionCode = 20
+        versionName = "1.9.0"
     }
 
     signingConfigs {

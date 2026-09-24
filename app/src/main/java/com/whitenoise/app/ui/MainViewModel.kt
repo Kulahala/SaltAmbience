@@ -81,6 +81,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _showImportDialog = MutableStateFlow(false)
     val showImportDialog: StateFlow<Boolean> = _showImportDialog.asStateFlow()
 
+    private val _showSettingsDialog = MutableStateFlow(false)
+    val showSettingsDialog: StateFlow<Boolean> = _showSettingsDialog.asStateFlow()
+
+    val keepScreenOn: StateFlow<Boolean> = preferencesManager.keepScreenOnFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = false
+    )
+
+    val backgroundPlaybackEnabled: StateFlow<Boolean> = preferencesManager.backgroundPlaybackEnabledFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = true
+    )
+
     // Detected clipboard preset payload for banner
     private val _clipboardDetectedPayload = MutableStateFlow<PresetSharePayload?>(null)
     val clipboardDetectedPayload: StateFlow<PresetSharePayload?> = _clipboardDetectedPayload.asStateFlow()
@@ -149,6 +164,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleMasterPlay() {
         val currentState = engine.playbackState.value.isMasterPlaying
         engine.setMasterPlaying(!currentState)
+    }
+
+    fun pauseMasterPlay() {
+        engine.setMasterPlaying(false)
     }
 
     fun setMasterVolume(volume: Float) {
@@ -278,6 +297,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setShowImportDialog(show: Boolean) {
         _showImportDialog.value = show
+    }
+
+    fun setShowSettingsDialog(show: Boolean) {
+        _showSettingsDialog.value = show
+    }
+
+    fun setKeepScreenOn(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesManager.saveKeepScreenOn(enabled)
+        }
+    }
+
+    fun setBackgroundPlaybackEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesManager.saveBackgroundPlaybackEnabled(enabled)
+        }
     }
 
     fun dismissClipboardBanner() {

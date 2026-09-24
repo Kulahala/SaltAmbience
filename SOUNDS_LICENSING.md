@@ -19,6 +19,13 @@ All audio assets in **SaltAmbience (WhiteNoise-Android)** are sourced from the o
 | **粉红噪 (Pink Noise)** | `pink_noise.ogg` | [Omegatron / Pink_noise](https://commons.wikimedia.org/wiki/File:Pink_noise.ogg) | Omegatron | - | CC BY-SA 3.0 |
 | **都市 (City)** | `city.ogg` | [gezortenplotz / sounds / 44796](https://freesound.org/people/gezortenplotz/sounds/44796/) | gezortenplotz | Porrumentzio | CC BY 3.0 |
 | **棕色噪音 (Brown Noise)** | `brown_noise.ogg` | [Omegatron / Brown_noise](https://commons.wikimedia.org/wiki/File:Brown_noise.ogg) | Omegatron | - | CC BY-SA 3.0 |
+| **电风扇 (Fan)** | `fan.ogg` | [remvze/moodist / ceiling-fan](https://github.com/remvze/moodist) | Moodist / MAZE | SaltAmbience | MIT / CC0 |
+| **钟表 (Clock)** | `clock.ogg` | [remvze/moodist / clock](https://github.com/remvze/moodist) | Moodist / MAZE | SaltAmbience | MIT / CC0 |
+| **机械键盘 (Keyboard)** | `keyboard.ogg` | [remvze/moodist / keyboard](https://github.com/remvze/moodist) | Moodist / MAZE | SaltAmbience | MIT / CC0 |
+| **风铃 (Wind Chimes)** | `wind_chimes.ogg` | [remvze/moodist / wind-chimes](https://github.com/remvze/moodist) | Moodist / MAZE | SaltAmbience | MIT / CC0 |
+| **雨打屋檐 (Rain Roof)** | `rain_roof.ogg` | [remvze/moodist / rain-on-window](https://github.com/remvze/moodist) | Moodist / MAZE | SaltAmbience | MIT / CC0 |
+| **深海水声 (Underwater)** | `underwater.ogg` | [remvze/moodist / underwater](https://github.com/remvze/moodist) | Moodist / MAZE | SaltAmbience | MIT / CC0 |
+| **科学绿噪 (Green Noise)** | `green_noise.ogg` | [SaltAmbience / Green Noise 500Hz](https://github.com/Kulahala/SaltAmbience) | SaltAmbience | SaltAmbience | CC0 1.0 (Public Domain) |
 
 > (*) Editing implies cross-fade loop processing according to Blanket audio loop guidelines.
-> Special thanks to [Rafael Mardojai](https://github.com/rafaelmardojai) and the Blanket community for curating and looping these natural sounds.
+> Special thanks to [Rafael Mardojai](https://github.com/rafaelmardojai) (Blanket), [remvze](https://github.com/remvze/moodist) (Moodist), and Wikimedia Commons for curating and providing these natural soundscapes.

@@ -158,6 +158,8 @@ app/src/main/java/com/whitenoise/app/
 | **Stage 16** | 顶栏折叠吸顶、纯实色悬浮舱与方案库导入闭环 (v1.7.6) | **[x] 已达成** | 彻底根除外部 alpha 模糊库闪退与负 offset 截断 bug；大标题随手势 1:1 动态收缩折叠；预设横滑栏（固定 54.dp）永远稳固吸顶；主屏移除冗余“恢复默认”，将其与官方方案库深度收纳进导入弹窗（支持已存在提示与单项/全量找回）；顶栏与播控条落地 100% 纯实色防叠字悬浮舱；全站 69 项单测 100% 全绿。 |
 | **Stage 17** | Ponytail 极简架构瘦身、剥离 Material3/Media3-UI 与抽屉容器收敛 (v1.7.7) | **[x] 已达成** | 彻底剔除 `material3`、`media3-ui`、`espresso` 等 4 个非必要依赖；自研轻量 `SaltHorizontalSlider` 替代 Material3 Slider；收敛 `MixerBottomSheet` 与 `SleepTimerBottomSheet` 到统一 `SaltBottomSheet`；净消减逾 600 行代码，全站测试与打包 100% 全绿。 |
 | **Stage 18** | 预设卡片平滑过渡、核心操作触感微震与抽屉关闭按钮正圆统一 (v1.7.8) | **[x] 已达成** | 预设方案卡片接入 `animateColorAsState` 平滑渐变消除硬切跳变；音效开关/预设应用/播控补齐 `TextHandleMove` 轻触微震；5 个抽屉右上角关闭按钮统一为 32dp 正圆并保留控制中心“完成”；单测与 Release 构建 100% 全绿。 |
+| **Stage 19** | 设置中心抽屉 (SettingsBottomSheet)、后台播放保活与屏幕常亮控制 (v1.8.0) | **[x] 已达成** | 落地包豪斯齿轮矢量图标 (`BauhausUiSymbol.Settings`) 与高光调色；自研纯 Compose 阻尼物理弹簧跑道开关 (`SaltSwitch`) 配备 `TextHandleMove` 微震；Bento 分组设置抽屉（后台播放保活开关、常亮看护开关、内嵌三段式外观模式胶囊、开源致谢与重置方案入口）；`HomeScreen` 联动 Activity Window Flag 与 Lifecycle ON_STOP 暂停；72 项单测与 Release 构建 100% 全绿。 |
+| **Stage 20** | 音效生态全量扩充至 22 款、声学无缝工坊与专属包豪斯矢量符号 (v1.9.0) | **[x] 已达成** | 扩充电风扇、钟表、机械键盘、风铃、雨打屋檐、深海水声、科学绿噪等 7 款无缝音源（全站扩充至 22 款自然音）；Python + FFmpeg 7.1 实现采样级等能量交叉淡化无缝循环；手绘 7 款专属包豪斯极简矢量符号 (`BauhausSoundIcon`) 与自然语义调色；更新防疲劳时间戳偏置库；72 项单测全绿，Release 打包全绿。 |
 
 ---
 

@@ -375,9 +375,9 @@ class StateDeduplicationAndNotificationTest {
     }
 
     @Test
-    fun testAllFifteenTracksHaveCorrespondingNameResolution() {
+    fun testAllTwentyTwoTracksHaveCorrespondingNameResolution() {
         val tracks = SoundRepository.ALL_TRACKS
-        assertEquals(15, tracks.size)
+        assertEquals(22, tracks.size)
 
         for (track in tracks) {
             val resolvedName = SoundRepository.ALL_TRACKS.find { it.id == track.id }?.name
@@ -403,9 +403,9 @@ class StateDeduplicationAndNotificationTest {
     }
 
     @Test
-    fun testAllFifteenTracksHaveDistinctSkeuomorphicPalettes() {
+    fun testAllTwentyTwoTracksHaveDistinctSkeuomorphicPalettes() {
         val tracks = SoundRepository.ALL_TRACKS
-        assertEquals(15, tracks.size)
+        assertEquals(22, tracks.size)
 
         // Verify each track returns non-null valid colors
         for (track in tracks) {

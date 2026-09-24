@@ -22,7 +22,7 @@ class BauhausUiIconTest {
     @Test
     fun testAllBauhausUiSymbolsDefined() {
         val symbols = BauhausUiSymbol.entries
-        assertEquals(12, symbols.size)
+        assertEquals(13, symbols.size)
 
         val expectedNames = listOf(
             "Play",
@@ -36,7 +36,8 @@ class BauhausUiIconTest {
             "Timer",
             "Add",
             "Restore",
-            "Import"
+            "Import",
+            "Settings"
         )
         for (name in expectedNames) {
             assertTrue("Expected symbol $name in BauhausUiSymbol entries", symbols.any { it.name == name })
@@ -208,6 +209,14 @@ class BauhausUiIconTest {
         val check = BauhausUiTheme.getPalette(BauhausUiSymbol.Check, isDark = false)
         assertEquals(Color(0xFF10B981), check.primary)
         assertEquals(Color(0xFF34D399), check.secondary)
+
+        // Settings: 机械冷灰/极光冰蓝
+        val settingsDark = BauhausUiTheme.getPalette(BauhausUiSymbol.Settings, isDark = true)
+        assertEquals(Color(0xFFE2E8F0), settingsDark.primary)
+        assertEquals(Color(0xFF38BDF8), settingsDark.secondary)
+        val settingsLight = BauhausUiTheme.getPalette(BauhausUiSymbol.Settings, isDark = false)
+        assertEquals(Color(0xFF334155), settingsLight.primary)
+        assertEquals(Color(0xFF38BDF8), settingsLight.secondary)
     }
 
     @Test
@@ -237,7 +246,8 @@ class BauhausUiIconTest {
         val tracks = listOf(
             "rain", "storm", "wind", "stream", "fireplace", "birds",
             "summer_night", "white_noise", "waves", "coffee_shop",
-            "train", "boat", "pink_noise", "city", "brown_noise"
+            "train", "boat", "pink_noise", "city", "brown_noise",
+            "fan", "clock", "keyboard", "wind_chimes", "rain_roof", "underwater", "green_noise"
         )
         for (trackId in tracks) {
             val palette = BauhausSoundTheme.getPalette(trackId, isDark = true)

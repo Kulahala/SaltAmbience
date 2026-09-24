@@ -108,6 +108,55 @@ object SoundRepository {
             subtitle = "深沉厚重的低频慢波瀑布声",
             assetFileName = "brown_noise.ogg",
             volume = 0.5f
+        ),
+        SoundTrack(
+            id = "fan",
+            name = "电风扇",
+            subtitle = "恒定转动的机械微风伴眠",
+            assetFileName = "fan.ogg",
+            volume = 0.5f
+        ),
+        SoundTrack(
+            id = "clock",
+            name = "钟表",
+            subtitle = "规律催眠的秒针律动",
+            assetFileName = "clock.ogg",
+            volume = 0.5f
+        ),
+        SoundTrack(
+            id = "keyboard",
+            name = "机械键盘",
+            subtitle = "清脆规律的指尖敲击节奏",
+            assetFileName = "keyboard.ogg",
+            volume = 0.45f
+        ),
+        SoundTrack(
+            id = "wind_chimes",
+            name = "风铃",
+            subtitle = "微风吹拂的空灵金属脆响",
+            assetFileName = "wind_chimes.ogg",
+            volume = 0.5f
+        ),
+        SoundTrack(
+            id = "rain_roof",
+            name = "雨打屋檐",
+            subtitle = "雨水滴落窗檐与屋顶的庇护感",
+            assetFileName = "rain_roof.ogg",
+            volume = 0.5f
+        ),
+        SoundTrack(
+            id = "underwater",
+            name = "深海水声",
+            subtitle = "深潜海底的沉浸低频与水泡",
+            assetFileName = "underwater.ogg",
+            volume = 0.55f
+        ),
+        SoundTrack(
+            id = "green_noise",
+            name = "绿噪",
+            subtitle = "聚焦自然中频的心理学慢波",
+            assetFileName = "green_noise.ogg",
+            volume = 0.5f
         )
     )
 

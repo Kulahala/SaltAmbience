@@ -33,6 +33,28 @@ class PreferencesManager(private val context: Context) {
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         private val KEY_PRESET_HINT_DISMISSED = booleanPreferencesKey("preset_hint_dismissed")
         private val KEY_DELETED_DEFAULT_PRESETS = stringSetPreferencesKey("deleted_default_preset_ids")
+        private val KEY_KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on")
+        private val KEY_BACKGROUND_PLAYBACK_ENABLED = booleanPreferencesKey("background_playback_enabled")
+    }
+
+    val keepScreenOnFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[KEY_KEEP_SCREEN_ON] ?: false
+    }
+
+    suspend fun saveKeepScreenOn(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_KEEP_SCREEN_ON] = enabled
+        }
+    }
+
+    val backgroundPlaybackEnabledFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[KEY_BACKGROUND_PLAYBACK_ENABLED] ?: true
+    }
+
+    suspend fun saveBackgroundPlaybackEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_BACKGROUND_PLAYBACK_ENABLED] = enabled
+        }
     }
 
     val deletedDefaultPresetIdsFlow: Flow<Set<String>> = context.dataStore.data.map { preferences ->

@@ -35,7 +35,8 @@ enum class BauhausUiSymbol {
     Timer,
     Add,
     Restore,
-    Import
+    Import,
+    Settings
 }
 
 /**
@@ -104,6 +105,10 @@ object BauhausUiTheme {
         BauhausUiSymbol.Check -> BauhausUiPalette(
             primary = Color(0xFF10B981), // 完成绿
             secondary = Color(0xFF34D399) // 完成亮绿
+        )
+        BauhausUiSymbol.Settings -> BauhausUiPalette(
+            primary = if (isDark) Color(0xFFE2E8F0) else Color(0xFF334155),
+            secondary = Color(0xFF38BDF8)
         )
     }
 }
@@ -480,6 +485,42 @@ private fun DrawScope.drawBauhausUiSymbol(
             drawLine(secondaryColor, Offset(w * 0.50f, h * 0.14f), Offset(w * 0.50f, h * 0.62f), strokeWidth, StrokeCap.Round)
             drawLine(secondaryColor, Offset(w * 0.34f, h * 0.46f), Offset(w * 0.50f, h * 0.62f), strokeWidth, StrokeCap.Round)
             drawLine(secondaryColor, Offset(w * 0.66f, h * 0.46f), Offset(w * 0.50f, h * 0.62f), strokeWidth, StrokeCap.Round)
+        }
+
+        BauhausUiSymbol.Settings -> {
+            // Bauhaus acoustic gear: central hollow ring + core acoustic dot + 6 symmetric radial teeth
+            val center = Offset(w * 0.50f, h * 0.50f)
+            val ringRadius = w * 0.26f
+            drawCircle(
+                color = primaryColor,
+                radius = ringRadius,
+                center = center,
+                style = Stroke(width = strokeWidth)
+            )
+            // Core secondary acoustic dot
+            drawCircle(
+                color = secondaryColor,
+                radius = w * 0.08f,
+                center = center
+            )
+            // 6 radial teeth at 0°, 60°, 120°, 180°, 240°, 300°
+            val innerR = w * 0.28f
+            val outerR = w * 0.44f
+            val angles = floatArrayOf(0f, 60f, 120f, 180f, 240f, 300f)
+            for (deg in angles) {
+                val rad = Math.toRadians(deg.toDouble())
+                val cos = Math.cos(rad).toFloat()
+                val sin = Math.sin(rad).toFloat()
+                val p1 = Offset(center.x + innerR * cos, center.y + innerR * sin)
+                val p2 = Offset(center.x + outerR * cos, center.y + outerR * sin)
+                drawLine(
+                    color = primaryColor,
+                    start = p1,
+                    end = p2,
+                    strokeWidth = strokeWidth * 1.15f,
+                    cap = StrokeCap.Round
+                )
+            }
         }
     }
 }

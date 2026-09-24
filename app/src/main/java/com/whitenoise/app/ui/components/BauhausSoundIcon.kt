@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.unit.dp
 import com.moriafly.salt.ui.SaltTheme
@@ -101,6 +103,34 @@ object BauhausSoundTheme {
             "brown_noise" -> SoundIconPalette(
                 primary = if (isDark) Color(0xFFB0BEC5) else Color(0xFF4E342E), // 岩石灰
                 secondary = Color(0xFF6D4C41) // 大地泥土暖褐
+            )
+            "fan" -> SoundIconPalette(
+                primary = lightPrimary,
+                secondary = Color(0xFF00ACC1) // 微风冰青
+            )
+            "clock" -> SoundIconPalette(
+                primary = if (isDark) Color(0xFFFFF8E1) else Color(0xFF37474F), // 象牙白/深灰
+                secondary = Color(0xFFF59E0B) // 表盘暖金
+            )
+            "keyboard" -> SoundIconPalette(
+                primary = if (isDark) Color(0xFFECEFF1) else Color(0xFF263238), // 键帽冷银/碳黑
+                secondary = Color(0xFF818CF8) // 极客霓虹蓝紫
+            )
+            "wind_chimes" -> SoundIconPalette(
+                primary = lightPrimary,
+                secondary = Color(0xFFFBBF24) // 黄铜金响
+            )
+            "rain_roof" -> SoundIconPalette(
+                primary = if (isDark) Color(0xFFCFD8DC) else Color(0xFF37474F), // 屋檐石板灰
+                secondary = Color(0xFF38BDF8) // 雨滴天青
+            )
+            "underwater" -> SoundIconPalette(
+                primary = lightPrimary,
+                secondary = Color(0xFF0284C7) // 深海蔚蓝
+            )
+            "green_noise" -> SoundIconPalette(
+                primary = lightPrimary,
+                secondary = Color(0xFF10B981) // 森林翡翠绿
             )
             else -> SoundIconPalette(
                 primary = lightPrimary,
@@ -496,6 +526,131 @@ private fun DrawScope.drawBauhausSymbol(
             }
             drawPath(deepWave, secondaryColor, style = strokeS)
             drawCircle(secondaryColor, radius = strokeWidth * lerp(0.70f, 1.1f, morphProgress), center = Offset(w * 0.50f, h * 0.54f))
+        }
+
+        "fan" -> {
+            // Rotating aerodynamic 3-blade fan propeller with protective circular rim
+            val rimRadius = w * 0.38f
+            drawCircle(primaryColor, radius = rimRadius, center = center, style = strokeP)
+            val rotAngle = lerp(0f, 60f, morphProgress)
+            rotate(degrees = rotAngle, pivot = center) {
+                for (angle in listOf(0f, 120f, 240f)) {
+                    val rad = Math.toRadians(angle.toDouble())
+                    val tipX = center.x + (rimRadius * 0.82f) * Math.cos(rad).toFloat()
+                    val tipY = center.y + (rimRadius * 0.82f) * Math.sin(rad).toFloat()
+                    drawLine(secondaryColor, center, Offset(tipX, tipY), strokeWidth = strokeWidth * 1.1f, cap = StrokeCap.Round)
+                }
+            }
+            drawCircle(secondaryColor, radius = strokeWidth * 0.9f, center = center)
+        }
+
+        "clock" -> {
+            // Bauhaus clock dial + 90-degree hands + suspension top crown
+            val dialRadius = w * 0.34f
+            drawCircle(primaryColor, radius = dialRadius, center = center, style = strokeP)
+            // Top crown
+            drawLine(primaryColor, Offset(center.x, center.y - dialRadius), Offset(center.x, center.y - dialRadius - h * 0.08f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            // Hour hand (pointing to 12)
+            drawLine(secondaryColor, center, Offset(center.x, center.y - dialRadius * 0.58f), strokeWidth = strokeWidth * 1.1f, cap = StrokeCap.Round)
+            // Minute hand (pointing to 3 with slight morph tick)
+            val tickAngle = lerp(0f, 15f, morphProgress)
+            val minLen = dialRadius * 0.78f
+            val minRad = Math.toRadians(tickAngle.toDouble())
+            val minX = center.x + minLen * Math.cos(minRad).toFloat()
+            val minY = center.y + minLen * Math.sin(minRad).toFloat()
+            drawLine(secondaryColor, center, Offset(minX, minY), strokeWidth = strokeWidth * 0.85f, cap = StrokeCap.Round)
+            drawCircle(secondaryColor, radius = strokeWidth * 0.65f, center = center)
+        }
+
+        "keyboard" -> {
+            // Stepped isometric mechanical keycaps with actuation bounce
+            val keyW = w * 0.28f
+            val keyH = h * 0.30f
+            val corner = CornerRadius(4.dp.toPx())
+            // Key 1 (Base key on left)
+            drawRoundRect(primaryColor, topLeft = Offset(w * 0.16f, h * 0.34f), size = Size(keyW, keyH), cornerRadius = corner, style = strokeP)
+            // Key 2 (Active key on right pressed down with bounce)
+            val key2Y = lerp(h * 0.26f, h * 0.36f, morphProgress)
+            drawRoundRect(secondaryColor, topLeft = Offset(w * 0.54f, key2Y), size = Size(keyW, keyH), cornerRadius = corner, style = strokeS)
+            // Bottom chassis line
+            val baseLine = h * 0.78f
+            drawLine(primaryColor, Offset(w * 0.12f, baseLine), Offset(w * 0.88f, baseLine), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            // Actuation spark dot
+            drawCircle(secondaryColor, radius = strokeWidth * 0.60f, center = Offset(w * 0.68f, key2Y + keyH * 0.50f))
+        }
+
+        "wind_chimes" -> {
+            // Horizontal suspension bar + 3 staggered vertical chime tubes + swinging pendulum clapper
+            val barY = h * 0.22f
+            drawLine(primaryColor, Offset(w * 0.16f, barY), Offset(w * 0.84f, barY), strokeWidth = strokeWidth * 1.1f, cap = StrokeCap.Round)
+            // 3 chime rods
+            drawLine(secondaryColor, Offset(w * 0.30f, barY), Offset(w * 0.30f, h * 0.54f), strokeWidth = strokeWidth * 0.85f, cap = StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.50f, barY), Offset(w * 0.50f, h * 0.68f), strokeWidth = strokeWidth * 0.85f, cap = StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.70f, barY), Offset(w * 0.70f, h * 0.46f), strokeWidth = strokeWidth * 0.85f, cap = StrokeCap.Round)
+            // Center swinging string & leaf pendant
+            val swingX = lerp(w * 0.50f, w * 0.58f, morphProgress)
+            drawLine(primaryColor, Offset(w * 0.50f, h * 0.68f), Offset(swingX, h * 0.84f), strokeWidth = strokeWidth * 0.55f, cap = StrokeCap.Round)
+            drawCircle(secondaryColor, radius = strokeWidth * 0.75f, center = Offset(swingX, h * 0.84f))
+        }
+
+        "rain_roof" -> {
+            // Slanted roof eaves line with eaves edge
+            val roofLine = Path().apply {
+                moveTo(w * 0.12f, h * 0.32f)
+                lineTo(w * 0.84f, h * 0.42f)
+                lineTo(w * 0.80f, h * 0.52f)
+            }
+            drawPath(roofLine, primaryColor, style = strokeP)
+            // 3 Dripping raindrops falling with vertical morphing
+            val drop1Y = lerp(h * 0.52f, h * 0.68f, morphProgress)
+            drawLine(secondaryColor, Offset(w * 0.28f, h * 0.46f), Offset(w * 0.28f, drop1Y), strokeWidth = strokeWidth * 0.80f, cap = StrokeCap.Round)
+            val drop2Y = lerp(h * 0.60f, h * 0.78f, morphProgress)
+            drawCircle(secondaryColor, radius = strokeWidth * 0.75f, center = Offset(w * 0.52f, drop2Y))
+            val drop3Y = lerp(h * 0.56f, h * 0.74f, morphProgress)
+            drawLine(secondaryColor, Offset(w * 0.76f, h * 0.52f), Offset(w * 0.76f, drop3Y), strokeWidth = strokeWidth * 0.80f, cap = StrokeCap.Round)
+        }
+
+        "underwater" -> {
+            // Twin deep ocean undulating curves + rising aeration bubbles
+            val waveAmp = lerp(0.65f, 1.0f, morphProgress)
+            val wave1 = Path().apply {
+                moveTo(w * 0.14f, h * 0.62f)
+                cubicTo(w * 0.36f, h * 0.62f - (h * 0.12f * waveAmp), w * 0.64f, h * 0.62f + (h * 0.12f * waveAmp), w * 0.86f, h * 0.62f)
+            }
+            drawPath(wave1, primaryColor, style = strokeP)
+            val wave2 = Path().apply {
+                moveTo(w * 0.18f, h * 0.78f)
+                cubicTo(w * 0.40f, h * 0.78f - (h * 0.08f * waveAmp), w * 0.62f, h * 0.78f + (h * 0.08f * waveAmp), w * 0.82f, h * 0.78f)
+            }
+            drawPath(wave2, secondaryColor, style = strokeS)
+            // Rising bubbles
+            val b1Y = lerp(h * 0.48f, h * 0.28f, morphProgress)
+            drawCircle(secondaryColor, radius = strokeWidth * 0.80f, center = Offset(w * 0.36f, b1Y), style = strokeS)
+            val b2Y = lerp(h * 0.58f, h * 0.40f, morphProgress)
+            drawCircle(secondaryColor, radius = strokeWidth * 0.55f, center = Offset(w * 0.68f, b2Y), style = strokeS)
+        }
+
+        "green_noise" -> {
+            // Natural 500Hz bell-curve spectrum bars dancing with spring morphing
+            val baseLine = h * 0.80f
+            val bars = listOf(
+                w * 0.20f to 0.22f,
+                w * 0.35f to 0.42f,
+                w * 0.50f to 0.62f, // Central resonant peak
+                w * 0.65f to 0.42f,
+                w * 0.80f to 0.22f
+            )
+            // Base horizontal axis
+            drawLine(primaryColor, Offset(w * 0.12f, baseLine), Offset(w * 0.88f, baseLine), strokeWidth = strokeWidth * 0.8f, cap = StrokeCap.Round)
+            // Pulsing frequency energy bars
+            for ((x, maxHFactor) in bars) {
+                val currentH = h * maxHFactor * lerp(0.60f, 1.0f, morphProgress)
+                val isPeak = x == w * 0.50f
+                val barColor = if (isPeak) secondaryColor else primaryColor
+                drawLine(barColor, Offset(x, baseLine), Offset(x, baseLine - currentH), strokeWidth = strokeWidth * 0.90f, cap = StrokeCap.Round)
+            }
+            // Energy peak dot
+            drawCircle(secondaryColor, radius = strokeWidth * 0.75f, center = Offset(w * 0.50f, baseLine - h * 0.62f * lerp(0.60f, 1.0f, morphProgress) - strokeWidth))
         }
 
         else -> {

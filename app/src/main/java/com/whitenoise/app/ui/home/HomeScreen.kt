@@ -60,8 +60,10 @@ import androidx.compose.ui.unit.sp
 import com.moriafly.salt.ui.SaltTheme
 import com.moriafly.salt.ui.Text
 import com.whitenoise.app.ui.MainViewModel
+import android.app.Activity
 import android.content.ClipboardManager
 import android.content.Context
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -86,6 +88,7 @@ import com.whitenoise.app.ui.components.DeletePresetConfirmBottomSheet
 import com.whitenoise.app.ui.components.ImportPresetBottomSheet
 import com.whitenoise.app.ui.components.MixerBottomSheet
 import com.whitenoise.app.ui.components.SavePresetBottomSheet
+import com.whitenoise.app.ui.components.SettingsBottomSheet
 import com.whitenoise.app.ui.components.SleepTimerBottomSheet
 import com.whitenoise.app.ui.components.SoundTileCard
 import com.whitenoise.app.ui.components.ThemeSelectionBottomSheet
@@ -125,6 +128,9 @@ fun HomeScreen(
     val showSavePresetDialog by viewModel.showSavePresetDialog.collectAsState()
     val showThemeDialog by viewModel.showThemeDialog.collectAsState()
     val showImportDialog by viewModel.showImportDialog.collectAsState()
+    val showSettingsDialog by viewModel.showSettingsDialog.collectAsState()
+    val keepScreenOn by viewModel.keepScreenOn.collectAsState()
+    val backgroundPlaybackEnabled by viewModel.backgroundPlaybackEnabled.collectAsState()
     val detectedPayload by viewModel.clipboardDetectedPayload.collectAsState()
     val themeMode by viewModel.themeMode.collectAsState()
     val isPresetHintDismissed by viewModel.isPresetHintDismissed.collectAsState()
@@ -139,6 +145,20 @@ fun HomeScreen(
             .associate { it.id to it.volume }
     }
 
+    // Keep screen on when enabled in settings AND audio is actively playing
+    val shouldKeepScreenOn = keepScreenOn && playbackState.isMasterPlaying && activeTracksMap.isNotEmpty()
+    DisposableEffect(shouldKeepScreenOn) {
+        val activity = context as? Activity
+        if (shouldKeepScreenOn) {
+            activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        onDispose {
+            activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+
     // Observe Toast feedback events
     LaunchedEffect(Unit) {
         viewModel.toastMessage.collectLatest { msg ->
@@ -146,8 +166,8 @@ fun HomeScreen(
         }
     }
 
-    // Inspect clipboard when Activity resumes to foreground
-    DisposableEffect(lifecycleOwner) {
+    // Inspect clipboard when Activity resumes; pause playback on stop if background playback is disabled
+    DisposableEffect(lifecycleOwner, backgroundPlaybackEnabled) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 try {
@@ -156,6 +176,10 @@ fun HomeScreen(
                     viewModel.inspectClipboard(clipText)
                 } catch (e: Exception) {
                     // Ignore
+                }
+            } else if (event == Lifecycle.Event.ON_STOP) {
+                if (!backgroundPlaybackEnabled && viewModel.playbackState.value.isMasterPlaying) {
+                    viewModel.pauseMasterPlay()
                 }
             }
         }
@@ -171,7 +195,7 @@ fun HomeScreen(
     val activeTracks = remember(tracks) { tracks.filter { it.isPlaying } }
 
     val isAnySheetOpen = showMixerSheet || showSleepDialog || showAboutDialog ||
-        showSavePresetDialog || showThemeDialog || showImportDialog || (presetPendingDelete != null)
+        showSavePresetDialog || showThemeDialog || showImportDialog || showSettingsDialog || (presetPendingDelete != null)
 
     // Smooth backdrop blur (14.dp provides elegant legibility reduction without excessive GPU convolution overhead)
     val animatedBlurRadius by animateDpAsState(
@@ -537,29 +561,28 @@ fun HomeScreen(
                                 )
                             }
 
-                            // Top Right: Compact Theme Switch Button
+                            // Top Right: Compact Settings Button
                             Box(
                                 modifier = Modifier
                                     .clip(CircleShape)
                                     .background(SaltTheme.colors.subBackground)
-                                    .clickable { viewModel.setShowThemeDialog(true) }
+                                    .clickable {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        viewModel.setShowSettingsDialog(true)
+                                    }
                                     .padding(horizontal = 12.dp, vertical = 7.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     BauhausUiIcon(
-                                        symbol = themeMode.toBauhausSymbol(),
+                                        symbol = BauhausUiSymbol.Settings,
                                         modifier = Modifier.size(13.dp)
                                     )
                                     Text(
-                                        text = when (themeMode) {
-                                            com.whitenoise.app.core.model.ThemeMode.SYSTEM -> "系统"
-                                            com.whitenoise.app.core.model.ThemeMode.LIGHT -> "浅色"
-                                            com.whitenoise.app.core.model.ThemeMode.DARK -> "深色"
-                                        },
+                                        text = "设置",
                                         style = SaltTheme.textStyles.sub,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Medium,
@@ -794,6 +817,25 @@ fun HomeScreen(
             currentMode = themeMode,
             onSelectMode = { mode -> viewModel.setThemeMode(mode) },
             onDismiss = { viewModel.setShowThemeDialog(false) }
+        )
+
+        SettingsBottomSheet(
+            isVisible = showSettingsDialog,
+            onDismiss = { viewModel.setShowSettingsDialog(false) },
+            keepScreenOn = keepScreenOn,
+            onKeepScreenOnChange = { viewModel.setKeepScreenOn(it) },
+            backgroundPlaybackEnabled = backgroundPlaybackEnabled,
+            onBackgroundPlaybackEnabledChange = { viewModel.setBackgroundPlaybackEnabled(it) },
+            themeMode = themeMode,
+            onSelectThemeMode = { viewModel.setThemeMode(it) },
+            versionName = versionName,
+            onOpenAbout = {
+                viewModel.setShowSettingsDialog(false)
+                viewModel.setShowAboutDialog(true)
+            },
+            onRestorePresets = {
+                viewModel.restoreDefaultPresets()
+            }
         )
 
         ImportPresetBottomSheet(
