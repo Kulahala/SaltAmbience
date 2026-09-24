@@ -311,7 +311,7 @@ fun MixerBottomSheet(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Stop All Button
+                            // Clear Mix Button
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
@@ -321,35 +321,54 @@ fun MixerBottomSheet(
                                     .padding(vertical = 14.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = "⏹ 全部停止",
-                                    style = SaltTheme.textStyles.main,
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 14.sp,
-                                    color = SaltTheme.colors.text.copy(alpha = 0.8f)
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    BauhausUiIcon(
+                                        symbol = BauhausUiSymbol.Clear,
+                                        modifier = Modifier.size(15.dp),
+                                        tint = SaltTheme.colors.text.copy(alpha = 0.8f)
+                                    )
+                                    Text(
+                                        text = "清空混音",
+                                        style = SaltTheme.textStyles.main,
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 14.sp,
+                                        color = SaltTheme.colors.text.copy(alpha = 0.8f)
+                                    )
+                                }
                             }
 
                             // Master Play/Pause Button
+                            val playButtonColor = if (isMasterPlaying) SaltTheme.colors.highlight else SaltTheme.colors.highlight.copy(alpha = 0.15f)
+                            val playContentColor = if (isMasterPlaying) Color.White else SaltTheme.colors.highlight
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(16.dp))
-                                    .background(
-                                        if (isMasterPlaying) SaltTheme.colors.highlight
-                                        else SaltTheme.colors.highlight.copy(alpha = 0.15f)
-                                    )
+                                    .background(playButtonColor)
                                     .clickable { onToggleMasterPlay() }
                                     .padding(vertical = 14.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = if (isMasterPlaying) "⏸ 暂停混音" else "▶ 继续混音",
-                                    style = SaltTheme.textStyles.main,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                    color = if (isMasterPlaying) Color.White else SaltTheme.colors.highlight
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    BauhausUiIcon(
+                                        symbol = if (isMasterPlaying) BauhausUiSymbol.Pause else BauhausUiSymbol.Play,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = playContentColor
+                                    )
+                                    Text(
+                                        text = if (isMasterPlaying) "暂停混音" else "继续混音",
+                                        style = SaltTheme.textStyles.main,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = playContentColor
+                                    )
+                                }
                             }
                         }
                     }

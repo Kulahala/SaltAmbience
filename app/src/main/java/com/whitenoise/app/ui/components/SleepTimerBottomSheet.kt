@@ -247,17 +247,27 @@ fun SleepTimerBottomSheet(
                                         .padding(horizontal = 8.dp, vertical = 3.dp)
                                 ) {
                                     val countdownStr = VolumeCalculator.formatCountdown(sleepTimerRemainingSeconds)
-                                    Text(
-                                        text = "⏱️ $countdownStr 倒计时中",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = SaltTheme.colors.highlight
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        BauhausUiIcon(
+                                            symbol = BauhausUiSymbol.Timer,
+                                            modifier = Modifier.size(11.dp),
+                                            tint = SaltTheme.colors.highlight
+                                        )
+                                        Text(
+                                            text = "$countdownStr 倒计时中",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = SaltTheme.colors.highlight
+                                        )
+                                    }
                                 }
                             }
                         }
 
-                        // Close "✕" Button
+                        // Close button
                         Box(
                             modifier = Modifier
                                 .size(32.dp)
@@ -267,11 +277,10 @@ fun SleepTimerBottomSheet(
                                 .padding(4.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "✕",
-                                color = SaltTheme.colors.text.copy(alpha = 0.6f),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold
+                            BauhausUiIcon(
+                                symbol = BauhausUiSymbol.Close,
+                                modifier = Modifier.size(12.dp),
+                                tint = SaltTheme.colors.text.copy(alpha = 0.6f)
                             )
                         }
                     }
@@ -441,7 +450,7 @@ fun SleepTimerBottomSheet(
                                         .padding(bottom = 2.dp)
                                 ) {
                                     Text(
-                                        text = "✏️ 输入",
+                                        text = "手动输入",
                                         fontSize = 11.sp,
                                         color = SaltTheme.colors.text.copy(alpha = 0.65f),
                                         fontWeight = FontWeight.Medium
@@ -608,7 +617,7 @@ fun SleepTimerBottomSheet(
                     // Explanatory Footer
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "💡 到期前将呈对数平滑淡出至静音，结束后自动释放播放服务",
+                        text = "到期前将呈对数平滑淡出至静音，结束后自动释放播放服务",
                         style = SaltTheme.textStyles.sub,
                         fontSize = 11.sp,
                         color = SaltTheme.colors.text.copy(alpha = 0.55f),

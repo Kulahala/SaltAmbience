@@ -96,6 +96,7 @@ app/src/main/java/com/whitenoise/app/
 ### 3.3 椒盐美学 UI 规范 (`SaltUI`)
 - **视觉风格**：清爽克制、低饱和度、大圆角卡片、清晰的分组布局。
 - **包豪斯声学极简矢量符号与拟物色彩语义**：全站废除彩色 Emoji，统一由纯几何点、线、面构成的 `BauhausSoundIcon` 接管，未激活哑光雾灰；激活时映射真实自然声学意象（溪流上白下水蓝、篝火烈焰橙红+火星金黄、雷雨高能电光黄+暴雨白、林风苍翠绿、夏夜月牙金+静谧夜紫、海浪深海蔚蓝、粉噪柔粉、棕噪大地暖褐等），明暗自适应；底栏播放条做减法移除重复混音按钮，右侧独占动态倒计时胶囊。
+- **全站 UI 核心系统图标包豪斯矢量化 (`BauhausUiIcon`)**：全站播控（Play/Pause）、控制中心清空（Clear）、主题模式（ThemeSystem/Light/Dark）、定时胶囊（Timer）、添加/恢复（Add/Restore）、弹窗关闭与勾选（Close/Check）全面接管，杜绝任何系统 Emoji 与 Unicode 字符 Hack；控制中心停止按钮精准定名为「清空混音」，杜绝交互误导。
 - **色彩与层级契约 (Color Tokens Contract)**：
   - **主底色（Level 0 主屏幕背景）**：必须使用 `SaltTheme.colors.background`（浅色为纯白 `#FAFAFA`，深色为 `#121212`），严禁在根容器滥用 `subBackground` 导致全局发灰；
   - **容器底色（Level 1 卡片与抽屉）**：统一使用 `SaltTheme.colors.subBackground`（浅色为浅灰 `#F3F4F6`，深色为半透明白 `#FFFFFF14`），配合大圆角（`16.dp`~`20.dp`）；
@@ -141,6 +142,7 @@ app/src/main/java/com/whitenoise/app/
 | **Stage 10** | 锁屏通知包豪斯黑胶封面、声学极简矢量符号、低延迟瞬发引擎与防循环疲劳声学动态 (v1.7.0) | **[x] 已达成** | 彻底消除锁屏通知粗糙白三角，动态渲染注入 512x512 包豪斯黑胶声学艺术大封面与微小单色图标；15 款自然音全站废弃拟物 Emoji，由包豪斯声学极简矢量符号 (`BauhausSoundIcon`) 统一驱动；ExoPlayer 定制 50ms 缓冲策略 + 0ms 乐观响应 + 串行异步音频焦点治理消除体感半秒延迟；落地方案 A（起播随机时间戳偏置）与方案 B（±2% 自然微速差重采样），彻底消除长时播放循环疲劳；48 项单测 100% 全绿。 |
 | **Stage 11** | 定时器闪退根治、拟物语义专属配色、播控条精简与系统原生倒计时联动 (v1.7.1) | **[x] 已达成** | 根除 `String.format` 字符百分号插值崩溃，抽取纯 Kotlin 安全倒计时工具；15 款音标与锁屏黑胶封面全量落地拟物语义配色（篝火烈焰红橙+金星、雷雨电光黄、林风苍翠绿等）；播控条移除冗余混音按钮并落地实时倒计时高亮胶囊；通知栏与锁屏接入 Android 原生 `Chronometer` 硬件级秒级倒计时；52 项单测 100% 全绿。 |
 | **Stage 12** | LoadControl 独立实例工厂根治跨轨哑音、通知单轨直显与分钟级跳变驱动 (v1.7.2) | **[x] 已达成** | 彻底根除 Media3 DefaultLoadControl 单线程亲和性断言导致的并发哑音，采用工厂构建独立实例；通知副文本单轨直显音效名并消除锁屏截断折叠；通知栏精准分钟级跳变更新；56 项单测 100% 全绿。 |
+| **Stage 13** | 控制中心文案重塑为「清空混音」、全站 UI 核心系统图标包豪斯矢量化 (v1.7.3) | **[x] 已达成** | 控制中心按钮彻底消除歧义重塑为「清空混音」与 Play/Pause；全站上线统一的 `BauhausUiIcon` 纯几何 Canvas 矢量体系（Play、Pause、Clear、ThemeSystem、ThemeLight、ThemeDark、Close、Check、Timer、Add、Restore、Import 等 12 类符号），彻底消除粗糙的系统 Emoji 与 Unicode 字符 Hack；63 项单测 100% 全绿。 |
 
 ---
 

@@ -79,9 +79,10 @@ fun DeletePresetConfirmBottomSheet(
                             .background(Color(0xFFE53935).copy(alpha = 0.12f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "🗑️",
-                            fontSize = 18.sp
+                        BauhausUiIcon(
+                            symbol = BauhausUiSymbol.Clear,
+                            modifier = Modifier.size(18.dp),
+                            tint = Color(0xFFE53935)
                         )
                     }
 
@@ -114,11 +115,10 @@ fun DeletePresetConfirmBottomSheet(
                         .padding(horizontal = 10.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "✕",
-                        style = SaltTheme.textStyles.sub,
-                        color = SaltTheme.colors.text.copy(alpha = 0.6f),
-                        fontSize = 12.sp
+                    BauhausUiIcon(
+                        symbol = BauhausUiSymbol.Close,
+                        modifier = Modifier.size(11.dp),
+                        tint = SaltTheme.colors.text.copy(alpha = 0.6f)
                     )
                 }
             }

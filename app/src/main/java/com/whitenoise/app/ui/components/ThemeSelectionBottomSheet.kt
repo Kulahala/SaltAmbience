@@ -81,11 +81,10 @@ fun ThemeSelectionBottomSheet(
                         .padding(horizontal = 10.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "✕",
-                        style = SaltTheme.textStyles.sub,
-                        color = SaltTheme.colors.text.copy(alpha = 0.6f),
-                        fontSize = 12.sp
+                    BauhausUiIcon(
+                        symbol = BauhausUiSymbol.Close,
+                        modifier = Modifier.size(11.dp),
+                        tint = SaltTheme.colors.text.copy(alpha = 0.6f)
                     )
                 }
             }
@@ -96,7 +95,7 @@ fun ThemeSelectionBottomSheet(
                 mode = ThemeMode.SYSTEM,
                 title = "跟随系统",
                 subtitle = "自动匹配系统深色模式设置",
-                iconEmoji = "🌓",
+                symbol = BauhausUiSymbol.ThemeSystem,
                 isSelected = currentMode == ThemeMode.SYSTEM,
                 onClick = {
                     onSelectMode(ThemeMode.SYSTEM)
@@ -110,7 +109,7 @@ fun ThemeSelectionBottomSheet(
                 mode = ThemeMode.LIGHT,
                 title = "浅色模式",
                 subtitle = "清爽纯净，适合白天专注使用",
-                iconEmoji = "☀️",
+                symbol = BauhausUiSymbol.ThemeLight,
                 isSelected = currentMode == ThemeMode.LIGHT,
                 onClick = {
                     onSelectMode(ThemeMode.LIGHT)
@@ -124,7 +123,7 @@ fun ThemeSelectionBottomSheet(
                 mode = ThemeMode.DARK,
                 title = "深色模式",
                 subtitle = "纯净暗调，夜间助眠柔和不刺眼",
-                iconEmoji = "🌙",
+                symbol = BauhausUiSymbol.ThemeDark,
                 isSelected = currentMode == ThemeMode.DARK,
                 onClick = {
                     onSelectMode(ThemeMode.DARK)
@@ -159,7 +158,7 @@ private fun ThemeOptionItem(
     mode: ThemeMode,
     title: String,
     subtitle: String,
-    iconEmoji: String,
+    symbol: BauhausUiSymbol,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -185,9 +184,11 @@ private fun ThemeOptionItem(
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = iconEmoji,
-            fontSize = 22.sp
+        val iconTint = if (isSelected) SaltTheme.colors.highlight else SaltTheme.colors.text.copy(alpha = 0.75f)
+        BauhausUiIcon(
+            symbol = symbol,
+            modifier = Modifier.size(24.dp),
+            tint = iconTint
         )
 
         Spacer(modifier = Modifier.width(14.dp))
@@ -217,11 +218,10 @@ private fun ThemeOptionItem(
                     .background(SaltTheme.colors.highlight),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "✓",
-                    color = Color.White,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
+                BauhausUiIcon(
+                    symbol = BauhausUiSymbol.Check,
+                    modifier = Modifier.size(12.dp),
+                    tint = Color.White
                 )
             }
         }

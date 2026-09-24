@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -105,11 +106,10 @@ fun SavePresetBottomSheet(
                         .padding(horizontal = 10.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "✕",
-                        style = SaltTheme.textStyles.sub,
-                        color = SaltTheme.colors.text.copy(alpha = 0.6f),
-                        fontSize = 12.sp
+                    BauhausUiIcon(
+                        symbol = BauhausUiSymbol.Close,
+                        modifier = Modifier.size(11.dp),
+                        tint = SaltTheme.colors.text.copy(alpha = 0.6f)
                     )
                 }
             }

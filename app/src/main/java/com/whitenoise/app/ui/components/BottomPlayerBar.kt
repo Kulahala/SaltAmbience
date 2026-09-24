@@ -75,21 +75,21 @@ fun BottomPlayerBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Master Play / Pause Circular Button
+            val isMasterPlaying = playbackState.isMasterPlaying
+            val playBgColor = if (isMasterPlaying) SaltTheme.colors.highlight else buttonSurfaceColor
+            val playIconColor = if (isMasterPlaying) Color.White else SaltTheme.colors.highlight
             Box(
                 modifier = Modifier
                     .size(42.dp)
                     .clip(CircleShape)
-                    .background(
-                        if (playbackState.isMasterPlaying) SaltTheme.colors.highlight
-                        else buttonSurfaceColor
-                    )
+                    .background(playBgColor)
                     .clickable { onToggleMasterPlay() },
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = if (playbackState.isMasterPlaying) "⏸" else "▶",
-                    color = if (playbackState.isMasterPlaying) Color.White else SaltTheme.colors.highlight,
-                    fontSize = 16.sp
+                BauhausUiIcon(
+                    symbol = if (isMasterPlaying) BauhausUiSymbol.Pause else BauhausUiSymbol.Play,
+                    tint = playIconColor,
+                    modifier = Modifier.size(16.dp)
                 )
             }
 
@@ -171,11 +171,7 @@ fun BottomPlayerBar(
             val isTimerRunning = playbackState.isSleepTimerRunning
             val timerBg = if (isTimerRunning) SaltTheme.colors.highlight.copy(alpha = 0.16f) else buttonSurfaceColor
             val timerBorder = if (isTimerRunning) SaltTheme.colors.highlight.copy(alpha = 0.35f) else Color.Transparent
-            val timerText = if (isTimerRunning) {
-                "⏱️ " + VolumeCalculator.formatCountdown(playbackState.sleepTimerRemainingSeconds)
-            } else {
-                "⏱️ 定时"
-            }
+            val timerContentColor = if (isTimerRunning) SaltTheme.colors.highlight else SaltTheme.colors.text
 
             Box(
                 modifier = Modifier
@@ -186,13 +182,23 @@ fun BottomPlayerBar(
                     .padding(horizontal = 11.dp, vertical = 7.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = timerText,
-                    style = SaltTheme.textStyles.sub,
-                    fontWeight = if (isTimerRunning) FontWeight.Bold else FontWeight.Medium,
-                    fontSize = 12.sp,
-                    color = if (isTimerRunning) SaltTheme.colors.highlight else SaltTheme.colors.text
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    BauhausUiIcon(
+                        symbol = BauhausUiSymbol.Timer,
+                        tint = timerContentColor,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Text(
+                        text = if (isTimerRunning) VolumeCalculator.formatCountdown(playbackState.sleepTimerRemainingSeconds) else "定时",
+                        style = SaltTheme.textStyles.sub,
+                        fontWeight = if (isTimerRunning) FontWeight.Bold else FontWeight.Medium,
+                        fontSize = 12.sp,
+                        color = timerContentColor
+                    )
+                }
             }
         }
     }

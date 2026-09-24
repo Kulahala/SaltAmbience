@@ -122,11 +122,10 @@ fun ImportPresetBottomSheet(
                         .padding(horizontal = 10.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "✕",
-                        style = SaltTheme.textStyles.sub,
-                        color = SaltTheme.colors.text.copy(alpha = 0.6f),
-                        fontSize = 12.sp
+                    BauhausUiIcon(
+                        symbol = BauhausUiSymbol.Close,
+                        modifier = Modifier.size(11.dp),
+                        tint = SaltTheme.colors.text.copy(alpha = 0.6f)
                     )
                 }
             }
@@ -174,7 +173,7 @@ fun ImportPresetBottomSheet(
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = "📋 粘贴",
+                                text = "粘贴",
                                 style = SaltTheme.textStyles.sub,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium,
@@ -336,7 +335,11 @@ fun ImportPresetBottomSheet(
                         contentAlignment = Alignment.Center
                     ) {
                         if (applyImmediately) {
-                            Text(text = "✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            BauhausUiIcon(
+                                symbol = BauhausUiSymbol.Check,
+                                modifier = Modifier.size(11.dp),
+                                tint = Color.White
+                            )
                         }
                     }
                 }
@@ -373,7 +376,7 @@ fun ImportPresetBottomSheet(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "⚠️ 未能识别有效口令，请检查格式后重试",
+                        text = "未能识别有效口令，请检查格式后重试",
                         style = SaltTheme.textStyles.sub,
                         fontSize = 12.sp,
                         color = SaltTheme.colors.text.copy(alpha = 0.55f)

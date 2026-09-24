@@ -63,6 +63,9 @@ import com.whitenoise.app.core.model.Preset
 import com.whitenoise.app.core.model.SoundCategory
 import com.whitenoise.app.ui.components.AboutBottomSheet
 import com.whitenoise.app.ui.components.BauhausSoundIcon
+import com.whitenoise.app.ui.components.BauhausUiIcon
+import com.whitenoise.app.ui.components.BauhausUiSymbol
+import com.whitenoise.app.ui.components.toBauhausSymbol
 import com.whitenoise.app.ui.components.BottomPlayerBar
 import com.whitenoise.app.ui.components.DeletePresetConfirmBottomSheet
 import com.whitenoise.app.ui.components.ImportPresetBottomSheet
@@ -79,6 +82,22 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val versionName = remember(context) {
+        try {
+            val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getPackageInfo(
+                    context.packageName,
+                    android.content.pm.PackageManager.PackageInfoFlags.of(0)
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getPackageInfo(context.packageName, 0)
+            }
+            packageInfo.versionName ?: "1.7.3"
+        } catch (_: Exception) {
+            "1.7.3"
+        }
+    }
     val lifecycleOwner = LocalLifecycleOwner.current
     val haptic = LocalHapticFeedback.current
 
@@ -211,7 +230,7 @@ fun HomeScreen(
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = "v1.7.0",
+                                    text = "v$versionName",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = SaltTheme.colors.text.copy(alpha = 0.65f)
@@ -237,11 +256,12 @@ fun HomeScreen(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
-                            Text(
-                                text = themeMode.iconEmoji,
-                                fontSize = 13.sp
+                            BauhausUiIcon(
+                                symbol = themeMode.toBauhausSymbol(),
+                                modifier = Modifier.size(13.dp),
+                                tint = SaltTheme.colors.text.copy(alpha = 0.75f)
                             )
                             Text(
                                 text = when (themeMode) {
@@ -280,7 +300,11 @@ fun HomeScreen(
                                 modifier = Modifier.weight(1f),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(text = "🎧", fontSize = 14.sp)
+                                BauhausUiIcon(
+                                    symbol = BauhausUiSymbol.Import,
+                                    modifier = Modifier.size(13.dp),
+                                    tint = SaltTheme.colors.highlight
+                                )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "检测到混音【${detectedPayload?.name}】，点击一键导入",
@@ -297,10 +321,10 @@ fun HomeScreen(
                                     .clickable { viewModel.dismissClipboardBanner() }
                                     .padding(4.dp)
                             ) {
-                                Text(
-                                    text = "✕",
-                                    fontSize = 11.sp,
-                                    color = SaltTheme.colors.highlight.copy(alpha = 0.65f)
+                                BauhausUiIcon(
+                                    symbol = BauhausUiSymbol.Close,
+                                    modifier = Modifier.size(10.dp),
+                                    tint = SaltTheme.colors.highlight.copy(alpha = 0.65f)
                                 )
                             }
                         }
@@ -325,7 +349,7 @@ fun HomeScreen(
                                 color = SaltTheme.colors.text
                             )
 
-                            // 📥 导入按钮
+                            // 导入按钮
                             Box(
                                 modifier = Modifier
                                     .clip(CircleShape)
@@ -338,7 +362,11 @@ fun HomeScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    Text(text = "📥", fontSize = 11.sp)
+                                    BauhausUiIcon(
+                                        symbol = BauhausUiSymbol.Import,
+                                        modifier = Modifier.size(11.dp),
+                                        tint = SaltTheme.colors.text.copy(alpha = 0.8f)
+                                    )
                                     Text(
                                         text = "导入",
                                         style = SaltTheme.textStyles.sub,
@@ -407,11 +435,10 @@ fun HomeScreen(
                                                 .clickable { presetPendingDelete = preset },
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Text(
-                                                text = "✕",
-                                                color = SaltTheme.colors.text.copy(alpha = 0.55f),
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Bold
+                                            BauhausUiIcon(
+                                                symbol = BauhausUiSymbol.Close,
+                                                modifier = Modifier.size(10.dp),
+                                                tint = SaltTheme.colors.text.copy(alpha = 0.55f)
                                             )
                                         }
                                     }
@@ -427,13 +454,23 @@ fun HomeScreen(
                                     .padding(horizontal = 14.dp, vertical = 10.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = "+ 存为预设",
-                                    color = SaltTheme.colors.highlight,
-                                    style = SaltTheme.textStyles.main,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 13.sp
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    BauhausUiIcon(
+                                        symbol = BauhausUiSymbol.Add,
+                                        modifier = Modifier.size(12.dp),
+                                        tint = SaltTheme.colors.highlight
+                                    )
+                                    Text(
+                                        text = "存为预设",
+                                        color = SaltTheme.colors.highlight,
+                                        style = SaltTheme.textStyles.main,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 13.sp
+                                    )
+                                }
                             }
 
                             // 恢复默认预设 (后悔药胶囊按钮)
@@ -456,13 +493,12 @@ fun HomeScreen(
                                 ) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        horizontalArrangement = Arrangement.spacedBy(5.dp)
                                     ) {
-                                        Text(
-                                            text = "↺",
-                                            color = SaltTheme.colors.text.copy(alpha = 0.70f),
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold
+                                        BauhausUiIcon(
+                                            symbol = BauhausUiSymbol.Restore,
+                                            modifier = Modifier.size(12.dp),
+                                            tint = SaltTheme.colors.text.copy(alpha = 0.70f)
                                         )
                                         Text(
                                             text = "恢复默认",
@@ -496,8 +532,6 @@ fun HomeScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text(text = "💡", fontSize = 11.sp)
-                                        Spacer(modifier = Modifier.width(6.dp))
                                         Text(
                                             text = "长按预设卡片可快速复制并导出分享口令",
                                             style = SaltTheme.textStyles.sub,
@@ -511,10 +545,10 @@ fun HomeScreen(
                                             .clickable { viewModel.dismissPresetHint() }
                                             .padding(4.dp)
                                     ) {
-                                        Text(
-                                            text = "✕",
-                                            fontSize = 11.sp,
-                                            color = SaltTheme.colors.text.copy(alpha = 0.45f)
+                                        BauhausUiIcon(
+                                            symbol = BauhausUiSymbol.Close,
+                                            modifier = Modifier.size(10.dp),
+                                            tint = SaltTheme.colors.text.copy(alpha = 0.45f)
                                         )
                                     }
                                 }
