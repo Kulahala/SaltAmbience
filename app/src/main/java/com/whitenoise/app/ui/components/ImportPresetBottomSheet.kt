@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.moriafly.salt.ui.SaltTheme
 import com.moriafly.salt.ui.Text
+import com.whitenoise.app.core.model.Preset
 import com.whitenoise.app.core.model.PresetShareCode
 import com.whitenoise.app.core.model.PresetSharePayload
 import com.whitenoise.app.data.repository.SoundRepository
@@ -47,7 +48,11 @@ import com.whitenoise.app.data.repository.SoundRepository
 fun ImportPresetBottomSheet(
     isVisible: Boolean,
     initialPayload: PresetSharePayload? = null,
+    currentPresets: List<Preset> = emptyList(),
     onImport: (PresetSharePayload, Boolean) -> Unit,
+    onRestoreDefaultPreset: (String) -> Unit = {},
+    onRestoreAllDefaults: () -> Unit = {},
+    onPresetAlreadyExists: (Preset) -> Unit = {},
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -382,6 +387,167 @@ fun ImportPresetBottomSheet(
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Section 2: Official Default Presets & Restore
+            val existingPresetIds = remember(currentPresets) { currentPresets.map { it.id }.toSet() }
+            val hasDeletedDefaults = remember(existingPresetIds) {
+                Preset.DEFAULT_PRESETS.any { it.id !in existingPresetIds }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "官方精选方案库",
+                    style = SaltTheme.textStyles.main,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = SaltTheme.colors.text
+                )
+
+                // 一键恢复全部默认方案（仅在有缺失时高亮提示）
+                if (hasDeletedDefaults) {
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
+                            .clickable { onRestoreAllDefaults() }
+                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            BauhausUiIcon(
+                                symbol = BauhausUiSymbol.Restore,
+                                modifier = Modifier.size(11.dp)
+                            )
+                            Text(
+                                text = "恢复全部",
+                                style = SaltTheme.textStyles.sub,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = SaltTheme.colors.highlight
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "系统出厂经典混音，轻触可补充缺失方案或查看状态",
+                style = SaltTheme.textStyles.sub,
+                fontSize = 12.sp,
+                color = SaltTheme.colors.text.copy(alpha = 0.55f)
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // 官方预设列表卡片
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Preset.DEFAULT_PRESETS.forEach { defaultPreset ->
+                    val isExisting = defaultPreset.id in existingPresetIds
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .border(
+                                width = 1.dp,
+                                color = if (isExisting) SaltTheme.colors.text.copy(alpha = 0.06f) else SaltTheme.colors.highlight.copy(alpha = 0.40f),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .background(
+                                if (isExisting) SaltTheme.colors.subBackground.copy(alpha = 0.50f)
+                                else SaltTheme.colors.highlight.copy(alpha = 0.08f)
+                            )
+                            .clickable {
+                                if (isExisting) {
+                                    onPresetAlreadyExists(defaultPreset)
+                                } else {
+                                    onRestoreDefaultPreset(defaultPreset.id)
+                                }
+                            }
+                            .padding(horizontal = 12.dp, vertical = 9.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = defaultPreset.name,
+                                    style = SaltTheme.textStyles.main,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = if (isExisting) SaltTheme.colors.text.copy(alpha = 0.85f) else SaltTheme.colors.highlight
+                                )
+                                if (defaultPreset.description.isNotBlank()) {
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = defaultPreset.description,
+                                        style = SaltTheme.textStyles.sub,
+                                        fontSize = 11.sp,
+                                        color = SaltTheme.colors.text.copy(alpha = 0.55f),
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+
+                            // 状态标签
+                            if (isExisting) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(SaltTheme.colors.text.copy(alpha = 0.06f))
+                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                ) {
+                                    Text(
+                                        text = "已存在",
+                                        fontSize = 11.sp,
+                                        color = SaltTheme.colors.text.copy(alpha = 0.45f),
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(SaltTheme.colors.highlight)
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(3.dp)
+                                    ) {
+                                        BauhausUiIcon(
+                                            symbol = BauhausUiSymbol.Add,
+                                            modifier = Modifier.size(10.dp),
+                                            tint = Color.White
+                                        )
+                                        Text(
+                                            text = "恢复",
+                                            fontSize = 11.sp,
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }

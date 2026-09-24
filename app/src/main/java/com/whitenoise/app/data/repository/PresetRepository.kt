@@ -50,6 +50,10 @@ class PresetRepository(
         preferencesManager?.addDeletedDefaultPresetId(presetId)
     }
 
+    suspend fun restoreDefaultPreset(presetId: String) {
+        preferencesManager?.removeDeletedDefaultPresetId(presetId)
+    }
+
     suspend fun restoreDefaultPresets() {
         preferencesManager?.resetDeletedDefaultPresets()
     }

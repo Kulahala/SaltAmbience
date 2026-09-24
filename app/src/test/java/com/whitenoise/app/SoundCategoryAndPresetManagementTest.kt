@@ -157,4 +157,21 @@ class SoundCategoryAndPresetManagementTest {
         // Other defaults must be present
         assertTrue("corner_cafe should still be present", result.any { it.id == "corner_cafe" })
     }
+
+    @Test
+    fun testSingleDefaultPresetRestoration() {
+        val defaults = Preset.DEFAULT_PRESETS
+        val deletedSet = mutableSetOf(defaults[0].id, defaults[1].id)
+
+        // Initial soft delete state
+        val initialList = PresetRepository.assemblePresets(emptyList(), deletedSet)
+        assertFalse(initialList.any { it.id == defaults[0].id })
+        assertFalse(initialList.any { it.id == defaults[1].id })
+
+        // Single restore defaults[0]
+        deletedSet.remove(defaults[0].id)
+        val partiallyRestored = PresetRepository.assemblePresets(emptyList(), deletedSet)
+        assertTrue("defaults[0] should be restored", partiallyRestored.any { it.id == defaults[0].id })
+        assertFalse("defaults[1] should still be deleted", partiallyRestored.any { it.id == defaults[1].id })
+    }
 }

@@ -117,7 +117,6 @@ fun HomeScreen(
     val tracks by viewModel.tracks.collectAsState()
     val playbackState by viewModel.playbackState.collectAsState()
     val presets by viewModel.presets.collectAsState()
-    val hasDeletedDefaultPresets by viewModel.hasDeletedDefaultPresets.collectAsState()
 
     val showSleepDialog by viewModel.showSleepTimerDialog.collectAsState()
     val showAboutDialog by viewModel.showAboutDialog.collectAsState()
@@ -680,43 +679,6 @@ fun HomeScreen(
                         }
                     }
 
-                    // 恢复默认预设 (后悔药胶囊按钮)
-                    if (hasDeletedDefaultPresets) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(SaltTheme.colors.subBackground)
-                                .border(
-                                    width = 1.dp,
-                                    color = SaltTheme.colors.text.copy(alpha = 0.12f),
-                                    shape = RoundedCornerShape(14.dp)
-                                )
-                                .clickable {
-                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    viewModel.restoreDefaultPresets()
-                                }
-                                .padding(horizontal = 14.dp, vertical = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(5.dp)
-                            ) {
-                                BauhausUiIcon(
-                                    symbol = BauhausUiSymbol.Restore,
-                                    modifier = Modifier.size(12.dp)
-                                )
-                                Text(
-                                    text = "恢复默认",
-                                    color = SaltTheme.colors.text.copy(alpha = 0.70f),
-                                    style = SaltTheme.textStyles.main,
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 13.sp
-                                )
-                            }
-                        }
-                    }
-
                     // 导入按钮（吸顶常驻胶囊）
                     Box(
                         modifier = Modifier
@@ -813,8 +775,18 @@ fun HomeScreen(
         ImportPresetBottomSheet(
             isVisible = showImportDialog,
             initialPayload = detectedPayload,
+            currentPresets = presets,
             onImport = { payload, applyImmediately ->
                 viewModel.importPreset(payload, applyImmediately)
+            },
+            onRestoreDefaultPreset = { presetId ->
+                viewModel.restoreSingleDefaultPreset(presetId)
+            },
+            onRestoreAllDefaults = {
+                viewModel.restoreDefaultPresets()
+            },
+            onPresetAlreadyExists = { preset ->
+                viewModel.notifyPresetAlreadyExists(preset.name)
             },
             onDismiss = { viewModel.setShowImportDialog(false) }
         )

@@ -52,6 +52,13 @@ class PreferencesManager(private val context: Context) {
         }
     }
 
+    suspend fun removeDeletedDefaultPresetId(presetId: String) {
+        context.dataStore.edit { preferences ->
+            val current = preferences[KEY_DELETED_DEFAULT_PRESETS] ?: emptySet()
+            preferences[KEY_DELETED_DEFAULT_PRESETS] = current - presetId
+        }
+    }
+
     suspend fun resetDeletedDefaultPresets() {
         context.dataStore.edit { preferences ->
             preferences.remove(KEY_DELETED_DEFAULT_PRESETS)

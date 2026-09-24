@@ -244,6 +244,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun restoreSingleDefaultPreset(presetId: String) {
+        val defaultPreset = Preset.DEFAULT_PRESETS.find { it.id == presetId } ?: return
+        viewModelScope.launch {
+            presetRepository.restoreDefaultPreset(presetId)
+            _toastMessage.emit("已恢复默认方案【${defaultPreset.name}】")
+        }
+    }
+
+    fun notifyPresetAlreadyExists(presetName: String) {
+        viewModelScope.launch {
+            _toastMessage.emit("方案【$presetName】已在列表中，无需重复添加")
+        }
+    }
+
     fun restoreDefaultPresets() {
         viewModelScope.launch {
             presetRepository.restoreDefaultPresets()
