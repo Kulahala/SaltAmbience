@@ -19,14 +19,95 @@ import androidx.compose.ui.unit.dp
 import com.moriafly.salt.ui.SaltTheme
 
 /**
+ * Semantic acoustic color palette for Bauhaus minimalist vector symbols.
+ * Each sound effect maps to iconic natural color associations (e.g. fire: amber-orange, storm: lightning gold,
+ * forest wind: evergreen, stream: clear river blue, summer night: lunar gold + night violet, etc.)
+ */
+data class SoundIconPalette(
+    val primary: Color,
+    val secondary: Color
+)
+
+object BauhausSoundTheme {
+    fun getPalette(trackId: String, isDark: Boolean): SoundIconPalette {
+        val lightPrimary = if (isDark) Color.White else Color(0xFF1E2026)
+        return when (trackId) {
+            "rain" -> SoundIconPalette(
+                primary = if (isDark) Color(0xFFE0F7FA) else Color(0xFF263238),
+                secondary = Color(0xFF29B6F6) // 清澈雨丝蓝
+            )
+            "storm" -> SoundIconPalette(
+                primary = lightPrimary,
+                secondary = Color(0xFFFFD600) // 电光金黄
+            )
+            "wind" -> SoundIconPalette(
+                primary = lightPrimary,
+                secondary = Color(0xFF43A047) // 苍翠林木绿
+            )
+            "stream" -> SoundIconPalette(
+                primary = lightPrimary, // 上部溪石白
+                secondary = Color(0xFF0288D1) // 下部清流湛蓝
+            )
+            "fireplace" -> SoundIconPalette(
+                primary = Color(0xFFFF5722), // 烈焰橙红
+                secondary = Color(0xFFFFC107) // 火星金黄
+            )
+            "birds" -> SoundIconPalette(
+                primary = lightPrimary,
+                secondary = Color(0xFFFFA726) // 晨光暖橙羽
+            )
+            "summer_night" -> SoundIconPalette(
+                primary = Color(0xFFFFF59D), // 皎洁月牙金白
+                secondary = Color(0xFF7E57C2) // 静谧夜空紫
+            )
+            "white_noise" -> SoundIconPalette(
+                primary = lightPrimary,
+                secondary = Color(0xFF90A4AE) // 冷调全频银灰
+            )
+            "waves" -> SoundIconPalette(
+                primary = lightPrimary, // 拍岸浪花白
+                secondary = Color(0xFF1565C0) // 蔚蓝深海
+            )
+            "coffee_shop" -> SoundIconPalette(
+                primary = if (isDark) Color(0xFFFFF8E1) else Color(0xFF3E2723), // 奶泡暖白/浓缩深棕
+                secondary = Color(0xFF8D6E63) // 烘焙焦糖棕
+            )
+            "train" -> SoundIconPalette(
+                primary = if (isDark) Color(0xFFECEFF1) else Color(0xFF37474F), // 钢轨银白
+                secondary = Color(0xFFFF9800) // 信号灯琥珀金
+            )
+            "boat" -> SoundIconPalette(
+                primary = Color(0xFFA1887F), // 原木暖棕
+                secondary = Color(0xFF00ACC1) // 碧波湖水蓝
+            )
+            "pink_noise" -> SoundIconPalette(
+                primary = lightPrimary,
+                secondary = Color(0xFFF06292) // 珊瑚柔粉
+            )
+            "city" -> SoundIconPalette(
+                primary = if (isDark) Color(0xFFCFD8DC) else Color(0xFF263238), // 建筑冷灰
+                secondary = Color(0xFFFFB300) // 霓虹金顶
+            )
+            "brown_noise" -> SoundIconPalette(
+                primary = if (isDark) Color(0xFFB0BEC5) else Color(0xFF4E342E), // 岩石灰
+                secondary = Color(0xFF6D4C41) // 大地泥土暖褐
+            )
+            else -> SoundIconPalette(
+                primary = lightPrimary,
+                secondary = Color(0xFF19B2A6) // 椒盐海盐冰青
+            )
+        }
+    }
+}
+
+/**
  * Unified Bauhaus acoustic minimalist vector symbol system.
- * Replaces colorful Unicode emojis with clean geometric acoustic elements (points, lines, planes, waveforms).
+ * Replaces colorful Unicode emojis with clean geometric acoustic elements (points, lines, planes, waveforms)
+ * mapped to skeuomorphic natural color palettes.
  *
  * Color Specification:
  * - Inactive (未激活): Matte mist grey (SaltTheme.colors.text with alpha 0.42f) across all strokes.
- * - Active (激活): High-contrast two-tone Bauhaus acoustic palette:
- *   - Primary structure / upper line (主结构线/上线): Pure White (Color.White in dark mode, deep charcoal in light mode).
- *   - Water wave / ripple / node / secondary line (水波/微流/节点/下线): Sea Salt Ice Cyan (SaltTheme.colors.highlight).
+ * - Active (激活): High-contrast two-tone skeuomorphic natural palette corresponding to the sound's real essence.
  */
 @Composable
 fun BauhausSoundIcon(
@@ -37,11 +118,10 @@ fun BauhausSoundIcon(
 ) {
     val isDark = SaltTheme.configs.isDarkTheme
     val idleColor = SaltTheme.colors.text.copy(alpha = 0.42f)
-    val primaryActiveColor = if (isDark) Color.White else Color(0xFF1E2026)
-    val secondaryActiveColor = SaltTheme.colors.highlight
+    val activePalette = BauhausSoundTheme.getPalette(trackId, isDark)
 
-    val targetPrimary = tint ?: if (isPlaying) primaryActiveColor else idleColor
-    val targetSecondary = tint ?: if (isPlaying) secondaryActiveColor else idleColor
+    val targetPrimary = tint ?: if (isPlaying) activePalette.primary else idleColor
+    val targetSecondary = tint ?: if (isPlaying) activePalette.secondary else idleColor
 
     val animatedPrimary by animateColorAsState(
         targetValue = targetPrimary,
@@ -246,8 +326,8 @@ private fun DrawScope.drawBauhausSymbol(
             drawPath(hull, primaryColor, style = strokeP)
             // Tilted oar vector (Cyan)
             drawLine(secondaryColor, Offset(w * 0.32f, h * 0.26f), Offset(w * 0.66f, h * 0.82f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            // Water ripple (White)
-            drawLine(primaryColor, Offset(w * 0.24f, h * 0.84f), Offset(w * 0.76f, h * 0.84f), strokeWidth = strokeWidth * 0.75f, cap = StrokeCap.Round)
+            // Water ripple (Lake Blue)
+            drawLine(secondaryColor, Offset(w * 0.24f, h * 0.84f), Offset(w * 0.76f, h * 0.84f), strokeWidth = strokeWidth * 0.75f, cap = StrokeCap.Round)
         }
 
         "pink_noise" -> {

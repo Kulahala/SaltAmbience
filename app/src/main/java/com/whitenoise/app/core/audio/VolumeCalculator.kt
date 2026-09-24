@@ -64,4 +64,18 @@ object VolumeCalculator {
         if (remainingSeconds == null || remainingSeconds <= 0L) return 0
         return ((remainingSeconds + 59) / 60).toInt()
     }
+
+    /**
+     * Safe string formatting for countdown timer display (mm:ss), avoiding String.format % interpolation crashes.
+     */
+    fun formatCountdown(remainingSeconds: Long?): String {
+        if (remainingSeconds == null || remainingSeconds <= 0L) return "00:00"
+        val totalSecs = remainingSeconds.coerceAtLeast(0L)
+        val mins = totalSecs / 60
+        val secs = totalSecs % 60
+        val minStr = if (mins < 10) "0$mins" else "$mins"
+        val secStr = if (secs < 10) "0$secs" else "$secs"
+        return "$minStr:$secStr"
+    }
 }
+

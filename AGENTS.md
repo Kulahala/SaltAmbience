@@ -91,11 +91,11 @@ app/src/main/java/com/whitenoise/app/
 - **生命周期与保活**：继承 `androidx.media3.session.MediaSessionService`，前台服务类型明确指定为 `android:foregroundServiceType="mediaPlayback"`。充分利用 `MediaSessionService` 原生通知与前台调度能力，避免自建冲突的通知循环。
 - **系统媒体控制（虚拟主控 Player）**：MediaSession 仅接受单 Player 接口。基于 `SimpleBasePlayer` 代理主控 Play/Pause/Stop 指令并统一下发至子音轨池。
 - **集中式音频焦点 (AudioFocus)**：各子 ExoPlayer 必须设置 `handleAudioFocus = false`，禁止各自争抢焦点；由引擎统一监听 `AudioManager` 焦点事件（来电暂停、短通知 Ducking 整体主音量）。播放结束完整释放资源。
-- **锁屏与通知栏包豪斯动态封面**：基于 `Canvas` 纯数学几何动态生成 512×512 黑胶声学大封面注入 `NotificationCompat.Builder.setLargeIcon` 与 `MediaMetadata.artworkData`，小图标统一为矢量单色 `ic_launcher_monochrome`，彻底消除拉伸白三角；内置 LRU 缓存并剔除 `isPlaying` key 避免暂停时重复 PNG 压缩。
+- **锁屏与通知栏包豪斯动态封面与原生倒计时**：基于 `Canvas` 纯数学几何动态生成 512×512 黑胶声学大封面注入 `NotificationCompat.Builder.setLargeIcon` 与 `MediaMetadata.artworkData`，小图标统一为矢量单色 `ic_launcher_monochrome`，内置 LRU 缓存并按当前主题声渲染专属 Ambient Glow 氛围光与拟物色彩；休眠定时开启时由系统原生 `setUsesChronometer(true)` + `setChronometerCountDown(true)` 硬件级秒级倒数，杜绝重复唤醒 CPU。
 
 ### 3.3 椒盐美学 UI 规范 (`SaltUI`)
 - **视觉风格**：清爽克制、低饱和度、大圆角卡片、清晰的分组布局。
-- **包豪斯声学极简矢量符号**：全站废除彩色 Emoji，统一由纯几何点、线、面与波形构成的 `BauhausSoundIcon` 接管，未激活哑光雾灰，激活渐变至海盐冰青，并在卡片、滑块与播控栏全量联动。
+- **包豪斯声学极简矢量符号与拟物色彩语义**：全站废除彩色 Emoji，统一由纯几何点、线、面构成的 `BauhausSoundIcon` 接管，未激活哑光雾灰；激活时映射真实自然声学意象（溪流上白下水蓝、篝火烈焰橙红+火星金黄、雷雨高能电光黄+暴雨白、林风苍翠绿、夏夜月牙金+静谧夜紫、海浪深海蔚蓝、粉噪柔粉、棕噪大地暖褐等），明暗自适应；底栏播放条做减法移除重复混音按钮，右侧独占动态倒计时胶囊。
 - **色彩与层级契约 (Color Tokens Contract)**：
   - **主底色（Level 0 主屏幕背景）**：必须使用 `SaltTheme.colors.background`（浅色为纯白 `#FAFAFA`，深色为 `#121212`），严禁在根容器滥用 `subBackground` 导致全局发灰；
   - **容器底色（Level 1 卡片与抽屉）**：统一使用 `SaltTheme.colors.subBackground`（浅色为浅灰 `#F3F4F6`，深色为半透明白 `#FFFFFF14`），配合大圆角（`16.dp`~`20.dp`）；
@@ -139,6 +139,7 @@ app/src/main/java/com/whitenoise/app/
 | **Stage 8** | 音效分类导航、棕噪扩充与预设全自由管理 (v1.6.0) | **[x] 已达成** | 自定义预设置顶与最新倒序排列；默认预设支持软删除与一键“↺ 恢复默认”；引入 CC0 慢波助眠「棕色噪音」扩充至 15 款音源；音效矩阵 5 维胶囊过滤芯片；33 项单测 100% 全绿。 |
 | **Stage 9** | 视觉交互闭环、图标重塑与大屏自适应 (v1.6.1) | **[x] 已达成** | 落地包豪斯自适应图标 (D-14) 与 Android 13+ 动态取色；实色悬浮舱防叠字（130.dp 安全避让）；顶栏手势自然滚动；抽屉物理弹簧动效与玄武岩冷炭黑；移除多余缩放内凹并保留 14.dp 原生高斯模糊；顶栏极简减法（左上角微版本号触感入口）；全站多设备自适应 `GridCells.Adaptive(160.dp)` 配合 `GridItemSpan(maxLineSpan)`；33 项单测全绿。 |
 | **Stage 10** | 锁屏通知包豪斯黑胶封面、声学极简矢量符号、低延迟瞬发引擎与防循环疲劳声学动态 (v1.7.0) | **[x] 已达成** | 彻底消除锁屏通知粗糙白三角，动态渲染注入 512x512 包豪斯黑胶声学艺术大封面与微小单色图标；15 款自然音全站废弃拟物 Emoji，由包豪斯声学极简矢量符号 (`BauhausSoundIcon`) 统一驱动；ExoPlayer 定制 50ms 缓冲策略 + 0ms 乐观响应 + 串行异步音频焦点治理消除体感半秒延迟；落地方案 A（起播随机时间戳偏置）与方案 B（±2% 自然微速差重采样），彻底消除长时播放循环疲劳；48 项单测 100% 全绿。 |
+| **Stage 11** | 定时器闪退根治、拟物语义专属配色、播控条精简与系统原生倒计时联动 (v1.7.1) | **[x] 已达成** | 根除 `String.format` 字符百分号插值崩溃，抽取纯 Kotlin 安全倒计时工具；15 款音标与锁屏黑胶封面全量落地拟物语义配色（篝火烈焰红橙+金星、雷雨电光黄、林风苍翠绿等）；播控条移除冗余混音按钮并落地实时倒计时高亮胶囊；通知栏与锁屏接入 Android 原生 `Chronometer` 硬件级秒级倒计时；52 项单测 100% 全绿。 |
 
 ---
 

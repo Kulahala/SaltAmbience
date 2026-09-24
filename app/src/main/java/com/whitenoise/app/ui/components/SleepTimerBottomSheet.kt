@@ -246,11 +246,9 @@ fun SleepTimerBottomSheet(
                                         .background(SaltTheme.colors.highlight.copy(alpha = 0.15f))
                                         .padding(horizontal = 8.dp, vertical = 3.dp)
                                 ) {
-                                    val remaining = sleepTimerRemainingSeconds ?: 0L
-                                    val m = remaining / 60
-                                    val s = remaining % 60
+                                    val countdownStr = VolumeCalculator.formatCountdown(sleepTimerRemainingSeconds)
                                     Text(
-                                        text = "⏱️ %02d:%02d 倒计时中".format(m, s),
+                                        text = "⏱️ $countdownStr 倒计时中",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = SaltTheme.colors.highlight

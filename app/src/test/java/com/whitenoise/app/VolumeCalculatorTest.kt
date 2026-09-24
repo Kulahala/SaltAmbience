@@ -138,4 +138,24 @@ class VolumeCalculatorTest {
         assertEquals(60, VolumeCalculator.calculateRemainingMinutes(3600L))
         assertEquals(120, VolumeCalculator.calculateRemainingMinutes(7200L))
     }
+
+    @Test
+    fun testFormatCountdown() {
+        // Null and negative / zero boundaries
+        assertEquals("00:00", VolumeCalculator.formatCountdown(null))
+        assertEquals("00:00", VolumeCalculator.formatCountdown(-5L))
+        assertEquals("00:00", VolumeCalculator.formatCountdown(0L))
+
+        // Seconds padding
+        assertEquals("00:01", VolumeCalculator.formatCountdown(1L))
+        assertEquals("00:09", VolumeCalculator.formatCountdown(9L))
+        assertEquals("00:59", VolumeCalculator.formatCountdown(59L))
+
+        // Minutes padding and alignment
+        assertEquals("01:00", VolumeCalculator.formatCountdown(60L))
+        assertEquals("01:05", VolumeCalculator.formatCountdown(65L))
+        assertEquals("29:59", VolumeCalculator.formatCountdown(1799L))
+        assertEquals("30:00", VolumeCalculator.formatCountdown(1800L))
+        assertEquals("120:00", VolumeCalculator.formatCountdown(7200L))
+    }
 }

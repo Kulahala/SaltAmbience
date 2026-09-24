@@ -154,70 +154,44 @@ fun BottomPlayerBar(
 
                 Spacer(modifier = Modifier.height(2.dp))
 
-                // Subtitle line: master volume hint with optional countdown
-                val subText = if (playbackState.isSleepTimerRunning) {
-                    val remaining = playbackState.sleepTimerRemainingSeconds ?: 0L
-                    val mins = remaining / 60
-                    val secs = remaining % 60
-                    "总音量: ${(playbackState.masterVolume * 100).roundToInt()}% (%02d:%02d) · 混音台 ↗".format(mins, secs)
-                } else {
-                    "总音量: ${(playbackState.masterVolume * 100).roundToInt()}% · 混音台 ↗"
-                }
+                // Subtitle line: master volume hint with tap-to-open mixer affordance
+                val subText = "总音量: ${(playbackState.masterVolume * 100).roundToInt()}% · 混音台 ↗"
 
                 Text(
                     text = subText,
                     style = SaltTheme.textStyles.sub,
                     fontSize = 11.sp,
-                    color = if (playbackState.isSleepTimerRunning) SaltTheme.colors.highlight else SaltTheme.colors.text.copy(alpha = 0.65f)
+                    color = SaltTheme.colors.text.copy(alpha = 0.65f)
                 )
             }
 
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
-            // Clock / Sleep Timer Button
+            // Sleep Timer / Dynamic Countdown Pill Button
+            val isTimerRunning = playbackState.isSleepTimerRunning
+            val timerBg = if (isTimerRunning) SaltTheme.colors.highlight.copy(alpha = 0.16f) else buttonSurfaceColor
+            val timerBorder = if (isTimerRunning) SaltTheme.colors.highlight.copy(alpha = 0.35f) else Color.Transparent
+            val timerText = if (isTimerRunning) {
+                "⏱️ " + VolumeCalculator.formatCountdown(playbackState.sleepTimerRemainingSeconds)
+            } else {
+                "⏱️ 定时"
+            }
+
             Box(
                 modifier = Modifier
                     .clip(CircleShape)
-                    .background(
-                        if (playbackState.isSleepTimerRunning) SaltTheme.colors.highlight.copy(alpha = 0.16f)
-                        else buttonSurfaceColor
-                    )
+                    .background(timerBg)
+                    .border(width = 1.dp, color = timerBorder, shape = CircleShape)
                     .clickable { onOpenSleepTimer() }
-                    .padding(horizontal = 9.dp, vertical = 7.dp),
+                    .padding(horizontal = 11.dp, vertical = 7.dp),
                 contentAlignment = Alignment.Center
             ) {
-                val timerText = if (playbackState.isSleepTimerRunning) {
-                    val mins = VolumeCalculator.calculateRemainingMinutes(playbackState.sleepTimerRemainingSeconds)
-                    "⏱️ ${mins}m"
-                } else {
-                    "⏱️ 定时"
-                }
                 Text(
                     text = timerText,
                     style = SaltTheme.textStyles.sub,
-                    fontWeight = if (playbackState.isSleepTimerRunning) FontWeight.Bold else FontWeight.Medium,
+                    fontWeight = if (isTimerRunning) FontWeight.Bold else FontWeight.Medium,
                     fontSize = 12.sp,
-                    color = if (playbackState.isSleepTimerRunning) SaltTheme.colors.highlight else SaltTheme.colors.text
-                )
-            }
-
-            Spacer(modifier = Modifier.width(6.dp))
-
-            // Right: Expandable Mixer Sheet Trigger Button
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
-                    .clickable { onOpenMixer() }
-                    .padding(horizontal = 10.dp, vertical = 7.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "🎛️ 混音",
-                    style = SaltTheme.textStyles.sub,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 12.sp,
-                    color = SaltTheme.colors.highlight
+                    color = if (isTimerRunning) SaltTheme.colors.highlight else SaltTheme.colors.text
                 )
             }
         }

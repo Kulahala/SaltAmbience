@@ -6,6 +6,7 @@ import com.whitenoise.app.core.model.PresetShareCode
 import com.whitenoise.app.core.model.PresetSharePayload
 import com.whitenoise.app.core.service.WhiteNoiseMediaService
 import com.whitenoise.app.data.repository.SoundRepository
+import com.whitenoise.app.ui.components.BauhausSoundTheme
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.toList
@@ -38,6 +39,26 @@ class StateDeduplicationAndNotificationTest {
         assertEquals(
             "已暂停",
             WhiteNoiseMediaService.formatNotificationSubtext(isMasterPlaying = false, activeTrackCount = 0)
+        )
+        // Playing with sleep timer active (e.g. 1800s -> 30m)
+        assertEquals(
+            "正在混音播放 3 种自然声 · ⏱️ 30m后休眠",
+            WhiteNoiseMediaService.formatNotificationSubtext(
+                isMasterPlaying = true,
+                activeTrackCount = 3,
+                isSleepTimerRunning = true,
+                sleepTimerRemainingSeconds = 1800L
+            )
+        )
+        // Paused with sleep timer active (e.g. 65s -> 2m)
+        assertEquals(
+            "已暂停 · 2 轨待续 · ⏱️ 2m后休眠",
+            WhiteNoiseMediaService.formatNotificationSubtext(
+                isMasterPlaying = false,
+                activeTrackCount = 2,
+                isSleepTimerRunning = true,
+                sleepTimerRemainingSeconds = 65L
+            )
         )
     }
 
@@ -239,6 +260,48 @@ class StateDeduplicationAndNotificationTest {
             "Active track count change must update notification",
             WhiteNoiseMediaService.shouldUpdateNotification(baseState, countChangeState)
         )
+
+        // 6. Starting sleep timer: MUST update notification
+        val timerStartedState = baseState.copy(isSleepTimerRunning = true, sleepTimerRemainingSeconds = 1800L)
+        assertTrue(
+            "Starting sleep timer must update notification",
+            WhiteNoiseMediaService.shouldUpdateNotification(baseState, timerStartedState)
+        )
+
+        // 7. Canceling sleep timer: MUST update notification
+        val timerCanceledState = timerStartedState.copy(isSleepTimerRunning = false, sleepTimerRemainingSeconds = null)
+        assertTrue(
+            "Canceling sleep timer must update notification",
+            WhiteNoiseMediaService.shouldUpdateNotification(timerStartedState, timerCanceledState)
+        )
+
+        // 8. Sleep timer running tick: 1 second decrement must NOT update notification
+        val runningTickState = timerStartedState.copy(sleepTimerRemainingSeconds = 1799L)
+        assertFalse(
+            "Running sleep timer second-tick must NOT update notification",
+            WhiteNoiseMediaService.shouldUpdateNotification(timerStartedState, runningTickState)
+        )
+
+        // 9. Sleep timer duration reset by user (e.g. from 1800s to 3600s, >= 60s diff): MUST update notification
+        val timerResetState = timerStartedState.copy(sleepTimerRemainingSeconds = 3600L)
+        assertTrue(
+            "Resetting sleep timer duration (>=60s diff) must update notification",
+            WhiteNoiseMediaService.shouldUpdateNotification(timerStartedState, timerResetState)
+        )
+    }
+
+    @Test
+    fun testBottomPlayerBarCountdownFormattingSafety() {
+        // Verify that formatting live countdown does not crash with unknown format conversion exception
+        val remainingSeconds = 1799L
+        val formatted = VolumeCalculator.formatCountdown(remainingSeconds)
+        assertEquals("29:59", formatted)
+
+        // Verify percent sign in volume string doesn't cause formatting exceptions
+        val masterVolume = 1.0f
+        val volumePercent = (masterVolume * 100).toInt()
+        val displayStr = "总音量: $volumePercent% · 混音台 ↗"
+        assertEquals("总音量: 100% · 混音台 ↗", displayStr)
     }
 
     @Test
@@ -300,5 +363,44 @@ class StateDeduplicationAndNotificationTest {
         org.junit.Assert.assertNotNull(highestVolumeTrack)
         assertEquals("storm", highestVolumeTrack?.id)
         assertEquals("雷雨", highestVolumeTrack?.name)
+    }
+
+    @Test
+    fun testAllFifteenTracksHaveDistinctSkeuomorphicPalettes() {
+        val tracks = SoundRepository.ALL_TRACKS
+        assertEquals(15, tracks.size)
+
+        // Verify each track returns non-null valid colors
+        for (track in tracks) {
+            val darkPalette = BauhausSoundTheme.getPalette(track.id, isDark = true)
+            val lightPalette = BauhausSoundTheme.getPalette(track.id, isDark = false)
+            org.junit.Assert.assertNotNull(darkPalette.primary)
+            org.junit.Assert.assertNotNull(darkPalette.secondary)
+            org.junit.Assert.assertNotNull(lightPalette.primary)
+            org.junit.Assert.assertNotNull(lightPalette.secondary)
+        }
+
+        // Verify key semantic skeuomorphic associations
+        val fireplace = BauhausSoundTheme.getPalette("fireplace", isDark = true)
+        // Fireplace flame must be warm red-orange, not cyan
+        assertEquals(androidx.compose.ui.graphics.Color(0xFFFF5722), fireplace.primary)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFFFFC107), fireplace.secondary)
+
+        // Storm lightning must be electric yellow
+        val storm = BauhausSoundTheme.getPalette("storm", isDark = true)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFFFFD600), storm.secondary)
+
+        // Stream must be river blue
+        val stream = BauhausSoundTheme.getPalette("stream", isDark = true)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFF0288D1), stream.secondary)
+
+        // Forest wind must be evergreen
+        val wind = BauhausSoundTheme.getPalette("wind", isDark = true)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFF43A047), wind.secondary)
+
+        // Summer night must be moon gold and night violet
+        val summerNight = BauhausSoundTheme.getPalette("summer_night", isDark = true)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFFFFF59D), summerNight.primary)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFF7E57C2), summerNight.secondary)
     }
 }

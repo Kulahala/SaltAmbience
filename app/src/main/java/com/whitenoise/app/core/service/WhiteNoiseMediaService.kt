@@ -28,6 +28,7 @@ import androidx.media3.session.MediaStyleNotificationHelper
 import com.whitenoise.app.MainActivity
 import com.whitenoise.app.R
 import com.whitenoise.app.core.audio.AudioMixerEngine
+import com.whitenoise.app.core.audio.VolumeCalculator
 import com.whitenoise.app.core.model.PlaybackState
 import com.whitenoise.app.data.repository.SoundRepository
 import kotlinx.coroutines.CoroutineScope
@@ -74,18 +75,28 @@ class WhiteNoiseMediaService : MediaSessionService() {
             }
         }
 
-        fun formatNotificationSubtext(isMasterPlaying: Boolean, activeTrackCount: Int): String {
+        fun formatNotificationSubtext(
+            isMasterPlaying: Boolean,
+            activeTrackCount: Int,
+            isSleepTimerRunning: Boolean = false,
+            sleepTimerRemainingSeconds: Long? = null
+        ): String {
+            val timerSuffix = if (isSleepTimerRunning && sleepTimerRemainingSeconds != null && sleepTimerRemainingSeconds > 0) {
+                val mins = VolumeCalculator.calculateRemainingMinutes(sleepTimerRemainingSeconds)
+                " · ⏱️ ${mins}m后休眠"
+            } else ""
+
             return if (isMasterPlaying) {
                 if (activeTrackCount > 0) {
-                    "正在混音播放 $activeTrackCount 种自然声"
+                    "正在混音播放 $activeTrackCount 种自然声$timerSuffix"
                 } else {
-                    "未选择音效"
+                    "未选择音效$timerSuffix"
                 }
             } else {
                 if (activeTrackCount > 0) {
-                    "已暂停 · $activeTrackCount 轨待续"
+                    "已暂停 · $activeTrackCount 轨待续$timerSuffix"
                 } else {
-                    "已暂停"
+                    "已暂停$timerSuffix"
                 }
             }
         }
@@ -93,7 +104,10 @@ class WhiteNoiseMediaService : MediaSessionService() {
         fun shouldUpdateNotification(old: PlaybackState, new: PlaybackState): Boolean {
             return old.isMasterPlaying != new.isMasterPlaying ||
                 old.activeTrackCount != new.activeTrackCount ||
-                old.primaryTrackId != new.primaryTrackId
+                old.primaryTrackId != new.primaryTrackId ||
+                old.isSleepTimerRunning != new.isSleepTimerRunning ||
+                (old.isSleepTimerRunning && new.isSleepTimerRunning &&
+                    kotlin.math.abs((old.sleepTimerRemainingSeconds ?: 0L) - (new.sleepTimerRemainingSeconds ?: 0L)) >= 60L)
         }
     }
 
@@ -286,7 +300,12 @@ class WhiteNoiseMediaService : MediaSessionService() {
         )
 
         val isPlaying = state.isMasterPlaying
-        val subtext = formatNotificationSubtext(isPlaying, state.activeTrackCount)
+        val subtext = formatNotificationSubtext(
+            isMasterPlaying = isPlaying,
+            activeTrackCount = state.activeTrackCount,
+            isSleepTimerRunning = state.isSleepTimerRunning,
+            sleepTimerRemainingSeconds = state.sleepTimerRemainingSeconds
+        )
 
         val activeTracks = audioEngine.tracksState.value.filter { it.isPlaying && !it.isMuted }
         val primaryTrack = activeTracks.find { it.id == state.primaryTrackId }
@@ -351,6 +370,21 @@ class WhiteNoiseMediaService : MediaSessionService() {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .addAction(playPauseIcon, playPauseTitle, playPausePendingIntent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "全停", stopPendingIntent)
+
+        val isTimerActive = state.isSleepTimerRunning &&
+            state.sleepTimerRemainingSeconds != null &&
+            state.sleepTimerRemainingSeconds > 0
+
+        if (isTimerActive) {
+            val targetTimestamp = System.currentTimeMillis() + (state.sleepTimerRemainingSeconds ?: 0L) * 1000L
+            builder.setShowWhen(true)
+                .setWhen(targetTimestamp)
+                .setUsesChronometer(true)
+                .setChronometerCountDown(true)
+        } else {
+            builder.setShowWhen(false)
+                .setUsesChronometer(false)
+        }
 
         mediaSession?.let { session ->
             builder.setStyle(
