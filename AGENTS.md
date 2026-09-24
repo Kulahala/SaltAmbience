@@ -118,8 +118,9 @@ app/src/main/java/com/whitenoise/app/
   - **预设横滑栏永远稳固吸顶**：下部预设横滑栏（固定 54.dp）永远吸附在状态栏正下方（`statusBarsPadding()`），不设负 offset、不做外部截断，无论滚动到多深随时横滑切换混音；
   - **预设操作单点归一与官方库收纳**：主屏预设横滑栏做极致减法，彻底移除低频冗余的“恢复默认”胶囊，仅保留 `[方案卡片] ... [+ 存为预设] [📥 导入]`；将默认预设找回、单项恢复与官方方案库深度收纳进“导入”弹窗，已存在方案轻触提示“无需重复添加”，误删方案轻触即刻单项找回；
   - **纯实色防叠字悬浮舱**：顶栏与底栏播放条全面采用 100% 纯实色（`SaltTheme.colors.background` 与 `Color(0xFF1E2026)`），搭配 1.dp 精致边缘微描边与柔和阴影，彻底摒弃不稳定的外部 alpha 模糊库，杜绝字体重叠透底与崩溃闪退。
-- **应用图标契约 (Adaptive Icon Contract)**：
-  - 落地 Android 8.0+ 官方自适应矢量图标「包豪斯声学 · 琴弦点线面」(D-14) 为主图标（`res/drawable/` + `res/mipmap-anydpi-v26/`），配套 `ic_launcher_monochrome.xml` 支持 Android 13+ 壁纸动态取色；归档 D-16 备选。
+- **应用图标与全密度位图契约 (Adaptive & Legacy Icon Contract)**：
+  - 落地 Android 8.0+ 官方自适应矢量图标「包豪斯声学 · 琴弦点线面」(D-14) 为主图标（`res/drawable/` + `res/mipmap-anydpi-v26/`），配套 `ic_launcher_monochrome.xml` 支持 Android 13+ 壁纸动态取色；归档 D-16 备选；
+  - 严格配备 mdpi/hdpi/xhdpi/xxhdpi/xxxhdpi 全密度 1080p 超采样抗锯齿 PNG 标准位图（`ic_launcher.png` 与 `ic_launcher_round.png`），保障 OEM 系统设置【应用信息】、多任务栈预览与传统启动器完美渲染，杜绝降级为系统默认播放器白三角。
 
 ### 3.4 状态持久化契约
 - 使用轻量 **Jetpack DataStore Preferences** 记录用户退出前的音轨音量状态与自定义场景预设；
@@ -162,6 +163,7 @@ app/src/main/java/com/whitenoise/app/
 | **Stage 20** | 音效生态全量扩充至 22 款、声学无缝工坊与专属包豪斯矢量符号 (v1.9.0) | **[x] 已达成** | 扩充电风扇、钟表、机械键盘、风铃、雨打屋檐、深海水声、科学绿噪等 7 款无缝音源（全站扩充至 22 款自然音）；Python + FFmpeg 7.1 实现采样级等能量交叉淡化无缝循环；手绘 7 款专属包豪斯极简矢量符号 (`BauhausSoundIcon`) 与自然语义调色；更新防疲劳时间戳偏置库；72 项单测全绿，Release 打包全绿。 |
 | **Stage 21** | 交互入口去冗余、设置抽屉收敛与致谢包豪斯胶囊滚动条 (v1.9.1) | **[x] 已达成** | 砍掉左上角 Brand 标题隐式点击暗门，收敛至右上角设置；砍掉设置中重复盲目的重置预设，交由方案库闭环；开源致谢副标更新为 22 款；关于抽屉加入 340dp 高度约束与纯原生包豪斯微光细胶囊滚动条；72 项单测全绿，Release 打包全绿。 |
 | **Stage 22** | 仓库公开合规性整改、分层多重许可与签名体系安全解耦 (v1.9.1-compliance) | **[x] 已达成** | 补齐根目录分层 MIT LICENSE (包含媒体音频独立排除例外)；重构 SOUNDS_LICENSING.md 补齐 CC 官方 URL 及 Pixabay 独立分发免责；README 补充 Moriafly/SaltPlayer 致敬免责及零权限隐私特性；端内关于抽屉增加 GitHub 主页直达；从 Git 解耦 keystore 并配置环境变量/优雅降级；72 项单测全绿，Debug/Release 构建全绿。 |
+| **Stage 23** | 补全全密度 Legacy 位图图标彻底根治应用信息默认播放器、发布 v2.0.0 正式版 (v2.0.0) | **[x] 已达成** | 剖析 HyperOS 跨进程 loadIcon 机制与 MediaSessionService 默认占位回退；补齐 mdpi~xxxhdpi 全密度 1080p 超采样正方形与完美圆位图；规范 res/mipmap-anydpi-v26/ 边界并在 Activity 显式声明；升级 v2.0.0 (versionCode 22)；72 项单测全绿，Release 打包全绿。 |
 
 ---
 
@@ -188,6 +190,8 @@ app/src/main/java/com/whitenoise/app/
    - 使用 `GridCells.Adaptive` 时，全宽通栏组件必须使用 `GridItemSpan(maxLineSpan)`，严禁硬编码 `GridItemSpan(2)`，否则在大屏/平板上会导致右侧出现空白断层。
 9. **Media3 LoadControl 独立实例与多线程亲和性**：
    - Media3 的 `DefaultLoadControl.onPrepared` 会断言 `threadId == -1 || threadId == currentThreadId`。多音轨并发池中每个 `ExoPlayer` 运行于独立的后台回放线程，**严禁将同一个 `LoadControl` 单例注入多个播放器**，必须使用工厂方法 `createLowLatencyLoadControl()` 为每个播放器分配独立实例，否则会导致首个准备的播放器独占线程、后续其他音轨全部抛出 `IllegalStateException` 哑音。
+10. **应用图标全密度 Legacy 位图与系统设置应用信息兼容**：
+    - Android 8.0+ 引入的 adaptive-icon 矢量 XML 仅被支持自适应图标的 Launcher 主屏幕解析。系统设置（【设置 -> 应用管理 -> 应用信息】）、任务栈预览或部分定制 OS（MIUI/HyperOS、ColorOS、OriginOS）在跨进程调用 PackageManager 加载图标时，若缺少标准分辨率 PNG 位图（res/mipmap-mdpi ~ xxxhdpi）或 res/mipmap/ 根目录存放了非法的 adaptive-icon XML，会导致跨进程解析失败回退为系统默认占位图标。尤其当应用声明了 mediaPlayback 权限与 MediaSessionService 时，会被系统识别为媒体应用并降级显示为“灰底居中白三角播放器”。必须在各 density 目录下提供成套的 ic_launcher.png 和 ic_launcher_round.png，且仅在 res/mipmap-anydpi-v26/ 中放置 adaptive-icon XML。
 
 ---
 
