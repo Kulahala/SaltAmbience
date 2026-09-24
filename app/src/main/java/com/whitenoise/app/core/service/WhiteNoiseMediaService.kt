@@ -79,22 +79,29 @@ class WhiteNoiseMediaService : MediaSessionService() {
             isMasterPlaying: Boolean,
             activeTrackCount: Int,
             isSleepTimerRunning: Boolean = false,
-            sleepTimerRemainingSeconds: Long? = null
+            sleepTimerRemainingSeconds: Long? = null,
+            singleTrackName: String? = null
         ): String {
             val timerSuffix = if (isSleepTimerRunning && sleepTimerRemainingSeconds != null && sleepTimerRemainingSeconds > 0) {
                 val mins = VolumeCalculator.calculateRemainingMinutes(sleepTimerRemainingSeconds)
                 " · ⏱️ ${mins}m后休眠"
             } else ""
 
+            val content = when {
+                activeTrackCount == 1 -> singleTrackName ?: "单轨播放中"
+                activeTrackCount > 1 -> "$activeTrackCount 轨混音中"
+                else -> "未选择音效"
+            }
+
             return if (isMasterPlaying) {
                 if (activeTrackCount > 0) {
-                    "正在混音播放 $activeTrackCount 种自然声$timerSuffix"
+                    "$content$timerSuffix"
                 } else {
                     "未选择音效$timerSuffix"
                 }
             } else {
                 if (activeTrackCount > 0) {
-                    "已暂停 · $activeTrackCount 轨待续$timerSuffix"
+                    "已暂停 · $content$timerSuffix"
                 } else {
                     "已暂停$timerSuffix"
                 }
@@ -102,12 +109,15 @@ class WhiteNoiseMediaService : MediaSessionService() {
         }
 
         fun shouldUpdateNotification(old: PlaybackState, new: PlaybackState): Boolean {
+            val oldMinutes = VolumeCalculator.calculateRemainingMinutes(old.sleepTimerRemainingSeconds)
+            val newMinutes = VolumeCalculator.calculateRemainingMinutes(new.sleepTimerRemainingSeconds)
+            val isMinuteChanged = (old.isSleepTimerRunning && new.isSleepTimerRunning) && (oldMinutes != newMinutes)
+
             return old.isMasterPlaying != new.isMasterPlaying ||
                 old.activeTrackCount != new.activeTrackCount ||
                 old.primaryTrackId != new.primaryTrackId ||
                 old.isSleepTimerRunning != new.isSleepTimerRunning ||
-                (old.isSleepTimerRunning && new.isSleepTimerRunning &&
-                    kotlin.math.abs((old.sleepTimerRemainingSeconds ?: 0L) - (new.sleepTimerRemainingSeconds ?: 0L)) >= 60L)
+                isMinuteChanged
         }
     }
 
@@ -300,13 +310,6 @@ class WhiteNoiseMediaService : MediaSessionService() {
         )
 
         val isPlaying = state.isMasterPlaying
-        val subtext = formatNotificationSubtext(
-            isMasterPlaying = isPlaying,
-            activeTrackCount = state.activeTrackCount,
-            isSleepTimerRunning = state.isSleepTimerRunning,
-            sleepTimerRemainingSeconds = state.sleepTimerRemainingSeconds
-        )
-
         val activeTracks = audioEngine.tracksState.value.filter { it.isPlaying && !it.isMuted }
         val primaryTrack = activeTracks.find { it.id == state.primaryTrackId }
             ?: activeTracks.maxByOrNull { it.volume }
@@ -314,6 +317,14 @@ class WhiteNoiseMediaService : MediaSessionService() {
 
         val trackId = primaryTrack?.id ?: state.primaryTrackId
         val soundName = primaryTrack?.name ?: SoundRepository.ALL_TRACKS.find { it.id == trackId }?.name
+
+        val subtext = formatNotificationSubtext(
+            isMasterPlaying = isPlaying,
+            activeTrackCount = state.activeTrackCount,
+            isSleepTimerRunning = state.isSleepTimerRunning,
+            sleepTimerRemainingSeconds = state.sleepTimerRemainingSeconds,
+            singleTrackName = soundName
+        )
 
         // Generate dynamic high-res Bauhaus acoustic artwork bitmap & bytes
         val (coverBitmap, artworkBytes) = BauhausArtworkGenerator.getOrCreateArtwork(

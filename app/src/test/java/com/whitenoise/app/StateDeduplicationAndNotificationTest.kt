@@ -20,19 +20,37 @@ class StateDeduplicationAndNotificationTest {
 
     @Test
     fun testNotificationSubtextFormatting() {
-        // Playing with active tracks
+        // Playing with multiple active tracks
         assertEquals(
-            "正在混音播放 3 种自然声",
+            "3 轨混音中",
             WhiteNoiseMediaService.formatNotificationSubtext(isMasterPlaying = true, activeTrackCount = 3)
+        )
+        // Playing with single active track: directly shows track name!
+        assertEquals(
+            "细雨",
+            WhiteNoiseMediaService.formatNotificationSubtext(
+                isMasterPlaying = true,
+                activeTrackCount = 1,
+                singleTrackName = "细雨"
+            )
         )
         // Playing with 0 active tracks
         assertEquals(
             "未选择音效",
             WhiteNoiseMediaService.formatNotificationSubtext(isMasterPlaying = true, activeTrackCount = 0)
         )
-        // Paused with tracks waiting
+        // Paused with single track
         assertEquals(
-            "已暂停 · 2 轨待续",
+            "已暂停 · 细雨",
+            WhiteNoiseMediaService.formatNotificationSubtext(
+                isMasterPlaying = false,
+                activeTrackCount = 1,
+                singleTrackName = "细雨"
+            )
+        )
+        // Paused with multiple tracks waiting
+        assertEquals(
+            "已暂停 · 2 轨混音中",
             WhiteNoiseMediaService.formatNotificationSubtext(isMasterPlaying = false, activeTrackCount = 2)
         )
         // Paused with 0 tracks
@@ -40,9 +58,20 @@ class StateDeduplicationAndNotificationTest {
             "已暂停",
             WhiteNoiseMediaService.formatNotificationSubtext(isMasterPlaying = false, activeTrackCount = 0)
         )
-        // Playing with sleep timer active (e.g. 1800s -> 30m)
+        // Playing with single track and sleep timer active (e.g. 1800s -> 30m): ultra clean, no ellipsis!
         assertEquals(
-            "正在混音播放 3 种自然声 · ⏱️ 30m后休眠",
+            "细雨 · ⏱️ 30m后休眠",
+            WhiteNoiseMediaService.formatNotificationSubtext(
+                isMasterPlaying = true,
+                activeTrackCount = 1,
+                isSleepTimerRunning = true,
+                sleepTimerRemainingSeconds = 1800L,
+                singleTrackName = "细雨"
+            )
+        )
+        // Playing with multiple tracks and sleep timer active
+        assertEquals(
+            "3 轨混音中 · ⏱️ 30m后休眠",
             WhiteNoiseMediaService.formatNotificationSubtext(
                 isMasterPlaying = true,
                 activeTrackCount = 3,
@@ -52,7 +81,7 @@ class StateDeduplicationAndNotificationTest {
         )
         // Paused with sleep timer active (e.g. 65s -> 2m)
         assertEquals(
-            "已暂停 · 2 轨待续 · ⏱️ 2m后休眠",
+            "已暂停 · 2 轨混音中 · ⏱️ 2m后休眠",
             WhiteNoiseMediaService.formatNotificationSubtext(
                 isMasterPlaying = false,
                 activeTrackCount = 2,
@@ -275,17 +304,25 @@ class StateDeduplicationAndNotificationTest {
             WhiteNoiseMediaService.shouldUpdateNotification(timerStartedState, timerCanceledState)
         )
 
-        // 8. Sleep timer running tick: 1 second decrement must NOT update notification
+        // 8. Sleep timer running intra-minute tick (1800s -> 1799s, both 30m): must NOT update notification
         val runningTickState = timerStartedState.copy(sleepTimerRemainingSeconds = 1799L)
         assertFalse(
-            "Running sleep timer second-tick must NOT update notification",
+            "Running sleep timer intra-minute second-tick must NOT update notification",
             WhiteNoiseMediaService.shouldUpdateNotification(timerStartedState, runningTickState)
         )
 
-        // 9. Sleep timer duration reset by user (e.g. from 1800s to 3600s, >= 60s diff): MUST update notification
+        // 9. Minute boundary transition (1741s -> 30m, 1740s -> 29m): MUST update notification
+        val stateAt30m = timerStartedState.copy(sleepTimerRemainingSeconds = 1741L)
+        val stateAt29m = timerStartedState.copy(sleepTimerRemainingSeconds = 1740L)
+        assertTrue(
+            "Minute boundary transition from 30m to 29m must trigger notification update",
+            WhiteNoiseMediaService.shouldUpdateNotification(stateAt30m, stateAt29m)
+        )
+
+        // 10. Sleep timer duration reset by user (e.g. from 1800s to 3600s, 30m to 60m): MUST update notification
         val timerResetState = timerStartedState.copy(sleepTimerRemainingSeconds = 3600L)
         assertTrue(
-            "Resetting sleep timer duration (>=60s diff) must update notification",
+            "Resetting sleep timer duration (from 30m to 60m) must update notification",
             WhiteNoiseMediaService.shouldUpdateNotification(timerStartedState, timerResetState)
         )
     }

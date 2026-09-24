@@ -44,6 +44,24 @@ class AudioMixerEngine private constructor(private val context: Context) {
                 instance ?: AudioMixerEngine(context.applicationContext).also { instance = it }
             }
         }
+
+        /**
+         * Factory method to create an independent DefaultLoadControl instance for each player.
+         * DefaultLoadControl in Media3 asserts single-thread affinity in onPrepared (threadId == -1 || threadId == currentThreadId).
+         * Sharing a singleton instance across multiple ExoPlayers running on separate playback threads causes
+         * IllegalStateException, rendering all subsequent tracks silent.
+         */
+        fun createLowLatencyLoadControl(): DefaultLoadControl {
+            return DefaultLoadControl.Builder()
+                .setBufferDurationsMs(
+                    /* minBufferMs = */ 1000,
+                    /* maxBufferMs = */ 2000,
+                    /* bufferForPlaybackMs = */ 50,
+                    /* bufferForPlaybackAfterRebufferMs = */ 100
+                )
+                .setPrioritizeTimeOverSizeThresholds(true)
+                .build()
+        }
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -80,18 +98,9 @@ class AudioMixerEngine private constructor(private val context: Context) {
     var onSleepTimerCompleted: (() -> Unit)? = null
 
     // Low latency load control specifically tuned for local asset audio:
-    // bufferForPlaybackMs = 50ms ensures virtually instantaneous audio start without waiting for network buffers
-    private val lowLatencyLoadControl by lazy {
-        DefaultLoadControl.Builder()
-            .setBufferDurationsMs(
-                /* minBufferMs = */ 1000,
-                /* maxBufferMs = */ 2000,
-                /* bufferForPlaybackMs = */ 50,
-                /* bufferForPlaybackAfterRebufferMs = */ 100
-            )
-            .setPrioritizeTimeOverSizeThresholds(true)
-            .build()
-    }
+    // bufferForPlaybackMs = 50ms ensures virtually instantaneous audio start without waiting for network buffers.
+    // Each ExoPlayer instance must have its own DefaultLoadControl to avoid single-thread affinity assertions.
+    fun createLowLatencyLoadControl(): DefaultLoadControl = Companion.createLowLatencyLoadControl()
 
     init {
         setupAudioFocus()
@@ -555,7 +564,7 @@ class AudioMixerEngine private constructor(private val context: Context) {
 
             ExoPlayer.Builder(context)
                 .setAudioAttributes(audioAttributes, /* handleAudioFocus = */ false)
-                .setLoadControl(lowLatencyLoadControl)
+                .setLoadControl(createLowLatencyLoadControl())
                 .build().apply {
                     val uri = "asset:///sounds/${track.assetFileName}"
                     setMediaItem(MediaItem.fromUri(uri))

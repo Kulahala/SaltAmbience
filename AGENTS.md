@@ -84,7 +84,7 @@ app/src/main/java/com/whitenoise/app/
 - **主增益与感知平滑淡出**：
   - 单轨音量公式：$ActualVolume = TrackVolume \times MasterVolume$；
   - 休眠淡出：在休眠定时器最后阶段（如 `min(60s, totalTime / 4)`），采用对数/二次幂曲线衰减，匹配人耳感知，杜绝截断爆音。
-- **低时延瞬发响应引擎**：定制 50ms 本地缓冲策略（`lowLatencyLoadControl`），配合 UI 0ms 乐观状态流即时翻转与音频焦点异步协程调度，消除体感起播与暂停延迟。
+- **低时延瞬发响应引擎**：定制 50ms 本地缓冲策略（通过 `createLowLatencyLoadControl()` 工厂为各播放器独立创建实例，杜绝 Media3 `DefaultLoadControl` 单线程亲和性断言导致的跨轨哑音崩溃），配合 UI 0ms 乐观状态流即时翻转与音频焦点异步协程调度，消除体感起播与暂停延迟。
 - **防循环疲劳声学微动态**：音轨点亮或切换预设时执行方案 A（安全随机起始偏置，打破 00:00.000 固定开头）与方案 B（±2% 自然微速差纯净重采样 `PlaybackParameters(speed, speed)`，打破机械节拍公倍数与相位死锁）；暂停再继续严格保持当前进度；未就绪音轨在 `STATE_READY` 延迟安全 seek。
 
 ### 3.2 前台保活与媒体控制契约 (`WhiteNoiseMediaService`)
@@ -140,6 +140,7 @@ app/src/main/java/com/whitenoise/app/
 | **Stage 9** | 视觉交互闭环、图标重塑与大屏自适应 (v1.6.1) | **[x] 已达成** | 落地包豪斯自适应图标 (D-14) 与 Android 13+ 动态取色；实色悬浮舱防叠字（130.dp 安全避让）；顶栏手势自然滚动；抽屉物理弹簧动效与玄武岩冷炭黑；移除多余缩放内凹并保留 14.dp 原生高斯模糊；顶栏极简减法（左上角微版本号触感入口）；全站多设备自适应 `GridCells.Adaptive(160.dp)` 配合 `GridItemSpan(maxLineSpan)`；33 项单测全绿。 |
 | **Stage 10** | 锁屏通知包豪斯黑胶封面、声学极简矢量符号、低延迟瞬发引擎与防循环疲劳声学动态 (v1.7.0) | **[x] 已达成** | 彻底消除锁屏通知粗糙白三角，动态渲染注入 512x512 包豪斯黑胶声学艺术大封面与微小单色图标；15 款自然音全站废弃拟物 Emoji，由包豪斯声学极简矢量符号 (`BauhausSoundIcon`) 统一驱动；ExoPlayer 定制 50ms 缓冲策略 + 0ms 乐观响应 + 串行异步音频焦点治理消除体感半秒延迟；落地方案 A（起播随机时间戳偏置）与方案 B（±2% 自然微速差重采样），彻底消除长时播放循环疲劳；48 项单测 100% 全绿。 |
 | **Stage 11** | 定时器闪退根治、拟物语义专属配色、播控条精简与系统原生倒计时联动 (v1.7.1) | **[x] 已达成** | 根除 `String.format` 字符百分号插值崩溃，抽取纯 Kotlin 安全倒计时工具；15 款音标与锁屏黑胶封面全量落地拟物语义配色（篝火烈焰红橙+金星、雷雨电光黄、林风苍翠绿等）；播控条移除冗余混音按钮并落地实时倒计时高亮胶囊；通知栏与锁屏接入 Android 原生 `Chronometer` 硬件级秒级倒计时；52 项单测 100% 全绿。 |
+| **Stage 12** | LoadControl 独立实例工厂根治跨轨哑音、通知单轨直显与分钟级跳变驱动 (v1.7.2) | **[x] 已达成** | 彻底根除 Media3 DefaultLoadControl 单线程亲和性断言导致的并发哑音，采用工厂构建独立实例；通知副文本单轨直显音效名并消除锁屏截断折叠；通知栏精准分钟级跳变更新；56 项单测 100% 全绿。 |
 
 ---
 
@@ -164,6 +165,8 @@ app/src/main/java/com/whitenoise/app/
    - 循环音源必须使用 OGG/Opus，规避 AAC 首尾卡顿；所有子 ExoPlayer 必须设置 `handleAudioFocus = false`，统一由顶层单点处理焦点。
 8. **自适应网格 Span 规范**：
    - 使用 `GridCells.Adaptive` 时，全宽通栏组件必须使用 `GridItemSpan(maxLineSpan)`，严禁硬编码 `GridItemSpan(2)`，否则在大屏/平板上会导致右侧出现空白断层。
+9. **Media3 LoadControl 独立实例与多线程亲和性**：
+   - Media3 的 `DefaultLoadControl.onPrepared` 会断言 `threadId == -1 || threadId == currentThreadId`。多音轨并发池中每个 `ExoPlayer` 运行于独立的后台回放线程，**严禁将同一个 `LoadControl` 单例注入多个播放器**，必须使用工厂方法 `createLowLatencyLoadControl()` 为每个播放器分配独立实例，否则会导致首个准备的播放器独占线程、后续其他音轨全部抛出 `IllegalStateException` 哑音。
 
 ---
 
