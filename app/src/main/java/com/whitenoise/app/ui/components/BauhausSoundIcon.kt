@@ -376,12 +376,15 @@ private fun DrawScope.drawBauhausSymbol(
 
         "white_noise" -> {
             // Full-spectrum balanced frequency raster bars: dynamic expansion from center
-            val b1 = lerp(w * 0.15f, 0f, 1f - morphProgress)
-            val b2 = lerp(w * 0.20f, 0f, 1f - morphProgress)
-            drawLine(primaryColor, Offset(w * 0.50f - (w * 0.30f - b1), h * 0.26f), Offset(w * 0.50f + (w * 0.30f - b1), h * 0.26f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            drawLine(secondaryColor, Offset(w * 0.50f - (w * 0.38f - b2), h * 0.42f), Offset(w * 0.50f + (w * 0.38f - b2), h * 0.42f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            drawLine(primaryColor, Offset(w * 0.50f - (w * 0.26f - b1), h * 0.58f), Offset(w * 0.50f + (w * 0.26f - b1), h * 0.58f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            drawLine(secondaryColor, Offset(w * 0.50f - (w * 0.34f - b2), h * 0.74f), Offset(w * 0.50f + (w * 0.34f - b2), h * 0.74f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            val scaleFactor = lerp(0.65f, 1.0f, morphProgress)
+            val hw1 = w * 0.30f * scaleFactor
+            val hw2 = w * 0.38f * scaleFactor
+            val hw3 = w * 0.26f * scaleFactor
+            val hw4 = w * 0.34f * scaleFactor
+            drawLine(primaryColor, Offset(w * 0.50f - hw1, h * 0.26f), Offset(w * 0.50f + hw1, h * 0.26f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.50f - hw2, h * 0.42f), Offset(w * 0.50f + hw2, h * 0.42f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            drawLine(primaryColor, Offset(w * 0.50f - hw3, h * 0.58f), Offset(w * 0.50f + hw3, h * 0.58f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.50f - hw4, h * 0.74f), Offset(w * 0.50f + hw4, h * 0.74f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
             // Vertical balance coordinate axis
             drawLine(primaryColor, Offset(w * 0.50f, h * 0.14f), Offset(w * 0.50f, h * 0.86f), strokeWidth = strokeWidth * 0.5f, cap = StrokeCap.Round)
         }
