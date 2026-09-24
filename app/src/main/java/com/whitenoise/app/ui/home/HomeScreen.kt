@@ -29,9 +29,11 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -450,7 +452,10 @@ fun HomeScreen(
                 items(displayedTracks, key = { it.id }) { track ->
                     SoundTileCard(
                         track = track,
-                        onTogglePlay = { viewModel.toggleTrackPlay(track.id) }
+                        onTogglePlay = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            viewModel.toggleTrackPlay(track.id)
+                        }
                     )
                 }
             }
@@ -595,20 +600,30 @@ fun HomeScreen(
                 ) {
                     presets.forEach { preset ->
                         val isPresetActive = remember(preset, activeTracksMap) { preset.matchesTracks(activeTracksMap) }
+                        val animatedBorderColor by animateColorAsState(
+                            targetValue = if (isPresetActive) SaltTheme.colors.highlight else Color.Transparent,
+                            animationSpec = tween(150),
+                            label = "preset_border"
+                        )
+                        val animatedBgColor by animateColorAsState(
+                            targetValue = if (isPresetActive) SaltTheme.colors.highlight.copy(alpha = 0.10f) else SaltTheme.colors.subBackground,
+                            animationSpec = tween(150),
+                            label = "preset_bg"
+                        )
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(14.dp))
                                 .border(
                                     width = 1.5.dp,
-                                    color = if (isPresetActive) SaltTheme.colors.highlight else Color.Transparent,
+                                    color = animatedBorderColor,
                                     shape = RoundedCornerShape(14.dp)
                                 )
-                                .background(
-                                    if (isPresetActive) SaltTheme.colors.highlight.copy(alpha = 0.10f)
-                                    else SaltTheme.colors.subBackground
-                                )
+                                .background(animatedBgColor)
                                 .combinedClickable(
-                                    onClick = { viewModel.applyPreset(preset) },
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        viewModel.applyPreset(preset)
+                                    },
                                     onLongClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         viewModel.copyPresetShareCode(preset)
@@ -717,7 +732,10 @@ fun HomeScreen(
             BottomPlayerBar(
                 playbackState = playbackState,
                 activeTracks = activeTracks,
-                onToggleMasterPlay = { viewModel.toggleMasterPlay() },
+                onToggleMasterPlay = {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    viewModel.toggleMasterPlay()
+                },
                 onOpenMixer = {
                     viewModel.setShowSleepTimerDialog(false)
                     showMixerSheet = true
@@ -740,8 +758,14 @@ fun HomeScreen(
             onTrackVolumeChange = { trackId, volume -> viewModel.setTrackVolume(trackId, volume) },
             onToggleTrackMute = { trackId -> viewModel.toggleTrackMute(trackId) },
             isMasterPlaying = playbackState.isMasterPlaying,
-            onToggleMasterPlay = { viewModel.toggleMasterPlay() },
-            onStopAll = { viewModel.stopAll() }
+            onToggleMasterPlay = {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                viewModel.toggleMasterPlay()
+            },
+            onStopAll = {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                viewModel.stopAll()
+            }
         )
 
         // Standalone Modern Music Player Style Sleep Timer Bottom Sheet

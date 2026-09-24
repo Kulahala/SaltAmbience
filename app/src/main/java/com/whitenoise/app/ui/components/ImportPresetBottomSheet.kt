@@ -118,18 +118,18 @@ fun ImportPresetBottomSheet(
                     )
                 }
 
-                // Close button
+                // Close button (Unified 32.dp circular capsule)
                 Box(
                     modifier = Modifier
+                        .size(32.dp)
                         .clip(CircleShape)
                         .background(SaltTheme.colors.subBackground)
-                        .clickable { onDismiss() }
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                        .clickable { onDismiss() },
                     contentAlignment = Alignment.Center
                 ) {
                     BauhausUiIcon(
                         symbol = BauhausUiSymbol.Close,
-                        modifier = Modifier.size(11.dp)
+                        modifier = Modifier.size(12.dp)
                     )
                 }
             }
