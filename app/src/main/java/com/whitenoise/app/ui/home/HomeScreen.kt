@@ -24,6 +24,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
@@ -36,10 +41,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalDensity
 import android.os.Build
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -188,97 +199,41 @@ fun HomeScreen(
                     }
                 )
         ) {
-            // Adaptive Bento Grid as Main Scroll Container (Multi-device responsive: 2 columns on phone, 3-4 on tablet/landscape)
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 160.dp),
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 130.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-            // Section 0: App Bar Header (Full width span)
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(horizontal = 4.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Left Brand Header with subtle version badge (Tapping opens About dialog with haptic feedback)
-                    Column(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                viewModel.setShowAboutDialog(true)
-                            }
-                            .padding(horizontal = 6.dp, vertical = 4.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = "SaltAmbience",
-                                style = SaltTheme.textStyles.largeTitle,
-                                color = SaltTheme.colors.text
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(SaltTheme.colors.subBackground)
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "v$versionName",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = SaltTheme.colors.text.copy(alpha = 0.65f)
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "椒盐美学 · 多轨自然声混音",
-                            style = SaltTheme.textStyles.sub,
-                            color = SaltTheme.colors.text.copy(alpha = 0.65f)
-                        )
-                    }
+            val gridState = rememberLazyGridState()
+            val density = LocalDensity.current
+            val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+            val presetsRowHeight = 54.dp
+            val collapsibleHeight = 90.dp // TitleBar (54dp) + SceneTitleBar (36dp)
+            val collapsibleHeightPx = with(density) { collapsibleHeight.toPx() }
 
-                    // Top Right: Compact Theme Switch Button (About moved to Title Header)
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(SaltTheme.colors.subBackground)
-                            .clickable { viewModel.setShowThemeDialog(true) }
-                            .padding(horizontal = 12.dp, vertical = 7.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
-                            BauhausUiIcon(
-                                symbol = themeMode.toBauhausSymbol(),
-                                modifier = Modifier.size(13.dp)
-                            )
-                            Text(
-                                text = when (themeMode) {
-                                    com.whitenoise.app.core.model.ThemeMode.SYSTEM -> "系统"
-                                    com.whitenoise.app.core.model.ThemeMode.LIGHT -> "浅色"
-                                    com.whitenoise.app.core.model.ThemeMode.DARK -> "深色"
-                                },
-                                style = SaltTheme.textStyles.sub,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = SaltTheme.colors.text.copy(alpha = 0.75f)
-                            )
-                        }
+            val collapseFraction by remember {
+                derivedStateOf {
+                    if (gridState.firstVisibleItemIndex > 0) {
+                        1f
+                    } else {
+                        (gridState.firstVisibleItemScrollOffset.toFloat() / collapsibleHeightPx).coerceIn(0f, 1f)
                     }
                 }
             }
+
+            val isDark = SaltTheme.configs.isDarkTheme
+            val topBarBorderColor = if (isDark) Color.White.copy(alpha = 0.08f) else SaltTheme.colors.text.copy(alpha = 0.06f)
+            val headerBgColor = SaltTheme.colors.background
+
+            // Adaptive Bento Grid as Main Scroll Container (Multi-device responsive: 2 columns on phone, 3-4 on tablet/landscape)
+            LazyVerticalGrid(
+                state = gridState,
+                columns = GridCells.Adaptive(minSize = 160.dp),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = statusBarTop + collapsibleHeight + presetsRowHeight,
+                    bottom = 130.dp
+                ),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
 
             // Lightweight detected clipboard banner (Full width span)
             if (detectedPayload != null) {
@@ -331,225 +286,46 @@ fun HomeScreen(
                     }
                 }
             }
-                // Section 1: Presets (Full width span)
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    Column {
-                        Row(
+                // 预设长按提示框（支持关闭后不再显示）
+                if (!isPresetHintDismissed) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 4.dp, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(SaltTheme.colors.subBackground)
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
                         ) {
-                            Text(
-                                text = "场景方案",
-                                style = SaltTheme.textStyles.main,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                                color = SaltTheme.colors.text
-                            )
-
-                            // 导入按钮
-                            Box(
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .background(SaltTheme.colors.subBackground)
-                                    .clickable { viewModel.setShowImportDialog(true) }
-                                    .padding(horizontal = 10.dp, vertical = 5.dp),
-                                contentAlignment = Alignment.Center
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    modifier = Modifier.weight(1f)
                                 ) {
-                                    BauhausUiIcon(
-                                        symbol = BauhausUiSymbol.Import,
-                                        modifier = Modifier.size(11.dp)
-                                    )
                                     Text(
-                                        text = "导入",
+                                        text = "长按预设卡片可快速复制并导出分享口令",
                                         style = SaltTheme.textStyles.sub,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = SaltTheme.colors.text.copy(alpha = 0.8f)
+                                        fontSize = 11.sp,
+                                        color = SaltTheme.colors.text.copy(alpha = 0.65f)
                                     )
                                 }
-                            }
-                        }
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState())
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            presets.forEach { preset ->
-                                val isPresetActive = remember(preset, activeTracksMap) { preset.matchesTracks(activeTracksMap) }
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .border(
-                                            width = 1.5.dp,
-                                            color = if (isPresetActive) SaltTheme.colors.highlight else Color.Transparent,
-                                            shape = RoundedCornerShape(14.dp)
-                                        )
-                                        .background(
-                                            if (isPresetActive) SaltTheme.colors.highlight.copy(alpha = 0.10f)
-                                            else SaltTheme.colors.subBackground
-                                        )
-                                        .combinedClickable(
-                                            onClick = { viewModel.applyPreset(preset) },
-                                            onLongClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                viewModel.copyPresetShareCode(preset)
-                                            }
-                                        )
-                                        .padding(horizontal = 14.dp, vertical = 10.dp)
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Column {
-                                            Text(
-                                                text = preset.name,
-                                                style = SaltTheme.textStyles.main,
-                                                fontWeight = if (isPresetActive) FontWeight.Bold else FontWeight.Medium,
-                                                color = if (isPresetActive) SaltTheme.colors.highlight else SaltTheme.colors.text
-                                            )
-                                            if (preset.description.isNotBlank()) {
-                                                Text(
-                                                    text = preset.description,
-                                                    style = SaltTheme.textStyles.sub,
-                                                    fontSize = 11.sp,
-                                                    color = if (isPresetActive) SaltTheme.colors.highlight.copy(alpha = 0.85f) else SaltTheme.colors.text.copy(alpha = 0.65f)
-                                                )
-                                            }
-                                        }
-
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Box(
-                                            modifier = Modifier
-                                                .size(28.dp)
-                                                .clip(CircleShape)
-                                                .background(SaltTheme.colors.text.copy(alpha = 0.08f))
-                                                .clickable { presetPendingDelete = preset },
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            BauhausUiIcon(
-                                                symbol = BauhausUiSymbol.Close,
-                                                modifier = Modifier.size(10.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            // 恢复末尾的 "+ 存为预设" 卡片
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
-                                    .clickable { viewModel.setShowSavePresetDialog(true) }
-                                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        .clip(CircleShape)
+                                        .clickable { viewModel.dismissPresetHint() }
+                                        .padding(4.dp)
                                 ) {
                                     BauhausUiIcon(
-                                        symbol = BauhausUiSymbol.Add,
-                                        modifier = Modifier.size(12.dp)
-                                    )
-                                    Text(
-                                        text = "存为预设",
-                                        color = SaltTheme.colors.highlight,
-                                        style = SaltTheme.textStyles.main,
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 13.sp
+                                        symbol = BauhausUiSymbol.Close,
+                                        modifier = Modifier.size(10.dp)
                                     )
                                 }
                             }
-
-                            // 恢复默认预设 (后悔药胶囊按钮)
-                            if (hasDeletedDefaultPresets) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .background(SaltTheme.colors.subBackground)
-                                        .border(
-                                            width = 1.dp,
-                                            color = SaltTheme.colors.text.copy(alpha = 0.12f),
-                                            shape = RoundedCornerShape(14.dp)
-                                        )
-                                        .clickable {
-                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                            viewModel.restoreDefaultPresets()
-                                        }
-                                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(5.dp)
-                                    ) {
-                                        BauhausUiIcon(
-                                            symbol = BauhausUiSymbol.Restore,
-                                            modifier = Modifier.size(12.dp)
-                                        )
-                                        Text(
-                                            text = "恢复默认",
-                                            color = SaltTheme.colors.text.copy(alpha = 0.70f),
-                                            style = SaltTheme.textStyles.main,
-                                            fontWeight = FontWeight.Medium,
-                                            fontSize = 13.sp
-                                        )
-                                    }
-                                }
-                            }
                         }
-
-                        // 预设长按提示框（支持关闭后不再显示）
-                        if (!isPresetHintDismissed) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 4.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(SaltTheme.colors.subBackground)
-                                    .padding(horizontal = 10.dp, vertical = 6.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Text(
-                                            text = "长按预设卡片可快速复制并导出分享口令",
-                                            style = SaltTheme.textStyles.sub,
-                                            fontSize = 11.sp,
-                                            color = SaltTheme.colors.text.copy(alpha = 0.65f)
-                                        )
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(CircleShape)
-                                            .clickable { viewModel.dismissPresetHint() }
-                                            .padding(4.dp)
-                                    ) {
-                                        BauhausUiIcon(
-                                            symbol = BauhausUiSymbol.Close,
-                                            modifier = Modifier.size(10.dp)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
 
@@ -677,6 +453,301 @@ fun HomeScreen(
                         track = track,
                         onTogglePlay = { viewModel.toggleTrackPlay(track.id) }
                     )
+                }
+            }
+
+            // Collapsing Sticky Top Header
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopCenter)
+                    .background(headerBgColor)
+                    .drawBehind {
+                        if (collapseFraction > 0.05f) {
+                            drawLine(
+                                color = topBarBorderColor.copy(alpha = topBarBorderColor.alpha * collapseFraction),
+                                start = Offset(0f, size.height),
+                                end = Offset(size.width, size.height),
+                                strokeWidth = 1.dp.toPx()
+                            )
+                        }
+                    }
+                    .statusBarsPadding()
+            ) {
+                // Collapsible Title Section (Brand + Scene bar)
+                val currentCollapsibleHeight = collapsibleHeight * (1f - collapseFraction)
+                if (currentCollapsibleHeight > 1.dp) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(currentCollapsibleHeight)
+                            .clipToBounds()
+                            .alpha((1f - collapseFraction * 1.5f).coerceIn(0f, 1f))
+                    ) {
+                        // Part 1: Brand Header with subtle version badge & Theme Switcher (Height: 54.dp)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(54.dp)
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        viewModel.setShowAboutDialog(true)
+                                    }
+                                    .padding(horizontal = 4.dp, vertical = 2.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = "SaltAmbience",
+                                        style = SaltTheme.textStyles.largeTitle,
+                                        color = SaltTheme.colors.text
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(SaltTheme.colors.subBackground)
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = "v$versionName",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = SaltTheme.colors.text.copy(alpha = 0.65f)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "椒盐美学 · 多轨自然声混音",
+                                    style = SaltTheme.textStyles.sub,
+                                    color = SaltTheme.colors.text.copy(alpha = 0.65f)
+                                )
+                            }
+
+                            // Top Right: Compact Theme Switch Button
+                            Box(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(SaltTheme.colors.subBackground)
+                                    .clickable { viewModel.setShowThemeDialog(true) }
+                                    .padding(horizontal = 12.dp, vertical = 7.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    BauhausUiIcon(
+                                        symbol = themeMode.toBauhausSymbol(),
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Text(
+                                        text = when (themeMode) {
+                                            com.whitenoise.app.core.model.ThemeMode.SYSTEM -> "系统"
+                                            com.whitenoise.app.core.model.ThemeMode.LIGHT -> "浅色"
+                                            com.whitenoise.app.core.model.ThemeMode.DARK -> "深色"
+                                        },
+                                        style = SaltTheme.textStyles.sub,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = SaltTheme.colors.text.copy(alpha = 0.75f)
+                                    )
+                                }
+                            }
+                        }
+
+                        // Part 2: Scene Title Bar (Height: 36.dp)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(36.dp)
+                                .padding(horizontal = 20.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "场景方案",
+                                style = SaltTheme.textStyles.main,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = SaltTheme.colors.text
+                            )
+                        }
+                    }
+                }
+
+                // Part 3: Sticky Presets Horizontal Scroll Row (Height: 54.dp, always visible)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(presetsRowHeight)
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    presets.forEach { preset ->
+                        val isPresetActive = remember(preset, activeTracksMap) { preset.matchesTracks(activeTracksMap) }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(14.dp))
+                                .border(
+                                    width = 1.5.dp,
+                                    color = if (isPresetActive) SaltTheme.colors.highlight else Color.Transparent,
+                                    shape = RoundedCornerShape(14.dp)
+                                )
+                                .background(
+                                    if (isPresetActive) SaltTheme.colors.highlight.copy(alpha = 0.10f)
+                                    else SaltTheme.colors.subBackground
+                                )
+                                .combinedClickable(
+                                    onClick = { viewModel.applyPreset(preset) },
+                                    onLongClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        viewModel.copyPresetShareCode(preset)
+                                    }
+                                )
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column {
+                                    Text(
+                                        text = preset.name,
+                                        style = SaltTheme.textStyles.main,
+                                        fontWeight = if (isPresetActive) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isPresetActive) SaltTheme.colors.highlight else SaltTheme.colors.text
+                                    )
+                                    if (preset.description.isNotBlank()) {
+                                        Text(
+                                            text = preset.description,
+                                            style = SaltTheme.textStyles.sub,
+                                            fontSize = 11.sp,
+                                            color = if (isPresetActive) SaltTheme.colors.highlight.copy(alpha = 0.85f) else SaltTheme.colors.text.copy(alpha = 0.65f)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(26.dp)
+                                        .clip(CircleShape)
+                                        .background(SaltTheme.colors.text.copy(alpha = 0.08f))
+                                        .clickable { presetPendingDelete = preset },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    BauhausUiIcon(
+                                        symbol = BauhausUiSymbol.Close,
+                                        modifier = Modifier.size(10.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // "+ 存为预设" 卡片
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
+                            .clickable { viewModel.setShowSavePresetDialog(true) }
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            BauhausUiIcon(
+                                symbol = BauhausUiSymbol.Add,
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Text(
+                                text = "存为预设",
+                                color = SaltTheme.colors.highlight,
+                                style = SaltTheme.textStyles.main,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+
+                    // 恢复默认预设 (后悔药胶囊按钮)
+                    if (hasDeletedDefaultPresets) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(SaltTheme.colors.subBackground)
+                                .border(
+                                    width = 1.dp,
+                                    color = SaltTheme.colors.text.copy(alpha = 0.12f),
+                                    shape = RoundedCornerShape(14.dp)
+                                )
+                                .clickable {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    viewModel.restoreDefaultPresets()
+                                }
+                                .padding(horizontal = 14.dp, vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(5.dp)
+                            ) {
+                                BauhausUiIcon(
+                                    symbol = BauhausUiSymbol.Restore,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Text(
+                                    text = "恢复默认",
+                                    color = SaltTheme.colors.text.copy(alpha = 0.70f),
+                                    style = SaltTheme.textStyles.main,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
+                    }
+
+                    // 导入按钮（吸顶常驻胶囊）
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(SaltTheme.colors.subBackground)
+                            .border(
+                                width = 1.dp,
+                                color = SaltTheme.colors.text.copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(14.dp)
+                            )
+                            .clickable { viewModel.setShowImportDialog(true) }
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            BauhausUiIcon(
+                                symbol = BauhausUiSymbol.Import,
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Text(
+                                text = "导入",
+                                color = SaltTheme.colors.text.copy(alpha = 0.75f),
+                                style = SaltTheme.textStyles.main,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
                 }
             }
 

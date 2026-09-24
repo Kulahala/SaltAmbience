@@ -51,7 +51,8 @@ fun BottomPlayerBar(
     val shape = RoundedCornerShape(26.dp)
     val isDark = SaltTheme.configs.isDarkTheme
     val borderColor = if (isDark) Color.White.copy(alpha = 0.08f) else SaltTheme.colors.text.copy(alpha = 0.06f)
-    val surfaceColor = if (isDark) Color(0xFF1E2026) else Color(0xFFF2F4F7)
+    val baseSurfaceColor = if (isDark) Color(0xFF1E2026) else Color(0xFFF2F4F7)
+    val surfaceColor = baseSurfaceColor
     val buttonSurfaceColor = if (isDark) Color(0xFF282B33) else Color.White
 
     Box(
