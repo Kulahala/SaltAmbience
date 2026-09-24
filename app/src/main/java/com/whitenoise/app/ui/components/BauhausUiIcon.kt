@@ -45,21 +45,95 @@ fun com.whitenoise.app.core.model.ThemeMode.toBauhausSymbol(): BauhausUiSymbol =
 }
 
 /**
+ * Semantic two-tone color palette for Bauhaus UI vector symbols.
+ */
+data class BauhausUiPalette(
+    val primary: Color,
+    val secondary: Color
+)
+
+object BauhausUiTheme {
+    fun getPalette(symbol: BauhausUiSymbol, isDark: Boolean): BauhausUiPalette = when (symbol) {
+        BauhausUiSymbol.ThemeLight -> BauhausUiPalette(
+            primary = Color(0xFFF59E0B), // 暖阳金
+            secondary = Color(0xFFFDE68A) // 光子亮黄
+        )
+        BauhausUiSymbol.ThemeDark -> BauhausUiPalette(
+            primary = Color(0xFFFBBF24), // 月牙金
+            secondary = Color(0xFFA78BFA) // 幽紫星芒
+        )
+        BauhausUiSymbol.ThemeSystem -> BauhausUiPalette(
+            primary = Color(0xFF38BDF8), // 冰蓝
+            secondary = if (isDark) Color.White else Color(0xFF475569) // 纯白 / 深灰
+        )
+        BauhausUiSymbol.Timer -> BauhausUiPalette(
+            primary = Color(0xFF10B981), // 薄荷翡翠绿
+            secondary = Color(0xFF34D399) // 亮薄荷绿
+        )
+        BauhausUiSymbol.Clear -> BauhausUiPalette(
+            primary = Color(0xFFEF4444), // 珊瑚赤红 (深)
+            secondary = Color(0xFFF87171) // 珊瑚赤红 (亮)
+        )
+        BauhausUiSymbol.Import -> BauhausUiPalette(
+            primary = if (isDark) Color(0xFF38BDF8) else Color(0xFF0284C7), // 电光青蓝
+            secondary = if (isDark) Color(0xFF7DD3FC) else Color(0xFF38BDF8)
+        )
+        BauhausUiSymbol.Add -> BauhausUiPalette(
+            primary = Color(0xFF22C55E), // 活力亮绿
+            secondary = Color(0xFF34D399) // 亮绿
+        )
+        BauhausUiSymbol.Restore -> BauhausUiPalette(
+            primary = Color(0xFF60A5FA), // 灵动天青蓝
+            secondary = Color(0xFF93C5FD) // 柔白天青蓝
+        )
+        BauhausUiSymbol.Play -> BauhausUiPalette(
+            primary = Color(0xFF3B82F6), // 强调蓝
+            secondary = Color.White // 纯白
+        )
+        BauhausUiSymbol.Pause -> BauhausUiPalette(
+            primary = Color(0xFF3B82F6), // 强调蓝
+            secondary = if (isDark) Color.White else Color(0xFF60A5FA) // 纯白 / 天蓝
+        )
+        BauhausUiSymbol.Close -> BauhausUiPalette(
+            primary = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B), // 优雅灰度
+            secondary = if (isDark) Color(0xFFCBD5E1) else Color(0xFF94A3B8)
+        )
+        BauhausUiSymbol.Check -> BauhausUiPalette(
+            primary = Color(0xFF10B981), // 完成绿
+            secondary = Color(0xFF34D399) // 完成亮绿
+        )
+    }
+}
+
+/**
  * Unified Bauhaus UI Vector Icon Component.
- * Pure Canvas rendering using geometric primitives with crisp aesthetic proportions.
+ * Pure Canvas rendering using geometric primitives with crisp aesthetic proportions and semantic two-tone palettes.
  */
 @Composable
 fun BauhausUiIcon(
     symbol: BauhausUiSymbol,
     modifier: Modifier = Modifier.size(16.dp),
-    tint: Color = SaltTheme.colors.text
+    tint: Color? = null
 ) {
+    val isDark = SaltTheme.configs.isDarkTheme
+    val palette = BauhausUiTheme.getPalette(symbol, isDark)
+    val primaryColor = tint ?: palette.primary
+    val secondaryColor = tint ?: palette.secondary
+
     Canvas(modifier = modifier) {
-        drawBauhausUiSymbol(symbol = symbol, color = tint)
+        drawBauhausUiSymbol(
+            symbol = symbol,
+            primaryColor = primaryColor,
+            secondaryColor = secondaryColor
+        )
     }
 }
 
-private fun DrawScope.drawBauhausUiSymbol(symbol: BauhausUiSymbol, color: Color) {
+private fun DrawScope.drawBauhausUiSymbol(
+    symbol: BauhausUiSymbol,
+    primaryColor: Color,
+    secondaryColor: Color
+) {
     val w = size.width
     val h = size.height
     val strokeWidth = (w * 0.10f).coerceAtLeast(1.5f)
@@ -73,13 +147,23 @@ private fun DrawScope.drawBauhausUiSymbol(symbol: BauhausUiSymbol, color: Color)
                 lineTo(w * 0.28f, h * 0.80f)
                 close()
             }
-            drawPath(path, color)
+            drawPath(path, primaryColor)
             // Stroke overlay to give slightly rounded corners
             drawPath(
                 path = path,
-                color = color,
+                color = primaryColor,
                 style = Stroke(width = strokeWidth * 0.8f, cap = StrokeCap.Round, join = StrokeJoin.Round)
             )
+            if (primaryColor != secondaryColor) {
+                // Bauhaus high-contrast vertical acoustic base spine (Pure white / light accent)
+                drawLine(
+                    color = secondaryColor,
+                    start = Offset(w * 0.28f, h * 0.32f),
+                    end = Offset(w * 0.28f, h * 0.68f),
+                    strokeWidth = strokeWidth * 0.85f,
+                    cap = StrokeCap.Round
+                )
+            }
         }
 
         BauhausUiSymbol.Pause -> {
@@ -88,13 +172,13 @@ private fun DrawScope.drawBauhausUiSymbol(symbol: BauhausUiSymbol, color: Color)
             val barH = h * 0.60f
             val corner = CornerRadius(barW / 2f, barW / 2f)
             drawRoundRect(
-                color = color,
+                color = primaryColor,
                 topLeft = Offset(w * 0.22f, h * 0.20f),
                 size = Size(barW, barH),
                 cornerRadius = corner
             )
             drawRoundRect(
-                color = color,
+                color = secondaryColor,
                 topLeft = Offset(w * 0.56f, h * 0.20f),
                 size = Size(barW, barH),
                 cornerRadius = corner
@@ -105,7 +189,7 @@ private fun DrawScope.drawBauhausUiSymbol(symbol: BauhausUiSymbol, color: Color)
             // Bauhaus geometric clear / trash / sweep geometry
             // Top lid handle
             drawLine(
-                color = color,
+                color = primaryColor,
                 start = Offset(w * 0.38f, h * 0.16f),
                 end = Offset(w * 0.62f, h * 0.16f),
                 strokeWidth = strokeWidth,
@@ -113,7 +197,7 @@ private fun DrawScope.drawBauhausUiSymbol(symbol: BauhausUiSymbol, color: Color)
             )
             // Horizontal rim
             drawLine(
-                color = color,
+                color = primaryColor,
                 start = Offset(w * 0.16f, h * 0.28f),
                 end = Offset(w * 0.84f, h * 0.28f),
                 strokeWidth = strokeWidth,
@@ -130,19 +214,19 @@ private fun DrawScope.drawBauhausUiSymbol(symbol: BauhausUiSymbol, color: Color)
             }
             drawPath(
                 path = bodyPath,
-                color = color,
+                color = primaryColor,
                 style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
             )
             // Interior acoustic ribs
             drawLine(
-                color = color,
+                color = secondaryColor,
                 start = Offset(w * 0.38f, h * 0.44f),
                 end = Offset(w * 0.38f, h * 0.74f),
                 strokeWidth = strokeWidth * 0.85f,
                 cap = StrokeCap.Round
             )
             drawLine(
-                color = color,
+                color = secondaryColor,
                 start = Offset(w * 0.62f, h * 0.44f),
                 end = Offset(w * 0.62f, h * 0.74f),
                 strokeWidth = strokeWidth * 0.85f,
@@ -156,7 +240,7 @@ private fun DrawScope.drawBauhausUiSymbol(symbol: BauhausUiSymbol, color: Color)
             val radius = w * 0.38f
             // Left filled hemisphere
             drawArc(
-                color = color,
+                color = primaryColor,
                 startAngle = 90f,
                 sweepAngle = 180f,
                 useCenter = true,
@@ -165,14 +249,14 @@ private fun DrawScope.drawBauhausUiSymbol(symbol: BauhausUiSymbol, color: Color)
             )
             // Outer circular boundary
             drawCircle(
-                color = color,
+                color = secondaryColor,
                 radius = radius,
                 center = center,
                 style = Stroke(width = strokeWidth)
             )
             // Center dividing diameter
             drawLine(
-                color = color,
+                color = secondaryColor,
                 start = Offset(w * 0.5f, center.y - radius),
                 end = Offset(w * 0.5f, center.y + radius),
                 strokeWidth = strokeWidth,
@@ -185,16 +269,16 @@ private fun DrawScope.drawBauhausUiSymbol(symbol: BauhausUiSymbol, color: Color)
             val center = Offset(w * 0.5f, h * 0.5f)
             val radius = w * 0.22f
             drawCircle(
-                color = color,
+                color = primaryColor,
                 radius = radius,
                 center = center,
                 style = Stroke(width = strokeWidth)
             )
             // 4 Orthogonal endpoints (Top, Bottom, Left, Right)
-            drawLine(color, Offset(w * 0.50f, h * 0.08f), Offset(w * 0.50f, h * 0.18f), strokeWidth, StrokeCap.Round)
-            drawLine(color, Offset(w * 0.50f, h * 0.82f), Offset(w * 0.50f, h * 0.92f), strokeWidth, StrokeCap.Round)
-            drawLine(color, Offset(w * 0.08f, h * 0.50f), Offset(w * 0.18f, h * 0.50f), strokeWidth, StrokeCap.Round)
-            drawLine(color, Offset(w * 0.82f, h * 0.50f), Offset(w * 0.92f, h * 0.50f), strokeWidth, StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.50f, h * 0.08f), Offset(w * 0.50f, h * 0.18f), strokeWidth, StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.50f, h * 0.82f), Offset(w * 0.50f, h * 0.92f), strokeWidth, StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.08f, h * 0.50f), Offset(w * 0.18f, h * 0.50f), strokeWidth, StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.82f, h * 0.50f), Offset(w * 0.92f, h * 0.50f), strokeWidth, StrokeCap.Round)
         }
 
         BauhausUiSymbol.ThemeDark -> {
@@ -205,7 +289,7 @@ private fun DrawScope.drawBauhausUiSymbol(symbol: BauhausUiSymbol, color: Color)
                 cubicTo(w * 0.32f, h * 0.74f, w * 0.32f, h * 0.32f, w * 0.54f, h * 0.14f)
                 close()
             }
-            drawPath(moonPath, color)
+            drawPath(moonPath, primaryColor)
             // Floating 4-point diamond star
             val starPath = Path().apply {
                 moveTo(w * 0.74f, h * 0.24f)
@@ -218,20 +302,20 @@ private fun DrawScope.drawBauhausUiSymbol(symbol: BauhausUiSymbol, color: Color)
                 lineTo(w * 0.71f, h * 0.32f)
                 close()
             }
-            drawPath(starPath, color)
+            drawPath(starPath, secondaryColor)
         }
 
         BauhausUiSymbol.Close -> {
             // 45 degree geometric micro-rounded intersecting cross
             drawLine(
-                color = color,
+                color = primaryColor,
                 start = Offset(w * 0.24f, h * 0.24f),
                 end = Offset(w * 0.76f, h * 0.76f),
                 strokeWidth = strokeWidth,
                 cap = StrokeCap.Round
             )
             drawLine(
-                color = color,
+                color = secondaryColor,
                 start = Offset(w * 0.76f, h * 0.24f),
                 end = Offset(w * 0.24f, h * 0.76f),
                 strokeWidth = strokeWidth,
@@ -248,9 +332,17 @@ private fun DrawScope.drawBauhausUiSymbol(symbol: BauhausUiSymbol, color: Color)
             }
             drawPath(
                 path = checkPath,
-                color = color,
+                color = primaryColor,
                 style = Stroke(width = strokeWidth * 1.15f, cap = StrokeCap.Round, join = StrokeJoin.Round)
             )
+            if (primaryColor != secondaryColor) {
+                // Terminus geometric dot
+                drawCircle(
+                    color = secondaryColor,
+                    radius = strokeWidth * 0.75f,
+                    center = Offset(w * 0.80f, h * 0.26f)
+                )
+            }
         }
 
         BauhausUiSymbol.Timer -> {
@@ -258,30 +350,30 @@ private fun DrawScope.drawBauhausUiSymbol(symbol: BauhausUiSymbol, color: Color)
             val center = Offset(w * 0.50f, h * 0.50f)
             val radius = w * 0.38f
             drawCircle(
-                color = color,
+                color = primaryColor,
                 radius = radius,
                 center = center,
                 style = Stroke(width = strokeWidth)
             )
             // Center pivot
-            drawCircle(color, radius = strokeWidth * 0.85f, center = center)
+            drawCircle(primaryColor, radius = strokeWidth * 0.85f, center = center)
             // Minute hand (vertical to 12 o'clock)
-            drawLine(color, center, Offset(center.x, center.y - radius * 0.65f), strokeWidth, StrokeCap.Round)
+            drawLine(secondaryColor, center, Offset(center.x, center.y - radius * 0.65f), strokeWidth, StrokeCap.Round)
             // Hour hand (pointing to 2 o'clock)
-            drawLine(color, center, Offset(center.x + radius * 0.48f, center.y - radius * 0.28f), strokeWidth, StrokeCap.Round)
+            drawLine(secondaryColor, center, Offset(center.x + radius * 0.48f, center.y - radius * 0.28f), strokeWidth, StrokeCap.Round)
         }
 
         BauhausUiSymbol.Add -> {
             // Equal-length orthogonal cross
             drawLine(
-                color = color,
+                color = primaryColor,
                 start = Offset(w * 0.20f, h * 0.50f),
                 end = Offset(w * 0.80f, h * 0.50f),
                 strokeWidth = strokeWidth,
                 cap = StrokeCap.Round
             )
             drawLine(
-                color = color,
+                color = secondaryColor,
                 start = Offset(w * 0.50f, h * 0.20f),
                 end = Offset(w * 0.50f, h * 0.80f),
                 strokeWidth = strokeWidth,
@@ -297,7 +389,7 @@ private fun DrawScope.drawBauhausUiSymbol(symbol: BauhausUiSymbol, color: Color)
             val arcSize = Size(arcRadius * 2f, arcRadius * 2f)
             // Arc sweeps from 9 o'clock (180°) counter-clockwise by -270° to 12 o'clock (-90°)
             drawArc(
-                color = color,
+                color = primaryColor,
                 startAngle = 180f,
                 sweepAngle = -270f,
                 useCenter = false,
@@ -307,8 +399,8 @@ private fun DrawScope.drawBauhausUiSymbol(symbol: BauhausUiSymbol, color: Color)
             )
             // Arrowhead placed precisely at the arc terminal point (0.50w, 0.18h) pointing left
             val arrowTip = Offset(w * 0.50f, h * 0.18f)
-            drawLine(color, arrowTip, Offset(w * 0.61f, h * 0.08f), strokeWidth, StrokeCap.Round)
-            drawLine(color, arrowTip, Offset(w * 0.61f, h * 0.28f), strokeWidth, StrokeCap.Round)
+            drawLine(secondaryColor, arrowTip, Offset(w * 0.61f, h * 0.08f), strokeWidth, StrokeCap.Round)
+            drawLine(secondaryColor, arrowTip, Offset(w * 0.61f, h * 0.28f), strokeWidth, StrokeCap.Round)
         }
 
         BauhausUiSymbol.Import -> {
@@ -321,13 +413,13 @@ private fun DrawScope.drawBauhausUiSymbol(symbol: BauhausUiSymbol, color: Color)
             }
             drawPath(
                 path = trayPath,
-                color = color,
+                color = primaryColor,
                 style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
             )
             // Downward arrow
-            drawLine(color, Offset(w * 0.50f, h * 0.14f), Offset(w * 0.50f, h * 0.62f), strokeWidth, StrokeCap.Round)
-            drawLine(color, Offset(w * 0.34f, h * 0.46f), Offset(w * 0.50f, h * 0.62f), strokeWidth, StrokeCap.Round)
-            drawLine(color, Offset(w * 0.66f, h * 0.46f), Offset(w * 0.50f, h * 0.62f), strokeWidth, StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.50f, h * 0.14f), Offset(w * 0.50f, h * 0.62f), strokeWidth, StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.34f, h * 0.46f), Offset(w * 0.50f, h * 0.62f), strokeWidth, StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.66f, h * 0.46f), Offset(w * 0.50f, h * 0.62f), strokeWidth, StrokeCap.Round)
         }
     }
 }

@@ -108,8 +108,7 @@ fun SavePresetBottomSheet(
                 ) {
                     BauhausUiIcon(
                         symbol = BauhausUiSymbol.Close,
-                        modifier = Modifier.size(11.dp),
-                        tint = SaltTheme.colors.text.copy(alpha = 0.6f)
+                        modifier = Modifier.size(11.dp)
                     )
                 }
             }

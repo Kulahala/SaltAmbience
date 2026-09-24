@@ -327,8 +327,7 @@ fun MixerBottomSheet(
                                 ) {
                                     BauhausUiIcon(
                                         symbol = BauhausUiSymbol.Clear,
-                                        modifier = Modifier.size(15.dp),
-                                        tint = SaltTheme.colors.text.copy(alpha = 0.8f)
+                                        modifier = Modifier.size(15.dp)
                                     )
                                     Text(
                                         text = "清空混音",

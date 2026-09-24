@@ -188,7 +188,7 @@ fun BottomPlayerBar(
                 ) {
                     BauhausUiIcon(
                         symbol = BauhausUiSymbol.Timer,
-                        tint = timerContentColor,
+                        tint = if (isTimerRunning) timerContentColor else null,
                         modifier = Modifier.size(12.dp)
                     )
                     Text(

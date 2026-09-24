@@ -83,8 +83,7 @@ fun ThemeSelectionBottomSheet(
                 ) {
                     BauhausUiIcon(
                         symbol = BauhausUiSymbol.Close,
-                        modifier = Modifier.size(11.dp),
-                        tint = SaltTheme.colors.text.copy(alpha = 0.6f)
+                        modifier = Modifier.size(11.dp)
                     )
                 }
             }
@@ -184,11 +183,9 @@ private fun ThemeOptionItem(
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        val iconTint = if (isSelected) SaltTheme.colors.highlight else SaltTheme.colors.text.copy(alpha = 0.75f)
         BauhausUiIcon(
             symbol = symbol,
-            modifier = Modifier.size(24.dp),
-            tint = iconTint
+            modifier = Modifier.size(24.dp)
         )
 
         Spacer(modifier = Modifier.width(14.dp))

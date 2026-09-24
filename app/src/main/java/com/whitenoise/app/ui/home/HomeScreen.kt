@@ -65,6 +65,8 @@ import com.whitenoise.app.ui.components.AboutBottomSheet
 import com.whitenoise.app.ui.components.BauhausSoundIcon
 import com.whitenoise.app.ui.components.BauhausUiIcon
 import com.whitenoise.app.ui.components.BauhausUiSymbol
+import com.whitenoise.app.ui.components.getContentColor
+import com.whitenoise.app.ui.components.getThemeColor
 import com.whitenoise.app.ui.components.toBauhausSymbol
 import com.whitenoise.app.ui.components.BottomPlayerBar
 import com.whitenoise.app.ui.components.DeletePresetConfirmBottomSheet
@@ -260,8 +262,7 @@ fun HomeScreen(
                         ) {
                             BauhausUiIcon(
                                 symbol = themeMode.toBauhausSymbol(),
-                                modifier = Modifier.size(13.dp),
-                                tint = SaltTheme.colors.text.copy(alpha = 0.75f)
+                                modifier = Modifier.size(13.dp)
                             )
                             Text(
                                 text = when (themeMode) {
@@ -302,8 +303,7 @@ fun HomeScreen(
                             ) {
                                 BauhausUiIcon(
                                     symbol = BauhausUiSymbol.Import,
-                                    modifier = Modifier.size(13.dp),
-                                    tint = SaltTheme.colors.highlight
+                                    modifier = Modifier.size(13.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
@@ -364,8 +364,7 @@ fun HomeScreen(
                                 ) {
                                     BauhausUiIcon(
                                         symbol = BauhausUiSymbol.Import,
-                                        modifier = Modifier.size(11.dp),
-                                        tint = SaltTheme.colors.text.copy(alpha = 0.8f)
+                                        modifier = Modifier.size(11.dp)
                                     )
                                     Text(
                                         text = "导入",
@@ -437,8 +436,7 @@ fun HomeScreen(
                                         ) {
                                             BauhausUiIcon(
                                                 symbol = BauhausUiSymbol.Close,
-                                                modifier = Modifier.size(10.dp),
-                                                tint = SaltTheme.colors.text.copy(alpha = 0.55f)
+                                                modifier = Modifier.size(10.dp)
                                             )
                                         }
                                     }
@@ -460,8 +458,7 @@ fun HomeScreen(
                                 ) {
                                     BauhausUiIcon(
                                         symbol = BauhausUiSymbol.Add,
-                                        modifier = Modifier.size(12.dp),
-                                        tint = SaltTheme.colors.highlight
+                                        modifier = Modifier.size(12.dp)
                                     )
                                     Text(
                                         text = "存为预设",
@@ -497,8 +494,7 @@ fun HomeScreen(
                                     ) {
                                         BauhausUiIcon(
                                             symbol = BauhausUiSymbol.Restore,
-                                            modifier = Modifier.size(12.dp),
-                                            tint = SaltTheme.colors.text.copy(alpha = 0.70f)
+                                            modifier = Modifier.size(12.dp)
                                         )
                                         Text(
                                             text = "恢复默认",
@@ -547,8 +543,7 @@ fun HomeScreen(
                                     ) {
                                         BauhausUiIcon(
                                             symbol = BauhausUiSymbol.Close,
-                                            modifier = Modifier.size(10.dp),
-                                            tint = SaltTheme.colors.text.copy(alpha = 0.45f)
+                                            modifier = Modifier.size(10.dp)
                                         )
                                     }
                                 }
@@ -596,16 +591,19 @@ fun HomeScreen(
                         ) {
                             SoundCategory.entries.forEach { category ->
                                 val isSelected = category == selectedCategory
+                                val categoryColor = category.getThemeColor()
+                                val isDark = SaltTheme.configs.isDarkTheme
+                                val contentColor = category.getContentColor(isDark)
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(
-                                            if (isSelected) SaltTheme.colors.highlight.copy(alpha = 0.12f)
-                                            else SaltTheme.colors.subBackground
+                                            if (isSelected) categoryColor.copy(alpha = 0.16f)
+                                            else categoryColor.copy(alpha = 0.06f)
                                         )
                                         .border(
                                             width = 1.dp,
-                                            color = if (isSelected) SaltTheme.colors.highlight.copy(alpha = 0.45f) else Color.Transparent,
+                                            color = if (isSelected) categoryColor.copy(alpha = 0.55f) else categoryColor.copy(alpha = 0.18f),
                                             shape = RoundedCornerShape(12.dp)
                                         )
                                         .clickable {
@@ -630,16 +628,16 @@ fun HomeScreen(
                                         }
                                         BauhausSoundIcon(
                                             trackId = categoryIconId,
-                                            isPlaying = isSelected,
+                                            isPlaying = true,
                                             modifier = Modifier.size(13.dp),
-                                            tint = if (isSelected) SaltTheme.colors.highlight else SaltTheme.colors.text.copy(alpha = 0.55f)
+                                            tint = contentColor
                                         )
                                         Text(
                                             text = category.title,
                                             style = SaltTheme.textStyles.sub,
                                             fontSize = 12.sp,
                                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                            color = if (isSelected) SaltTheme.colors.highlight else SaltTheme.colors.text.copy(alpha = 0.75f)
+                                            color = contentColor
                                         )
                                     }
                                 }

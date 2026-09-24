@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.moriafly.salt.ui.SaltTheme
+import com.whitenoise.app.core.model.SoundCategory
 
 /**
  * Semantic acoustic color palette for Bauhaus minimalist vector symbols.
@@ -26,7 +27,12 @@ import com.moriafly.salt.ui.SaltTheme
 data class SoundIconPalette(
     val primary: Color,
     val secondary: Color
-)
+) {
+    fun toIdlePalette(alpha: Float = 0.48f): SoundIconPalette = SoundIconPalette(
+        primary = primary.copy(alpha = alpha),
+        secondary = secondary.copy(alpha = alpha)
+    )
+}
 
 object BauhausSoundTheme {
     fun getPalette(trackId: String, isDark: Boolean): SoundIconPalette {
@@ -98,6 +104,42 @@ object BauhausSoundTheme {
             )
         }
     }
+
+    /**
+     * Compute the gentle tinted-idle palette preserving natural semantics at 48% opacity.
+     */
+    fun getIdlePalette(trackId: String, isDark: Boolean, alpha: Float = 0.48f): SoundIconPalette {
+        return getPalette(trackId, isDark).toIdlePalette(alpha)
+    }
+}
+
+/**
+ * Category-level Bauhaus natural semantic color mapping.
+ */
+fun SoundCategory.getThemeColor(): Color = when (this) {
+    SoundCategory.ALL -> Color(0xFF60A5FA)      // 系统蓝
+    SoundCategory.RAIN -> Color(0xFF38BDF8)     // 天青蓝
+    SoundCategory.NATURE -> Color(0xFF34D399)   // 苍翠绿
+    SoundCategory.LIFE -> Color(0xFFFB923C)     // 咖啡暖褐/琥珀
+    SoundCategory.NOISE -> Color(0xFFF472B6)    // 柔粉
+}
+
+/**
+ * High-readability content color for text/icons ensuring WCAG compliance across light/dark themes.
+ */
+fun SoundCategory.getContentColor(isDark: Boolean): Color {
+    val base = getThemeColor()
+    return if (isDark) {
+        base
+    } else {
+        when (this) {
+            SoundCategory.ALL -> Color(0xFF2563EB)
+            SoundCategory.RAIN -> Color(0xFF0284C7)
+            SoundCategory.NATURE -> Color(0xFF059669)
+            SoundCategory.LIFE -> Color(0xFFD97706)
+            SoundCategory.NOISE -> Color(0xFFDB2777)
+        }
+    }
 }
 
 /**
@@ -106,8 +148,9 @@ object BauhausSoundTheme {
  * mapped to skeuomorphic natural color palettes.
  *
  * Color Specification:
- * - Inactive (未激活): Matte mist grey (SaltTheme.colors.text with alpha 0.42f) across all strokes.
- * - Active (激活): High-contrast two-tone skeuomorphic natural palette corresponding to the sound's real essence.
+ * - Idle / Inactive (未激活): Tinted Idle (呼吸微色) preserving the sound's semantic two-tone palette at 48% opacity,
+ *   presenting gentle luminescent accents in dark mode and soft watercolor tones in light mode.
+ * - Active (激活): High-contrast 100% full-saturation two-tone skeuomorphic natural palette corresponding to the sound's real essence.
  */
 @Composable
 fun BauhausSoundIcon(
@@ -117,11 +160,11 @@ fun BauhausSoundIcon(
     tint: Color? = null
 ) {
     val isDark = SaltTheme.configs.isDarkTheme
-    val idleColor = SaltTheme.colors.text.copy(alpha = 0.42f)
     val activePalette = BauhausSoundTheme.getPalette(trackId, isDark)
+    val idlePalette = activePalette.toIdlePalette(0.48f)
 
-    val targetPrimary = tint ?: if (isPlaying) activePalette.primary else idleColor
-    val targetSecondary = tint ?: if (isPlaying) activePalette.secondary else idleColor
+    val targetPrimary = tint ?: if (isPlaying) activePalette.primary else idlePalette.primary
+    val targetSecondary = tint ?: if (isPlaying) activePalette.secondary else idlePalette.secondary
 
     val animatedPrimary by animateColorAsState(
         targetValue = targetPrimary,

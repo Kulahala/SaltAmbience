@@ -81,8 +81,7 @@ fun DeletePresetConfirmBottomSheet(
                     ) {
                         BauhausUiIcon(
                             symbol = BauhausUiSymbol.Clear,
-                            modifier = Modifier.size(18.dp),
-                            tint = Color(0xFFE53935)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
 
@@ -117,8 +116,7 @@ fun DeletePresetConfirmBottomSheet(
                 ) {
                     BauhausUiIcon(
                         symbol = BauhausUiSymbol.Close,
-                        modifier = Modifier.size(11.dp),
-                        tint = SaltTheme.colors.text.copy(alpha = 0.6f)
+                        modifier = Modifier.size(11.dp)
                     )
                 }
             }
