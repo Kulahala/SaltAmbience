@@ -54,7 +54,6 @@ fun SettingsBottomSheet(
     onSelectThemeMode: (ThemeMode) -> Unit,
     versionName: String,
     onOpenAbout: () -> Unit,
-    onRestorePresets: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
@@ -360,7 +359,7 @@ fun SettingsBottomSheet(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "查看 15 款音源授权、第三方开源库与项目主页",
+                                text = "查看 22 款音源授权、第三方开源库与项目主页",
                                 style = SaltTheme.textStyles.sub,
                                 fontSize = 11.sp,
                                 color = SaltTheme.colors.text.copy(alpha = 0.60f)
@@ -372,53 +371,6 @@ fun SettingsBottomSheet(
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = SaltTheme.colors.highlight
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(if (isDark) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.04f))
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Row: Restore Default Presets Shortcut
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                onRestorePresets()
-                            }
-                            .padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "重置官方混音方案",
-                                style = SaltTheme.textStyles.main,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = SaltTheme.colors.text
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "一键找回并复原误删的官方经典预设",
-                                style = SaltTheme.textStyles.sub,
-                                fontSize = 11.sp,
-                                color = SaltTheme.colors.text.copy(alpha = 0.60f)
-                            )
-                        }
-
-                        Text(
-                            text = "恢复 ›",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = SaltTheme.colors.text.copy(alpha = 0.70f)
                         )
                     }
                 }

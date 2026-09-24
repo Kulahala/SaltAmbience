@@ -523,11 +523,6 @@ fun HomeScreen(
                         ) {
                             Column(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        viewModel.setShowAboutDialog(true)
-                                    }
                                     .padding(horizontal = 4.dp, vertical = 2.dp)
                             ) {
                                 Row(
@@ -832,9 +827,6 @@ fun HomeScreen(
             onOpenAbout = {
                 viewModel.setShowSettingsDialog(false)
                 viewModel.setShowAboutDialog(true)
-            },
-            onRestorePresets = {
-                viewModel.restoreDefaultPresets()
             }
         )
 

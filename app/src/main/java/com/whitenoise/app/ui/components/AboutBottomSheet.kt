@@ -2,6 +2,7 @@ package com.whitenoise.app.ui.components
 
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -22,16 +24,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.moriafly.salt.ui.RoundedColumn
 import com.moriafly.salt.ui.SaltTheme
 import com.moriafly.salt.ui.Text
 
 /**
  * Modern SaltUI bottom drawer for About info and audio assets licensing credits.
+ * Features fixed header & footer with an internal scrollable Bento card
+ * equipped with an elegant minimalist Bauhaus scrollbar.
  */
 @Composable
 fun AboutBottomSheet(
@@ -50,9 +59,9 @@ fun AboutBottomSheet(
                 @Suppress("DEPRECATION")
                 context.packageManager.getPackageInfo(context.packageName, 0)
             }
-            packageInfo.versionName ?: "1.7.0"
+            packageInfo.versionName ?: "1.9.1"
         } catch (e: Exception) {
-            "1.7.0"
+            "1.9.1"
         }
     }
 
@@ -63,10 +72,9 @@ fun AboutBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
         ) {
-            // Header Row
+            // Header Row (Fixed at top)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -107,8 +115,27 @@ fun AboutBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            RoundedColumn {
-                Column(modifier = Modifier.padding(14.dp)) {
+            // Scrollable Licensing Bento Card with Bauhaus Custom Scrollbar
+            val scrollState = rememberScrollState()
+            val isDark = SaltTheme.configs.isDarkTheme
+            val scrollbarColor = if (isDark) Color.White.copy(alpha = 0.28f) else SaltTheme.colors.text.copy(alpha = 0.20f)
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 340.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(SaltTheme.colors.subBackground)
+                    .saltScrollbar(
+                        state = scrollState,
+                        color = scrollbarColor,
+                        width = 3.5.dp,
+                        paddingEnd = 5.dp
+                    )
+                    .verticalScroll(scrollState)
+                    .padding(16.dp)
+            ) {
+                Column {
                     Text(
                         text = "开源致谢与音源许可",
                         style = SaltTheme.textStyles.main,
@@ -154,6 +181,7 @@ fun AboutBottomSheet(
 
             Spacer(modifier = Modifier.height(18.dp))
 
+            // Action Button (Fixed at bottom)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -171,5 +199,34 @@ fun AboutBottomSheet(
                 )
             }
         }
+    }
+}
+
+/**
+ * Elegant minimalist custom scrollbar modifier adhering to SaltUI / Bauhaus aesthetics.
+ */
+private fun Modifier.saltScrollbar(
+    state: ScrollState,
+    color: Color,
+    width: Dp = 3.5.dp,
+    paddingEnd: Dp = 5.dp
+): Modifier = this.drawWithContent {
+    drawContent()
+    val totalHeight = size.height
+    val maxValue = state.maxValue
+    if (maxValue > 0 && totalHeight > 0f) {
+        val scrollRange = maxValue + totalHeight
+        val thumbHeight = (totalHeight * (totalHeight / scrollRange)).coerceIn(28.dp.toPx(), totalHeight * 0.75f)
+        val scrollProgress = state.value.toFloat() / maxValue.toFloat()
+        val thumbOffsetY = scrollProgress * (totalHeight - thumbHeight)
+        val thumbWidth = width.toPx()
+        val thumbX = size.width - thumbWidth - paddingEnd.toPx()
+
+        drawRoundRect(
+            color = color,
+            topLeft = Offset(thumbX, thumbOffsetY),
+            size = Size(thumbWidth, thumbHeight),
+            cornerRadius = CornerRadius(thumbWidth / 2f, thumbWidth / 2f)
+        )
     }
 }
