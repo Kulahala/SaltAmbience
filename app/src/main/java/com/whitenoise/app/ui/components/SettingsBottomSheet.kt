@@ -21,11 +21,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -57,7 +63,10 @@ fun SettingsBottomSheet(
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
     val isDark = SaltTheme.configs.isDarkTheme
+    var showKeepAliveGuide by remember { mutableStateOf(false) }
+    val latestReleaseUrl = "https://github.com/Kulahala/SaltAmbience/releases/latest"
 
     SaltBottomSheet(
         isVisible = isVisible,
@@ -135,13 +144,43 @@ fun SettingsBottomSheet(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                            Text(
-                                text = "后台继续播放",
-                                style = SaltTheme.textStyles.main,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 14.sp,
-                                color = SaltTheme.colors.text
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "后台继续播放",
+                                    style = SaltTheme.textStyles.main,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 14.sp,
+                                    color = SaltTheme.colors.text
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                // 微型包豪斯防杀警告微胶囊
+                                Row(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(
+                                            if (isDark) Color(0xFFF59E0B).copy(alpha = 0.16f)
+                                            else Color(0xFFF59E0B).copy(alpha = 0.12f)
+                                        )
+                                        .clickable {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            showKeepAliveGuide = true
+                                        }
+                                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    BauhausUiIcon(
+                                        symbol = BauhausUiSymbol.Warning,
+                                        modifier = Modifier.size(10.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Text(
+                                        text = "防杀指引",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = if (isDark) Color(0xFFFDE68A) else Color(0xFFD97706)
+                                    )
+                                }
+                            }
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "切换到其他应用或锁屏时保持自然声混音播放",
@@ -305,25 +344,64 @@ fun SettingsBottomSheet(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Row: Version info
+                    // Row: Version info & Check update gateway
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(latestReleaseUrl)).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }
+                                    context.startActivity(intent)
+                                } catch (_: Exception) {
+                                }
+                            }
+                            .padding(vertical = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "版本信息",
-                            style = SaltTheme.textStyles.main,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = SaltTheme.colors.text
-                        )
-                        Text(
-                            text = "v$versionName (已是最新)",
-                            style = SaltTheme.textStyles.sub,
-                            fontSize = 12.sp,
-                            color = SaltTheme.colors.text.copy(alpha = 0.65f)
-                        )
+                        Column {
+                            Text(
+                                text = "版本信息",
+                                style = SaltTheme.textStyles.main,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = SaltTheme.colors.text
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "点击前往 GitHub Releases 检查新版本",
+                                style = SaltTheme.textStyles.sub,
+                                fontSize = 11.sp,
+                                color = SaltTheme.colors.text.copy(alpha = 0.50f)
+                            )
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "v$versionName",
+                                style = SaltTheme.textStyles.sub,
+                                fontSize = 12.sp,
+                                color = SaltTheme.colors.text.copy(alpha = 0.65f)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "检查更新 >",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = SaltTheme.colors.highlight
+                                )
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -379,4 +457,9 @@ fun SettingsBottomSheet(
             Spacer(modifier = Modifier.height(20.dp))
         }
     }
+
+    KeepAliveGuideBottomSheet(
+        isVisible = showKeepAliveGuide,
+        onDismiss = { showKeepAliveGuide = false }
+    )
 }

@@ -121,6 +121,13 @@ app/src/main/java/com/whitenoise/app/
 - **应用图标与全密度位图契约 (Adaptive & Legacy Icon Contract)**：
   - 落地 Android 8.0+ 官方自适应矢量图标「包豪斯声学 · 琴弦点线面」(D-14) 为主图标（`res/drawable/` + `res/mipmap-anydpi-v26/`），配套 `ic_launcher_monochrome.xml` 支持 Android 13+ 壁纸动态取色；归档 D-16 备选；
   - 严格配备 mdpi/hdpi/xhdpi/xxhdpi/xxxhdpi 全密度 1080p 超采样抗锯齿 PNG 标准位图（`ic_launcher.png` 与 `ic_launcher_round.png`），保障 OEM 系统设置【应用信息】、多任务栈预览与传统启动器完美渲染，杜绝降级为系统默认播放器白三角。
+- **主流系统保活手风琴与包豪斯品牌矢量契约 (Keep-Alive Accordion & Brand Symbols Contract)**：
+  - 落地二级防杀抽屉 (`KeepAliveGuideBottomSheet`)，顶置通用核心三板斧（多任务加锁、电池无限制、允许自启动）；
+  - 5 大主流系统（小米/华为/OPPO/vivo/原生）采用默认折叠手风琴，折叠三角由 `spring(dampingRatio = 0.75f, stiffness = 380f)` 驱动 0° 到 90° 平滑旋转，内容由 `expandVertically() + fadeIn()` 弹性展开；
+  - 品牌图标彻底规避商业商标侵权，采用纯 Canvas 点线面包豪斯重绘（小米实心 Squircle 橙底反白 mi、华为八瓣扇形花冠、OPPO 独立双 O 椭圆、vivo 实体速度 V、Android 官方开源小机器人）。
+- **零网络权限与安全直达更新契约 (Zero Internet Permission & Safe Update Intent Contract)**：
+  - 应用清单坚守零 `INTERNET` 权限原则，全功能 100% 离线运行；
+  - 设置中心版本信息升级为可交互卡片，通过安全 Intent 调起系统外部浏览器直达 GitHub Releases (`/releases/latest`)，兼顾用户版本更新获取与极致的离线隐私安全口碑。
 
 ### 3.4 状态持久化契约
 - 使用轻量 **Jetpack DataStore Preferences** 记录用户退出前的音轨音量状态与自定义场景预设；
@@ -164,6 +171,7 @@ app/src/main/java/com/whitenoise/app/
 | **Stage 21** | 交互入口去冗余、设置抽屉收敛与致谢包豪斯胶囊滚动条 (v1.9.1) | **[x] 已达成** | 砍掉左上角 Brand 标题隐式点击暗门，收敛至右上角设置；砍掉设置中重复盲目的重置预设，交由方案库闭环；开源致谢副标更新为 22 款；关于抽屉加入 340dp 高度约束与纯原生包豪斯微光细胶囊滚动条；72 项单测全绿，Release 打包全绿。 |
 | **Stage 22** | 仓库公开合规性整改、分层多重许可与签名体系安全解耦 (v1.9.1-compliance) | **[x] 已达成** | 补齐根目录分层 MIT LICENSE (包含媒体音频独立排除例外)；重构 SOUNDS_LICENSING.md 补齐 CC 官方 URL 及 Pixabay 独立分发免责；README 补充 Moriafly/SaltPlayer 致敬免责及零权限隐私特性；端内关于抽屉增加 GitHub 主页直达；从 Git 解耦 keystore 并配置环境变量/优雅降级；72 项单测全绿，Debug/Release 构建全绿。 |
 | **Stage 23** | 工业级位图+纯色Adaptive重构根治应用信息默认播放器、发布 v2.0.0 正式版 (v2.0.0) | **[x] 已达成** | 剖析 HyperOS 手机管家等跨进程 loadIcon 时对纯 Vector AdaptiveIcon 栅格化失败降级为系统默认播放三角机理；落地原生纯色背景 (@color/ic_launcher_background: #11151F) 与全密度透明琴弦前景物理位图 (ic_launcher_foreground.png)；补齐 mdpi~xxxhdpi 全密度整图；升级 v2.0.0 (versionCode 22)；实机在澎湃OS应用管理与桌面双重验证全绿；72 项单测与 Release 构建全绿。 |
+| **Stage 24** | 主流系统防杀保活指引、包豪斯品牌几何矢量重绘与免联网直达更新 (v2.1.0) | **[x] 已达成** | 落地 `KeepAliveGuideBottomSheet` 覆盖小米/华为/OPPO/vivo/原生 5 大系统默认折叠保活手风琴；自绘 5 款纯几何包豪斯品牌矢量图标（小米 Squircle 橙底反白 mi、华为八瓣扇形花冠、OPPO 双 O 独立椭圆、vivo 实体速度 V、Android 官方小机器人）；设置抽屉新增防杀指引微胶囊；版本信息升级为可交互卡片，安全 Intent 调起浏览器直达 GitHub Releases (`/releases/latest`)，坚守 0 网络权限；76 项单测与 Release 构建 100% 全绿。 |
 
 ---
 

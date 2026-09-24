@@ -22,7 +22,7 @@ class BauhausUiIconTest {
     @Test
     fun testAllBauhausUiSymbolsDefined() {
         val symbols = BauhausUiSymbol.entries
-        assertEquals(13, symbols.size)
+        assertEquals(14, symbols.size)
 
         val expectedNames = listOf(
             "Play",
@@ -37,7 +37,8 @@ class BauhausUiIconTest {
             "Add",
             "Restore",
             "Import",
-            "Settings"
+            "Settings",
+            "Warning"
         )
         for (name in expectedNames) {
             assertTrue("Expected symbol $name in BauhausUiSymbol entries", symbols.any { it.name == name })
@@ -217,6 +218,14 @@ class BauhausUiIconTest {
         val settingsLight = BauhausUiTheme.getPalette(BauhausUiSymbol.Settings, isDark = false)
         assertEquals(Color(0xFF334155), settingsLight.primary)
         assertEquals(Color(0xFF38BDF8), settingsLight.secondary)
+
+        // Warning: 琥珀暖金/明亮暖黄
+        val warningDark = BauhausUiTheme.getPalette(BauhausUiSymbol.Warning, isDark = true)
+        assertEquals(Color(0xFFFBBF24), warningDark.primary)
+        assertEquals(Color(0xFFFDE68A), warningDark.secondary)
+        val warningLight = BauhausUiTheme.getPalette(BauhausUiSymbol.Warning, isDark = false)
+        assertEquals(Color(0xFFD97706), warningLight.primary)
+        assertEquals(Color(0xFFF59E0B), warningLight.secondary)
     }
 
     @Test

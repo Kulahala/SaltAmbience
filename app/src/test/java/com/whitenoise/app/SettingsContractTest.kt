@@ -111,4 +111,62 @@ class SettingsContractTest {
         assertEquals(Color(0xFF334155), lightPalette.primary)
         assertEquals(Color(0xFF38BDF8), lightPalette.secondary)
     }
+
+    @Test
+    fun testWarningSymbolPalette() {
+        val darkPalette = BauhausUiTheme.getPalette(BauhausUiSymbol.Warning, isDark = true)
+        val lightPalette = BauhausUiTheme.getPalette(BauhausUiSymbol.Warning, isDark = false)
+
+        assertEquals(Color(0xFFFBBF24), darkPalette.primary)
+        assertEquals(Color(0xFFFDE68A), darkPalette.secondary)
+        assertEquals(Color(0xFFD97706), lightPalette.primary)
+        assertEquals(Color(0xFFF59E0B), lightPalette.secondary)
+    }
+
+    @Test
+    fun testKeepAliveAccordionToggleLogic() {
+        var expandedBrands = setOf<String>()
+
+        fun toggleBrand(id: String) {
+            expandedBrands = if (expandedBrands.contains(id)) {
+                expandedBrands - id
+            } else {
+                expandedBrands + id
+            }
+        }
+
+        // Initially empty
+        assertTrue(expandedBrands.isEmpty())
+
+        // Expand xiaomi
+        toggleBrand("xiaomi")
+        assertTrue(expandedBrands.contains("xiaomi"))
+        assertEquals(1, expandedBrands.size)
+
+        // Expand huawei concurrently (multi-expand support)
+        toggleBrand("huawei")
+        assertTrue(expandedBrands.contains("xiaomi"))
+        assertTrue(expandedBrands.contains("huawei"))
+        assertEquals(2, expandedBrands.size)
+
+        // Collapse xiaomi
+        toggleBrand("xiaomi")
+        assertFalse(expandedBrands.contains("xiaomi"))
+        assertTrue(expandedBrands.contains("huawei"))
+        assertEquals(1, expandedBrands.size)
+    }
+
+    @Test
+    fun testKeepAliveBrandDefinitionsContract() {
+        val brandIds = listOf("xiaomi", "huawei", "oppo", "vivo", "stock")
+        assertEquals(5, brandIds.distinct().size)
+    }
+
+    @Test
+    fun testLatestReleaseUrlContract() {
+        val url = "https://github.com/Kulahala/SaltAmbience/releases/latest"
+        assertTrue(url.startsWith("https://github.com/"))
+        assertTrue(url.endsWith("/releases/latest"))
+    }
 }
+

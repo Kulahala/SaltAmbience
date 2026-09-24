@@ -36,7 +36,8 @@ enum class BauhausUiSymbol {
     Add,
     Restore,
     Import,
-    Settings
+    Settings,
+    Warning
 }
 
 /**
@@ -109,6 +110,10 @@ object BauhausUiTheme {
         BauhausUiSymbol.Settings -> BauhausUiPalette(
             primary = if (isDark) Color(0xFFE2E8F0) else Color(0xFF334155),
             secondary = Color(0xFF38BDF8)
+        )
+        BauhausUiSymbol.Warning -> BauhausUiPalette(
+            primary = if (isDark) Color(0xFFFBBF24) else Color(0xFFD97706), // 琥珀暖金
+            secondary = if (isDark) Color(0xFFFDE68A) else Color(0xFFF59E0B) // 亮黄
         )
     }
 }
@@ -521,6 +526,35 @@ private fun DrawScope.drawBauhausUiSymbol(
                     cap = StrokeCap.Round
                 )
             }
+        }
+
+        BauhausUiSymbol.Warning -> {
+            // 包豪斯圆角正等边三角形外框 + 垂直线段与律动圆点 (感叹号几何抽象)
+            val triPath = Path().apply {
+                moveTo(w * 0.50f, h * 0.16f)
+                lineTo(w * 0.86f, h * 0.82f)
+                lineTo(w * 0.14f, h * 0.82f)
+                close()
+            }
+            drawPath(
+                path = triPath,
+                color = primaryColor,
+                style = Stroke(width = strokeWidth * 1.1f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+            )
+            // 垂直警告线段
+            drawLine(
+                color = secondaryColor,
+                start = Offset(w * 0.50f, h * 0.38f),
+                end = Offset(w * 0.50f, h * 0.58f),
+                strokeWidth = strokeWidth * 1.25f,
+                cap = StrokeCap.Round
+            )
+            // 底部警告圆点
+            drawCircle(
+                color = secondaryColor,
+                radius = strokeWidth * 0.75f,
+                center = Offset(w * 0.50f, h * 0.70f)
+            )
         }
     }
 }
