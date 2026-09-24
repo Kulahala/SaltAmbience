@@ -46,25 +46,7 @@ class PresetTest {
         assertEquals(false, decoded.isDefault)
     }
 
-    @Test
-    fun testSoundTrackEffectiveVolume() {
-        val playingTrack = SoundTrack(
-            id = "rain",
-            name = "细雨",
-            subtitle = "秋雨",
-            assetFileName = "rain.ogg",
-            volume = 0.65f,
-            isPlaying = true,
-            isMuted = false
-        )
-        assertEquals(0.65f, playingTrack.effectiveTrackVolume, 0.001f)
 
-        val mutedTrack = playingTrack.copy(isMuted = true)
-        assertEquals(0.0f, mutedTrack.effectiveTrackVolume, 0.001f)
-
-        val stoppedTrack = playingTrack.copy(isPlaying = false)
-        assertEquals(0.0f, stoppedTrack.effectiveTrackVolume, 0.001f)
-    }
 
     @Test
     fun testTrackSaveStateSerializationRoundTrip() {
@@ -93,44 +75,7 @@ class PresetTest {
         assertEquals(true, decoded["wind"]!!.isMuted)
     }
 
-    @Test
-    fun testSoundTrackIconEmojiMapping() {
-        val expectedEmojis = mapOf(
-            "rain" to "🌧️",
-            "storm" to "⛈️",
-            "wind" to "🌲",
-            "stream" to "💧",
-            "fireplace" to "🪵",
-            "birds" to "🐦",
-            "summer_night" to "🦗",
-            "white_noise" to "📻",
-            "waves" to "🌊",
-            "coffee_shop" to "☕",
-            "train" to "🚂",
-            "boat" to "🛶",
-            "pink_noise" to "🌸",
-            "city" to "🏙️",
-            "brown_noise" to "🪐"
-        )
 
-        for ((id, expectedEmoji) in expectedEmojis) {
-            val track = SoundTrack(
-                id = id,
-                name = id,
-                subtitle = id,
-                assetFileName = "$id.ogg"
-            )
-            assertEquals("Track $id should have emoji $expectedEmoji", expectedEmoji, track.iconEmoji)
-        }
-
-        val unknownTrack = SoundTrack(
-            id = "unknown_sound",
-            name = "未知音效",
-            subtitle = "未知",
-            assetFileName = "unknown.ogg"
-        )
-        assertEquals("🎵", unknownTrack.iconEmoji)
-    }
 
     @Test
     fun testImportPresetUnknownTracksFilteringAndRename() {

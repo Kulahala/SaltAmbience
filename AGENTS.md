@@ -156,6 +156,7 @@ app/src/main/java/com/whitenoise/app/
 | **Stage 14** | 包豪斯常驻语义色彩体系、呼吸微色 (Tinted Idle) 与分类自然微光芯片 (v1.7.4) | **[x] 已达成** | 彻底告别黑白线框灰暗感；UI 矢量图标全面接入专属常驻双色；顶部分类胶囊常驻自然原色与微光底色；15 款音效卡片落地 48% 呼吸微色；66 项单测 100% 全绿。 |
 | **Stage 15** | 音效矩阵黑白回归、非线性变奏声学 Morphing 与播控形态切换 (v1.7.5) | **[x] 已达成** | 音效矩阵与分类芯片恢复未激活素描黑白灰阶、激活平滑跃升自然色彩；15 款音效落地非线性变奏物理弹簧 `spring` 驱动的呼吸与形态展开动画；实现 Play/Pause 纯几何实时无缝分裂与聚拢形态形变组件 (`BauhausPlayPauseMorphIcon`)；68 项单测 100% 全绿。 |
 | **Stage 16** | 顶栏折叠吸顶、纯实色悬浮舱与方案库导入闭环 (v1.7.6) | **[x] 已达成** | 彻底根除外部 alpha 模糊库闪退与负 offset 截断 bug；大标题随手势 1:1 动态收缩折叠；预设横滑栏（固定 54.dp）永远稳固吸顶；主屏移除冗余“恢复默认”，将其与官方方案库深度收纳进导入弹窗（支持已存在提示与单项/全量找回）；顶栏与播控条落地 100% 纯实色防叠字悬浮舱；全站 69 项单测 100% 全绿。 |
+| **Stage 17** | Ponytail 极简架构瘦身、剥离 Material3/Media3-UI 与抽屉容器收敛 (v1.7.7) | **[x] 已达成** | 彻底剔除 `material3`、`media3-ui`、`espresso` 等 4 个非必要依赖；自研轻量 `SaltHorizontalSlider` 替代 Material3 Slider；收敛 `MixerBottomSheet` 与 `SleepTimerBottomSheet` 到统一 `SaltBottomSheet`；净消减逾 600 行代码，全站测试与打包 100% 全绿。 |
 
 ---
 

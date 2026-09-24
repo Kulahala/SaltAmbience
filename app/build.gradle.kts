@@ -13,10 +13,8 @@ android {
         applicationId = "com.whitenoise.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 17
-        versionName = "1.7.6"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        versionCode = 18
+        versionName = "1.7.7"
     }
 
     signingConfigs {
@@ -93,19 +91,16 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.foundation)
 
     implementation(libs.salt.ui)
 
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.session)
-    implementation(libs.media3.ui)
 
     implementation(libs.datastore.preferences)
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

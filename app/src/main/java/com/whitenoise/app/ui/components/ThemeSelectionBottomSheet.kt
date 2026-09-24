@@ -224,21 +224,3 @@ private fun ThemeOptionItem(
         }
     }
 }
-
-@Deprecated(
-    "Use ThemeSelectionBottomSheet instead",
-    ReplaceWith("ThemeSelectionBottomSheet(isVisible = true, currentMode = currentMode, onSelectMode = onSelectMode, onDismiss = onDismiss)")
-)
-@Composable
-fun ThemeSelectionDialog(
-    currentMode: ThemeMode,
-    onSelectMode: (ThemeMode) -> Unit,
-    onDismiss: () -> Unit
-) {
-    ThemeSelectionBottomSheet(
-        isVisible = true,
-        currentMode = currentMode,
-        onSelectMode = onSelectMode,
-        onDismiss = onDismiss
-    )
-}

@@ -142,22 +142,3 @@ fun SoundTileCard(
         }
     }
 }
-
-/**
- * Backward compatibility alias for SoundCard.
- */
-@Deprecated("Use SoundTileCard instead", ReplaceWith("SoundTileCard(track, onTogglePlay, modifier)"))
-@Composable
-fun SoundCard(
-    track: SoundTrack,
-    onTogglePlay: () -> Unit,
-    onVolumeChange: (Float) -> Unit = {},
-    onToggleMute: () -> Unit = {},
-    modifier: Modifier = Modifier
-) {
-    SoundTileCard(
-        track = track,
-        onTogglePlay = onTogglePlay,
-        modifier = modifier
-    )
-}

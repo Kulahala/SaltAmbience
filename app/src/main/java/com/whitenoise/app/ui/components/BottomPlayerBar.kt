@@ -44,9 +44,7 @@ fun BottomPlayerBar(
     onToggleMasterPlay: () -> Unit,
     onOpenMixer: () -> Unit,
     modifier: Modifier = Modifier,
-    onOpenSleepTimer: () -> Unit = onOpenMixer,
-    onStopAll: () -> Unit = {},
-    onMasterVolumeChange: (Float) -> Unit = {}
+    onOpenSleepTimer: () -> Unit = onOpenMixer
 ) {
     val shape = RoundedCornerShape(26.dp)
     val isDark = SaltTheme.configs.isDarkTheme
@@ -203,28 +201,4 @@ fun BottomPlayerBar(
             }
         }
     }
-}
-
-/**
- * Backward compatibility overload for BottomPlayerBar without activeTracks.
- */
-@Composable
-fun BottomPlayerBar(
-    playbackState: PlaybackState,
-    onToggleMasterPlay: () -> Unit,
-    onStopAll: () -> Unit,
-    onMasterVolumeChange: (Float) -> Unit,
-    onOpenSleepTimer: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    BottomPlayerBar(
-        playbackState = playbackState,
-        activeTracks = emptyList(),
-        onToggleMasterPlay = onToggleMasterPlay,
-        onOpenMixer = onOpenSleepTimer,
-        modifier = modifier,
-        onOpenSleepTimer = onOpenSleepTimer,
-        onStopAll = onStopAll,
-        onMasterVolumeChange = onMasterVolumeChange
-    )
 }

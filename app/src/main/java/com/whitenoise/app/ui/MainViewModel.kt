@@ -3,11 +3,8 @@ package com.whitenoise.app.ui
 import android.app.Application
 import android.content.ClipData
 import android.content.ClipboardManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
-import android.os.IBinder
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.whitenoise.app.core.audio.AudioMixerEngine
@@ -100,28 +97,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val toastMessage: SharedFlow<String> = _toastMessage.asSharedFlow()
 
     private var isPreferencesRestored = false
-    private var isServiceBound = false
-
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            // Service connected and running
-        }
-
-        override fun onServiceDisconnected(name: ComponentName?) {
-        }
-    }
 
     init {
-        bindMediaService()
+        startMediaService()
         restorePreferencesAndObserve()
     }
 
-    private fun bindMediaService() {
+    private fun startMediaService() {
         val intent = Intent(getApplication(), WhiteNoiseMediaService::class.java)
         try {
             getApplication<Application>().startService(intent)
-            getApplication<Application>().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-            isServiceBound = true
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -354,18 +339,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setThemeMode(mode: com.whitenoise.app.core.model.ThemeMode) {
         viewModelScope.launch {
             preferencesManager.saveThemeMode(mode)
-        }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        if (isServiceBound) {
-            try {
-                getApplication<Application>().unbindService(serviceConnection)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-            isServiceBound = false
         }
     }
 }

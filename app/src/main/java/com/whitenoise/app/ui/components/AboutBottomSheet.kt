@@ -166,17 +166,3 @@ fun AboutBottomSheet(
         }
     }
 }
-
-@Deprecated(
-    "Use AboutBottomSheet instead",
-    ReplaceWith("AboutBottomSheet(isVisible = true, onDismiss = onDismiss)")
-)
-@Composable
-fun AboutDialog(
-    onDismiss: () -> Unit
-) {
-    AboutBottomSheet(
-        isVisible = true,
-        onDismiss = onDismiss
-    )
-}

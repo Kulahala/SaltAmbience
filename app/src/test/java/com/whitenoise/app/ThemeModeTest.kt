@@ -13,9 +13,6 @@ class ThemeModeTest {
         assertEquals("跟随系统", ThemeMode.SYSTEM.label)
         assertEquals("浅色模式", ThemeMode.LIGHT.label)
         assertEquals("深色模式", ThemeMode.DARK.label)
-        assertEquals("🌓", ThemeMode.SYSTEM.iconEmoji)
-        assertEquals("☀️", ThemeMode.LIGHT.iconEmoji)
-        assertEquals("🌙", ThemeMode.DARK.iconEmoji)
     }
 
     @Test

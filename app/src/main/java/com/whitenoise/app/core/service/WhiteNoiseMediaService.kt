@@ -10,9 +10,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.media.AudioManager
-import android.os.Binder
 import android.os.Build
-import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -121,14 +119,6 @@ class WhiteNoiseMediaService : MediaSessionService() {
         }
     }
 
-    inner class LocalBinder : Binder() {
-        val service: WhiteNoiseMediaService
-            get() = this@WhiteNoiseMediaService
-        val engine: AudioMixerEngine
-            get() = this@WhiteNoiseMediaService.audioEngine
-    }
-
-    private val binder = LocalBinder()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     lateinit var audioEngine: AudioMixerEngine
@@ -327,13 +317,7 @@ class WhiteNoiseMediaService : MediaSessionService() {
         )
 
         // Generate dynamic high-res Bauhaus acoustic artwork bitmap & bytes
-        val (coverBitmap, artworkBytes) = BauhausArtworkGenerator.getOrCreateArtwork(
-            context = this,
-            trackId = trackId,
-            soundName = soundName,
-            activeCount = state.activeTrackCount,
-            isPlaying = isPlaying
-        )
+        val (coverBitmap, artworkBytes) = BauhausArtworkGenerator.getOrCreateArtwork(trackId = trackId)
 
         // Update MediaSession coordinator player metadata
         val title = (primaryTrack?.name ?: soundName)?.let { "$it · SaltAmbience" } ?: "SaltAmbience 自然混音"
@@ -433,11 +417,6 @@ class WhiteNoiseMediaService : MediaSessionService() {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
         return mediaSession
-    }
-
-    override fun onBind(intent: Intent?): IBinder? {
-        super.onBind(intent)
-        return binder
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {

@@ -551,21 +551,3 @@ fun ImportPresetBottomSheet(
         }
     }
 }
-
-@Deprecated(
-    "Use ImportPresetBottomSheet instead",
-    ReplaceWith("ImportPresetBottomSheet(isVisible = true, initialPayload = initialPayload, onImport = onImport, onDismiss = onDismiss)")
-)
-@Composable
-fun ImportPresetDialog(
-    initialPayload: PresetSharePayload? = null,
-    onImport: (PresetSharePayload, Boolean) -> Unit,
-    onDismiss: () -> Unit
-) {
-    ImportPresetBottomSheet(
-        isVisible = true,
-        initialPayload = initialPayload,
-        onImport = onImport,
-        onDismiss = onDismiss
-    )
-}

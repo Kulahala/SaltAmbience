@@ -57,7 +57,6 @@ fun VerticalCapsuleSlider(
     value: Float, // 0.0f to 1.0f
     onValueChange: (Float) -> Unit,
     title: String,
-    icon: String = "",
     modifier: Modifier = Modifier,
     trackId: String? = null,
     isMuted: Boolean = false,
@@ -225,29 +224,14 @@ fun VerticalCapsuleSlider(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                if (trackId != null) {
-                    BauhausSoundIcon(
-                        trackId = trackId,
-                        isPlaying = !isMuted && effectiveValue > 0f,
-                        modifier = Modifier
-                            .size(24.dp)
-                            .then(if (isMuted) Modifier.alpha(0.4f) else Modifier)
-                    )
-                } else if (icon.isNotBlank()) {
-                    Text(
-                        text = icon,
-                        fontSize = 24.sp,
-                        modifier = Modifier.then(
-                            if (isMuted) Modifier.alpha(0.4f) else Modifier
-                        )
-                    )
-                } else {
-                    BauhausSoundIcon(
-                        trackId = "master",
-                        isPlaying = true,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                val iconTrackId = trackId ?: "master"
+                BauhausSoundIcon(
+                    trackId = iconTrackId,
+                    isPlaying = if (trackId != null) !isMuted && effectiveValue > 0f else true,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .then(if (isMuted) Modifier.alpha(0.4f) else Modifier)
+                )
             }
         }
 

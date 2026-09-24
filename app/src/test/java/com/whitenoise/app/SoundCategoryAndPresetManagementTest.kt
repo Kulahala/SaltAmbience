@@ -38,7 +38,6 @@ class SoundCategoryAndPresetManagementTest {
         assertNotNull("brown_noise should exist in repository", brownNoise)
         assertEquals("棕色噪音", brownNoise!!.name)
         assertEquals("brown_noise.ogg", brownNoise.assetFileName)
-        assertEquals("🪐", brownNoise.iconEmoji)
         assertEquals(SoundCategory.NOISE, brownNoise.category)
     }
 

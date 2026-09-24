@@ -205,19 +205,3 @@ fun SavePresetBottomSheet(
         }
     }
 }
-
-@Deprecated(
-    "Use SavePresetBottomSheet instead",
-    ReplaceWith("SavePresetBottomSheet(isVisible = true, onSave = onSave, onDismiss = onDismiss)")
-)
-@Composable
-fun SavePresetDialog(
-    onSave: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    SavePresetBottomSheet(
-        isVisible = true,
-        onSave = onSave,
-        onDismiss = onDismiss
-    )
-}

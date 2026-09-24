@@ -1,6 +1,5 @@
 package com.whitenoise.app.core.service
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -24,13 +23,7 @@ object BauhausArtworkGenerator {
     private const val ARTWORK_SIZE = 512
     private val cache = LruCache<String, Pair<Bitmap, ByteArray>>(20)
 
-    fun getOrCreateArtwork(
-        context: Context,
-        trackId: String?,
-        soundName: String? = null,
-        activeCount: Int = 1,
-        isPlaying: Boolean = true
-    ): Pair<Bitmap, ByteArray> {
+    fun getOrCreateArtwork(trackId: String?): Pair<Bitmap, ByteArray> {
         val key = trackId ?: "ambient"
         synchronized(cache) {
             val cached = cache.get(key)
@@ -47,12 +40,6 @@ object BauhausArtworkGenerator {
             cache.put(key, pair)
         }
         return pair
-    }
-
-    fun clearCache() {
-        synchronized(cache) {
-            cache.evictAll()
-        }
     }
 
     private fun generateBitmap(trackId: String?): Bitmap {
