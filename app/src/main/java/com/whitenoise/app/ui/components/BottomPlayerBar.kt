@@ -86,8 +86,8 @@ fun BottomPlayerBar(
                     .clickable { onToggleMasterPlay() },
                 contentAlignment = Alignment.Center
             ) {
-                BauhausUiIcon(
-                    symbol = if (isMasterPlaying) BauhausUiSymbol.Pause else BauhausUiSymbol.Play,
+                BauhausPlayPauseMorphIcon(
+                    isPlaying = isMasterPlaying,
                     tint = playIconColor,
                     modifier = Modifier.size(16.dp)
                 )

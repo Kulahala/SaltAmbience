@@ -1,8 +1,11 @@
 package com.whitenoise.app.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -129,6 +132,93 @@ fun BauhausUiIcon(
     }
 }
 
+/**
+ * Bauhaus Acoustic Play <-> Pause Shape Morphing Icon.
+ * Seamless geometric path morphing with non-linear spring physics:
+ * - Play state (isPlaying = false): Single focused dynamic triangle pointing right.
+ * - Pause state (isPlaying = true): Split into twin symmetric vertical Bauhaus pillars.
+ * Rate variation spring animation gives it an organic mechanical tactile response.
+ */
+@Composable
+fun BauhausPlayPauseMorphIcon(
+    isPlaying: Boolean,
+    modifier: Modifier = Modifier.size(16.dp),
+    tint: Color? = null
+) {
+    val isDark = SaltTheme.configs.isDarkTheme
+    val playPalette = BauhausUiTheme.getPalette(BauhausUiSymbol.Play, isDark)
+    val pausePalette = BauhausUiTheme.getPalette(BauhausUiSymbol.Pause, isDark)
+
+    val primaryColor = tint ?: (if (isPlaying) pausePalette.primary else playPalette.primary)
+    val secondaryColor = tint ?: (if (isPlaying) pausePalette.secondary else playPalette.secondary)
+
+    val morphProgress by animateFloatAsState(
+        targetValue = if (isPlaying) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = 0.65f, // 变奏回弹，动感十足，非线性速度变化
+            stiffness = 380f
+        ),
+        label = "play_pause_morph_progress"
+    )
+
+    Canvas(modifier = modifier) {
+        drawPlayPauseMorph(
+            progress = morphProgress,
+            primaryColor = primaryColor,
+            secondaryColor = secondaryColor
+        )
+    }
+}
+
+private fun lerp(start: Float, stop: Float, fraction: Float): Float =
+    start + (stop - start) * fraction
+
+fun DrawScope.drawPlayPauseMorph(
+    progress: Float,
+    primaryColor: Color,
+    secondaryColor: Color
+) {
+    val w = size.width
+    val h = size.height
+    val strokeWidth = (w * 0.088f).coerceAtLeast(1.5f)
+
+    // Left half / Pillar 1:
+    // progress = 0 (Play): Left trapezoid base of triangle
+    // progress = 1 (Pause): Left upright rounded bar
+    val lTopLeft = Offset(lerp(w * 0.24f, w * 0.22f, progress), lerp(h * 0.20f, h * 0.18f, progress))
+    val lTopRight = Offset(lerp(w * 0.46f, w * 0.42f, progress), lerp(h * 0.33f, h * 0.18f, progress))
+    val lBottomRight = Offset(lerp(w * 0.46f, w * 0.42f, progress), lerp(h * 0.67f, h * 0.82f, progress))
+    val lBottomLeft = Offset(lerp(w * 0.24f, w * 0.22f, progress), lerp(h * 0.80f, h * 0.82f, progress))
+
+    val pathLeft = Path().apply {
+        moveTo(lTopLeft.x, lTopLeft.y)
+        lineTo(lTopRight.x, lTopRight.y)
+        lineTo(lBottomRight.x, lBottomRight.y)
+        lineTo(lBottomLeft.x, lBottomLeft.y)
+        close()
+    }
+    drawPath(pathLeft, primaryColor)
+    drawPath(pathLeft, primaryColor, style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round))
+
+    // Right half / Pillar 2:
+    // progress = 0 (Play): Right triangle apex (top & bottom right converge at (0.82w, 0.50h))
+    // progress = 1 (Pause): Right upright rounded bar
+    val rTopLeft = Offset(lerp(w * 0.46f, w * 0.58f, progress), lerp(h * 0.33f, h * 0.18f, progress))
+    val rTopRight = Offset(lerp(w * 0.82f, w * 0.78f, progress), lerp(h * 0.50f, h * 0.18f, progress))
+    val rBottomRight = Offset(lerp(w * 0.82f, w * 0.78f, progress), lerp(h * 0.50f, h * 0.82f, progress))
+    val rBottomLeft = Offset(lerp(w * 0.46f, w * 0.58f, progress), lerp(h * 0.67f, h * 0.82f, progress))
+
+    val pathRight = Path().apply {
+        moveTo(rTopLeft.x, rTopLeft.y)
+        lineTo(rTopRight.x, rTopRight.y)
+        lineTo(rBottomRight.x, rBottomRight.y)
+        lineTo(rBottomLeft.x, rBottomLeft.y)
+        close()
+    }
+    drawPath(pathRight, secondaryColor)
+    drawPath(pathRight, secondaryColor, style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round))
+}
+
 private fun DrawScope.drawBauhausUiSymbol(
     symbol: BauhausUiSymbol,
     primaryColor: Color,
@@ -140,48 +230,18 @@ private fun DrawScope.drawBauhausUiSymbol(
 
     when (symbol) {
         BauhausUiSymbol.Play -> {
-            // Bauhaus solid geometric rounded triangle (optically offset slightly to the right)
-            val path = Path().apply {
-                moveTo(w * 0.28f, h * 0.20f)
-                lineTo(w * 0.80f, h * 0.50f)
-                lineTo(w * 0.28f, h * 0.80f)
-                close()
-            }
-            drawPath(path, primaryColor)
-            // Stroke overlay to give slightly rounded corners
-            drawPath(
-                path = path,
-                color = primaryColor,
-                style = Stroke(width = strokeWidth * 0.8f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+            drawPlayPauseMorph(
+                progress = 0f,
+                primaryColor = primaryColor,
+                secondaryColor = secondaryColor
             )
-            if (primaryColor != secondaryColor) {
-                // Bauhaus high-contrast vertical acoustic base spine (Pure white / light accent)
-                drawLine(
-                    color = secondaryColor,
-                    start = Offset(w * 0.28f, h * 0.32f),
-                    end = Offset(w * 0.28f, h * 0.68f),
-                    strokeWidth = strokeWidth * 0.85f,
-                    cap = StrokeCap.Round
-                )
-            }
         }
 
         BauhausUiSymbol.Pause -> {
-            // Parallel symmetric vertical thick rounded bars
-            val barW = w * 0.22f
-            val barH = h * 0.60f
-            val corner = CornerRadius(barW / 2f, barW / 2f)
-            drawRoundRect(
-                color = primaryColor,
-                topLeft = Offset(w * 0.22f, h * 0.20f),
-                size = Size(barW, barH),
-                cornerRadius = corner
-            )
-            drawRoundRect(
-                color = secondaryColor,
-                topLeft = Offset(w * 0.56f, h * 0.20f),
-                size = Size(barW, barH),
-                cornerRadius = corner
+            drawPlayPauseMorph(
+                progress = 1f,
+                primaryColor = primaryColor,
+                secondaryColor = secondaryColor
             )
         }
 

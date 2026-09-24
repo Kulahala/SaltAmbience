@@ -1,6 +1,9 @@
 package com.whitenoise.app.ui.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
@@ -15,6 +18,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.unit.dp
 import com.moriafly.salt.ui.SaltTheme
 import com.whitenoise.app.core.model.SoundCategory
@@ -106,6 +110,24 @@ object BauhausSoundTheme {
     }
 
     /**
+     * Compute clean monochrome/grayscale idle palette (pure black/white tones without saturation)
+     * restoring the peaceful sketch-like state before a sound is activated.
+     */
+    fun getMonochromeIdlePalette(isDark: Boolean): SoundIconPalette {
+        return if (isDark) {
+            SoundIconPalette(
+                primary = Color.White.copy(alpha = 0.38f),
+                secondary = Color.White.copy(alpha = 0.22f)
+            )
+        } else {
+            SoundIconPalette(
+                primary = Color(0xFF212121).copy(alpha = 0.38f),
+                secondary = Color(0xFF212121).copy(alpha = 0.22f)
+            )
+        }
+    }
+
+    /**
      * Compute the gentle tinted-idle palette preserving natural semantics at 48% opacity.
      */
     fun getIdlePalette(trackId: String, isDark: Boolean, alpha: Float = 0.48f): SoundIconPalette {
@@ -148,9 +170,12 @@ fun SoundCategory.getContentColor(isDark: Boolean): Color {
  * mapped to skeuomorphic natural color palettes.
  *
  * Color Specification:
- * - Idle / Inactive (未激活): Tinted Idle (呼吸微色) preserving the sound's semantic two-tone palette at 48% opacity,
- *   presenting gentle luminescent accents in dark mode and soft watercolor tones in light mode.
- * - Active (激活): High-contrast 100% full-saturation two-tone skeuomorphic natural palette corresponding to the sound's real essence.
+ * - Idle / Inactive (未激活): Pure monochrome black/white/gray sketch tones, quiet and understated.
+ * - Active (激活): High-contrast full-saturation two-tone skeuomorphic natural palette corresponding to the sound's essence.
+ *
+ * Dynamic Morphing:
+ * - Activation triggers a lively non-linear spring morphing animation (breathe scaling & parametric expansion)
+ *   bringing the geometric symbols to life.
  */
 @Composable
 fun BauhausSoundIcon(
@@ -161,37 +186,55 @@ fun BauhausSoundIcon(
 ) {
     val isDark = SaltTheme.configs.isDarkTheme
     val activePalette = BauhausSoundTheme.getPalette(trackId, isDark)
-    val idlePalette = activePalette.toIdlePalette(0.48f)
+    val monoIdlePalette = BauhausSoundTheme.getMonochromeIdlePalette(isDark)
 
-    val targetPrimary = tint ?: if (isPlaying) activePalette.primary else idlePalette.primary
-    val targetSecondary = tint ?: if (isPlaying) activePalette.secondary else idlePalette.secondary
+    val targetPrimary = tint ?: if (isPlaying) activePalette.primary else monoIdlePalette.primary
+    val targetSecondary = tint ?: if (isPlaying) activePalette.secondary else monoIdlePalette.secondary
 
     val animatedPrimary by animateColorAsState(
         targetValue = targetPrimary,
-        animationSpec = tween(durationMillis = 180),
+        animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
         label = "bauhaus_primary_color"
     )
     val animatedSecondary by animateColorAsState(
         targetValue = targetSecondary,
-        animationSpec = tween(durationMillis = 180),
+        animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
         label = "bauhaus_secondary_color"
     )
 
+    // Non-linear spring rate variation morphing animation
+    val morphProgress by animateFloatAsState(
+        targetValue = if (isPlaying) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = 0.58f, // 变奏弹性回弹（带生命力的弹簧），不呆板
+            stiffness = 320f      // 敏捷响应
+        ),
+        label = "bauhaus_sound_morph"
+    )
+
     Canvas(modifier = modifier) {
-        drawBauhausSymbol(
-            trackId = trackId,
-            primaryColor = animatedPrimary,
-            secondaryColor = animatedSecondary,
-            isPlaying = isPlaying
-        )
+        val breatheScale = 0.94f + morphProgress * 0.06f + (morphProgress - 1f).coerceAtLeast(0f) * 0.20f
+        scale(scale = breatheScale, pivot = center) {
+            drawBauhausSymbol(
+                trackId = trackId,
+                primaryColor = animatedPrimary,
+                secondaryColor = animatedSecondary,
+                isPlaying = isPlaying,
+                morphProgress = morphProgress
+            )
+        }
     }
 }
+
+private fun lerp(start: Float, stop: Float, fraction: Float): Float =
+    start + (stop - start) * fraction
 
 private fun DrawScope.drawBauhausSymbol(
     trackId: String,
     primaryColor: Color,
     secondaryColor: Color,
-    isPlaying: Boolean
+    isPlaying: Boolean,
+    morphProgress: Float = 1.0f
 ) {
     val w = size.width
     val h = size.height
@@ -202,134 +245,164 @@ private fun DrawScope.drawBauhausSymbol(
 
     when (trackId) {
         "rain" -> {
-            // 3 Parallel rhythmic tilted rain acoustic rays (-60 degrees): Outer 2 White, Center Cyan
-            drawLine(primaryColor, Offset(w * 0.28f, h * 0.28f), Offset(w * 0.16f, h * 0.72f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            drawLine(secondaryColor, Offset(w * 0.54f, h * 0.18f), Offset(w * 0.42f, h * 0.78f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            drawLine(primaryColor, Offset(w * 0.80f, h * 0.30f), Offset(w * 0.68f, h * 0.74f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            // Rain impact droplet node (Cyan)
-            drawCircle(secondaryColor, radius = strokeWidth * 0.95f, center = Offset(w * 0.40f, h * 0.88f))
+            // 3 Parallel rhythmic tilted rain acoustic rays: length and droplet expand dynamically
+            val lenFactor = lerp(0.70f, 1.0f, morphProgress)
+            val dropY = lerp(h * 0.80f, h * 0.88f, morphProgress)
+            val dropRadius = strokeWidth * lerp(0.65f, 0.95f, morphProgress)
+
+            val r1Start = Offset(lerp(w * 0.22f, w * 0.28f, lenFactor), lerp(h * 0.50f, h * 0.28f, lenFactor))
+            val r1End = Offset(lerp(w * 0.22f, w * 0.16f, lenFactor), lerp(h * 0.50f, h * 0.72f, lenFactor))
+            drawLine(primaryColor, r1Start, r1End, strokeWidth = strokeWidth, cap = StrokeCap.Round)
+
+            val r2Start = Offset(lerp(w * 0.48f, w * 0.54f, lenFactor), lerp(h * 0.48f, h * 0.18f, lenFactor))
+            val r2End = Offset(lerp(w * 0.48f, w * 0.42f, lenFactor), lerp(h * 0.48f, h * 0.78f, lenFactor))
+            drawLine(secondaryColor, r2Start, r2End, strokeWidth = strokeWidth, cap = StrokeCap.Round)
+
+            val r3Start = Offset(lerp(w * 0.74f, w * 0.80f, lenFactor), lerp(h * 0.52f, h * 0.30f, lenFactor))
+            val r3End = Offset(lerp(w * 0.74f, w * 0.68f, lenFactor), lerp(h * 0.52f, h * 0.74f, lenFactor))
+            drawLine(primaryColor, r3Start, r3End, strokeWidth = strokeWidth, cap = StrokeCap.Round)
+
+            drawCircle(secondaryColor, radius = dropRadius, center = Offset(w * 0.40f, dropY))
         }
 
         "storm" -> {
-            // Lightning fracture polyline (Cyan)
+            // Lightning fracture polyline extending downward with vibration
+            val tipX = lerp(w * 0.50f, w * 0.42f, morphProgress)
+            val tipY = lerp(h * 0.68f, h * 0.86f, morphProgress)
             val path = Path().apply {
                 moveTo(w * 0.58f, h * 0.14f)
                 lineTo(w * 0.36f, h * 0.46f)
                 lineTo(w * 0.64f, h * 0.46f)
-                lineTo(w * 0.42f, h * 0.86f)
+                lineTo(tipX, tipY)
             }
             drawPath(path, secondaryColor, style = strokeS)
-            // Secondary rain slash (White)
+            // Secondary rain slash
             drawLine(primaryColor, Offset(w * 0.20f, h * 0.38f), Offset(w * 0.14f, h * 0.74f), strokeWidth = strokeWidth * 0.8f, cap = StrokeCap.Round)
-            // Surge impact dot (White)
-            drawCircle(primaryColor, radius = strokeWidth * 0.9f, center = Offset(w * 0.80f, h * 0.68f))
+            // Surge impact dot pulsing
+            val sparkRadius = strokeWidth * lerp(0.50f, 0.95f, morphProgress)
+            drawCircle(primaryColor, radius = sparkRadius, center = Offset(w * 0.80f, h * 0.68f))
         }
 
         "wind" -> {
-            // 2 Aerodynamic fluid streamlines: Upper White, Lower Cyan
+            // 2 Aerodynamic fluid streamlines with subtle horizontal airflow shift
+            val flowShift = (1f - morphProgress) * (-w * 0.08f)
             val p1 = Path().apply {
-                moveTo(w * 0.14f, h * 0.36f)
-                cubicTo(w * 0.38f, h * 0.22f, w * 0.62f, h * 0.48f, w * 0.86f, h * 0.34f)
+                moveTo(w * 0.14f + flowShift, h * 0.36f)
+                cubicTo(w * 0.38f, lerp(h * 0.30f, h * 0.22f, morphProgress), w * 0.62f, lerp(h * 0.40f, h * 0.48f, morphProgress), w * 0.86f + flowShift, h * 0.34f)
             }
             drawPath(p1, primaryColor, style = strokeP)
             val p2 = Path().apply {
-                moveTo(w * 0.22f, h * 0.64f)
-                cubicTo(w * 0.44f, h * 0.52f, w * 0.66f, h * 0.74f, w * 0.78f, h * 0.64f)
+                moveTo(w * 0.22f + flowShift, h * 0.64f)
+                cubicTo(w * 0.44f, lerp(h * 0.58f, h * 0.52f, morphProgress), w * 0.66f, lerp(h * 0.68f, h * 0.74f, morphProgress), w * 0.78f + flowShift, h * 0.64f)
             }
             drawPath(p2, secondaryColor, style = strokeS)
-            // Vortex dot (Cyan)
-            drawCircle(secondaryColor, radius = strokeWidth * 0.8f, center = Offset(w * 0.86f, h * 0.62f))
+            // Vortex dot
+            val vortexX = lerp(w * 0.80f, w * 0.86f, morphProgress)
+            drawCircle(secondaryColor, radius = strokeWidth * lerp(0.50f, 0.85f, morphProgress), center = Offset(vortexX, h * 0.62f))
         }
 
         "stream" -> {
-            // Twin undulating sine ripple waves: Upper White (上白), Lower Cyan (下蓝)
+            // Twin undulating sine ripple waves with amplitude morphing
+            val waveAmp = lerp(0.60f, 1.0f, morphProgress)
             val p1 = Path().apply {
                 moveTo(w * 0.14f, h * 0.42f)
-                cubicTo(w * 0.32f, h * 0.26f, w * 0.50f, h * 0.56f, w * 0.68f, h * 0.42f)
-                cubicTo(w * 0.76f, h * 0.36f, w * 0.82f, h * 0.46f, w * 0.86f, h * 0.42f)
+                cubicTo(w * 0.32f, h * 0.42f - (h * 0.16f * waveAmp), w * 0.50f, h * 0.42f + (h * 0.14f * waveAmp), w * 0.68f, h * 0.42f)
+                cubicTo(w * 0.76f, h * 0.42f - (h * 0.06f * waveAmp), w * 0.82f, h * 0.42f + (h * 0.04f * waveAmp), w * 0.86f, h * 0.42f)
             }
             drawPath(p1, primaryColor, style = strokeP)
             val p2 = Path().apply {
                 moveTo(w * 0.14f, h * 0.64f)
-                cubicTo(w * 0.32f, h * 0.48f, w * 0.50f, h * 0.78f, w * 0.68f, h * 0.64f)
-                cubicTo(w * 0.76f, h * 0.58f, w * 0.82f, h * 0.68f, w * 0.86f, h * 0.64f)
+                cubicTo(w * 0.32f, h * 0.64f - (h * 0.16f * waveAmp), w * 0.50f, h * 0.64f + (h * 0.14f * waveAmp), w * 0.68f, h * 0.64f)
+                cubicTo(w * 0.76f, h * 0.64f - (h * 0.06f * waveAmp), w * 0.82f, h * 0.64f + (h * 0.04f * waveAmp), w * 0.86f, h * 0.64f)
             }
             drawPath(p2, secondaryColor, style = strokeS)
-            // Suspended ripple droplet (Cyan)
-            drawCircle(secondaryColor, radius = strokeWidth * 0.9f, center = Offset(w * 0.50f, h * 0.20f))
+            // Suspended ripple droplet leaping up
+            val dropletY = lerp(h * 0.28f, h * 0.20f, morphProgress)
+            drawCircle(secondaryColor, radius = strokeWidth * lerp(0.60f, 0.90f, morphProgress), center = Offset(w * 0.50f, dropletY))
         }
 
         "fireplace" -> {
-            // Geometric flame apex angles: Outer chevrons White, Center ray Cyan
-            drawLine(primaryColor, Offset(w * 0.28f, h * 0.78f), Offset(w * 0.50f, h * 0.30f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            drawLine(primaryColor, Offset(w * 0.72f, h * 0.78f), Offset(w * 0.50f, h * 0.30f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            drawLine(secondaryColor, Offset(w * 0.50f, h * 0.78f), Offset(w * 0.50f, h * 0.52f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            // Floating spark dots (Cyan)
-            drawCircle(secondaryColor, radius = strokeWidth * 0.7f, center = Offset(w * 0.36f, h * 0.18f))
-            drawCircle(secondaryColor, radius = strokeWidth * 0.9f, center = Offset(w * 0.64f, h * 0.22f))
+            // Geometric flame apex angles: Outer chevrons and leaping sparks
+            val flameSpread = lerp(0.06f, 0f, morphProgress)
+            val apexY = lerp(h * 0.40f, h * 0.30f, morphProgress)
+            drawLine(primaryColor, Offset(w * (0.28f + flameSpread), h * 0.78f), Offset(w * 0.50f, apexY), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            drawLine(primaryColor, Offset(w * (0.72f - flameSpread), h * 0.78f), Offset(w * 0.50f, apexY), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.50f, h * 0.78f), Offset(w * 0.50f, lerp(h * 0.62f, h * 0.52f, morphProgress)), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            // Floating spark dots rising upward
+            val spark1Y = lerp(h * 0.28f, h * 0.18f, morphProgress)
+            val spark2Y = lerp(h * 0.32f, h * 0.22f, morphProgress)
+            drawCircle(secondaryColor, radius = strokeWidth * lerp(0.50f, 0.75f, morphProgress), center = Offset(w * 0.36f, spark1Y))
+            drawCircle(secondaryColor, radius = strokeWidth * lerp(0.60f, 0.95f, morphProgress), center = Offset(w * 0.64f, spark2Y))
         }
 
         "birds" -> {
-            // Twin ascending gull wing arcs (White)
+            // Twin ascending gull wing arcs spreading with lift
+            val wingLift = lerp(h * 0.08f, 0f, morphProgress)
             val path = Path().apply {
-                moveTo(w * 0.14f, h * 0.56f)
-                quadraticTo(w * 0.32f, h * 0.30f, w * 0.50f, h * 0.50f)
-                quadraticTo(w * 0.68f, h * 0.30f, w * 0.86f, h * 0.56f)
+                moveTo(w * 0.14f, h * 0.56f + wingLift)
+                quadraticTo(w * 0.32f, h * 0.30f - wingLift * 0.5f, w * 0.50f, h * 0.50f)
+                quadraticTo(w * 0.68f, h * 0.30f - wingLift * 0.5f, w * 0.86f, h * 0.56f + wingLift)
             }
             drawPath(path, primaryColor, style = strokeP)
-            // Melodic chirp vocal tone dot (Cyan)
-            drawCircle(secondaryColor, radius = strokeWidth * 0.95f, center = Offset(w * 0.50f, h * 0.26f))
+            // Melodic chirp vocal tone dot blooming
+            drawCircle(secondaryColor, radius = strokeWidth * lerp(0.65f, 0.95f, morphProgress), center = Offset(w * 0.50f, lerp(h * 0.32f, h * 0.26f, morphProgress)))
         }
 
         "summer_night" -> {
-            // Slender crescent moon arc on right (White)
+            // Crescent moon arc sweeping open
+            val sweep = lerp(110f, 150f, morphProgress)
             drawArc(
                 color = primaryColor,
                 startAngle = -75f,
-                sweepAngle = 150f,
+                sweepAngle = sweep,
                 useCenter = false,
                 topLeft = Offset(w * 0.44f, h * 0.16f),
                 size = Size(w * 0.42f, h * 0.68f),
                 style = strokeP
             )
-            // Concentric acoustic pulse rings on left (Cyan)
+            // Concentric acoustic pulse rings expanding
+            val pulseScale = lerp(0.70f, 1.0f, morphProgress)
             drawArc(
                 color = secondaryColor,
                 startAngle = 135f,
-                sweepAngle = 90f,
+                sweepAngle = 90f * pulseScale,
                 useCenter = false,
                 topLeft = Offset(w * 0.12f, h * 0.36f),
-                size = Size(w * 0.40f, h * 0.40f),
+                size = Size(w * 0.40f * pulseScale, h * 0.40f * pulseScale),
                 style = thinStrokeS
             )
-            drawCircle(secondaryColor, radius = strokeWidth * 0.85f, center = Offset(w * 0.32f, h * 0.56f))
+            drawCircle(secondaryColor, radius = strokeWidth * lerp(0.60f, 0.85f, morphProgress), center = Offset(w * 0.32f, h * 0.56f))
         }
 
         "white_noise" -> {
-            // Full-spectrum balanced frequency raster bars: Alternating White and Cyan
-            drawLine(primaryColor, Offset(w * 0.20f, h * 0.26f), Offset(w * 0.80f, h * 0.26f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            drawLine(secondaryColor, Offset(w * 0.12f, h * 0.42f), Offset(w * 0.88f, h * 0.42f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            drawLine(primaryColor, Offset(w * 0.24f, h * 0.58f), Offset(w * 0.76f, h * 0.58f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            drawLine(secondaryColor, Offset(w * 0.16f, h * 0.74f), Offset(w * 0.84f, h * 0.74f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            // Vertical balance coordinate axis (White)
+            // Full-spectrum balanced frequency raster bars: dynamic expansion from center
+            val b1 = lerp(w * 0.15f, 0f, 1f - morphProgress)
+            val b2 = lerp(w * 0.20f, 0f, 1f - morphProgress)
+            drawLine(primaryColor, Offset(w * 0.50f - (w * 0.30f - b1), h * 0.26f), Offset(w * 0.50f + (w * 0.30f - b1), h * 0.26f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.50f - (w * 0.38f - b2), h * 0.42f), Offset(w * 0.50f + (w * 0.38f - b2), h * 0.42f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            drawLine(primaryColor, Offset(w * 0.50f - (w * 0.26f - b1), h * 0.58f), Offset(w * 0.50f + (w * 0.26f - b1), h * 0.58f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.50f - (w * 0.34f - b2), h * 0.74f), Offset(w * 0.50f + (w * 0.34f - b2), h * 0.74f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            // Vertical balance coordinate axis
             drawLine(primaryColor, Offset(w * 0.50f, h * 0.14f), Offset(w * 0.50f, h * 0.86f), strokeWidth = strokeWidth * 0.5f, cap = StrokeCap.Round)
         }
 
         "waves" -> {
-            // Swelling ocean crest wave curve (White)
+            // Swelling ocean crest wave curve
+            val crestY = lerp(h * 0.34f, h * 0.24f, morphProgress)
             val wave = Path().apply {
                 moveTo(w * 0.12f, h * 0.54f)
-                cubicTo(w * 0.32f, h * 0.54f, w * 0.44f, h * 0.24f, w * 0.66f, h * 0.24f)
-                cubicTo(w * 0.78f, h * 0.24f, w * 0.84f, h * 0.34f, w * 0.80f, h * 0.42f)
+                cubicTo(w * 0.32f, h * 0.54f, w * 0.44f, crestY, w * 0.66f, crestY)
+                cubicTo(w * 0.78f, crestY, w * 0.84f, h * 0.34f, w * 0.80f, h * 0.42f)
             }
             drawPath(wave, primaryColor, style = strokeP)
-            // Tide horizontal baseline (Cyan)
-            drawLine(secondaryColor, Offset(w * 0.12f, h * 0.76f), Offset(w * 0.88f, h * 0.76f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            drawCircle(secondaryColor, radius = strokeWidth * 0.85f, center = Offset(w * 0.34f, h * 0.76f))
+            // Tide horizontal baseline expanding
+            val tideRetract = lerp(w * 0.18f, 0f, morphProgress)
+            drawLine(secondaryColor, Offset(w * 0.12f + tideRetract * 0.5f, h * 0.76f), Offset(w * 0.88f - tideRetract * 0.5f, h * 0.76f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            drawCircle(secondaryColor, radius = strokeWidth * lerp(0.60f, 0.85f, morphProgress), center = Offset(w * 0.34f, h * 0.76f))
         }
 
         "coffee_shop" -> {
-            // Cup basin arc and saucer (White)
+            // Cup basin arc and saucer
             val cup = Path().apply {
                 moveTo(w * 0.24f, h * 0.52f)
                 lineTo(w * 0.76f, h * 0.52f)
@@ -337,85 +410,93 @@ private fun DrawScope.drawBauhausSymbol(
             }
             drawPath(cup, primaryColor, style = strokeP)
             drawLine(primaryColor, Offset(w * 0.18f, h * 0.84f), Offset(w * 0.82f, h * 0.84f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            // Rising twin steam S-curves (Cyan)
+            // Rising twin steam S-curves lifting upward
+            val steamLift = lerp(h * 0.08f, 0f, morphProgress)
             val s1 = Path().apply {
                 moveTo(w * 0.40f, h * 0.44f)
-                cubicTo(w * 0.34f, h * 0.32f, w * 0.46f, h * 0.24f, w * 0.40f, h * 0.14f)
+                cubicTo(w * 0.34f, h * 0.32f + steamLift, w * 0.46f, h * 0.24f + steamLift, w * 0.40f, h * 0.14f + steamLift)
             }
             drawPath(s1, secondaryColor, style = thinStrokeS)
             val s2 = Path().apply {
                 moveTo(w * 0.60f, h * 0.44f)
-                cubicTo(w * 0.54f, h * 0.32f, w * 0.66f, h * 0.24f, w * 0.60f, h * 0.14f)
+                cubicTo(w * 0.54f, h * 0.32f + steamLift, w * 0.66f, h * 0.24f + steamLift, w * 0.60f, h * 0.14f + steamLift)
             }
             drawPath(s2, secondaryColor, style = thinStrokeS)
         }
 
         "train" -> {
-            // Parallel rail tracks (White)
+            // Parallel rail tracks
             drawLine(primaryColor, Offset(w * 0.32f, h * 0.14f), Offset(w * 0.32f, h * 0.86f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
             drawLine(primaryColor, Offset(w * 0.68f, h * 0.14f), Offset(w * 0.68f, h * 0.86f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            // Transverse pulse sleepers (Cyan)
-            drawLine(secondaryColor, Offset(w * 0.18f, h * 0.30f), Offset(w * 0.82f, h * 0.30f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            drawLine(secondaryColor, Offset(w * 0.18f, h * 0.50f), Offset(w * 0.82f, h * 0.50f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            drawLine(secondaryColor, Offset(w * 0.18f, h * 0.70f), Offset(w * 0.82f, h * 0.70f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            // Transverse pulse sleepers expanding
+            val sleeperSpread = lerp(0.75f, 1.0f, morphProgress)
+            val sHalfW = w * 0.32f * sleeperSpread
+            drawLine(secondaryColor, Offset(w * 0.50f - sHalfW, h * 0.30f), Offset(w * 0.50f + sHalfW, h * 0.30f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.50f - sHalfW, h * 0.50f), Offset(w * 0.50f + sHalfW, h * 0.50f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.50f - sHalfW, h * 0.70f), Offset(w * 0.50f + sHalfW, h * 0.70f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
         }
 
         "boat" -> {
-            // Hull waterline arc (White)
+            // Hull waterline arc
             val hull = Path().apply {
                 moveTo(w * 0.16f, h * 0.58f)
                 cubicTo(w * 0.40f, h * 0.76f, w * 0.60f, h * 0.76f, w * 0.84f, h * 0.52f)
             }
             drawPath(hull, primaryColor, style = strokeP)
-            // Tilted oar vector (Cyan)
-            drawLine(secondaryColor, Offset(w * 0.32f, h * 0.26f), Offset(w * 0.66f, h * 0.82f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            // Water ripple (Lake Blue)
-            drawLine(secondaryColor, Offset(w * 0.24f, h * 0.84f), Offset(w * 0.76f, h * 0.84f), strokeWidth = strokeWidth * 0.75f, cap = StrokeCap.Round)
+            // Tilted oar vector paddling
+            val oarX = lerp(w * 0.58f, w * 0.66f, morphProgress)
+            drawLine(secondaryColor, Offset(w * 0.32f, h * 0.26f), Offset(oarX, h * 0.82f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            // Water ripple
+            val rippleW = lerp(w * 0.18f, w * 0.26f, morphProgress)
+            drawLine(secondaryColor, Offset(w * 0.50f - rippleW, h * 0.84f), Offset(w * 0.50f + rippleW, h * 0.84f), strokeWidth = strokeWidth * 0.75f, cap = StrokeCap.Round)
         }
 
         "pink_noise" -> {
-            // 1/f descending slope curve (White)
+            // 1/f descending slope curve
             val slope = Path().apply {
                 moveTo(w * 0.16f, h * 0.26f)
                 cubicTo(w * 0.38f, h * 0.44f, w * 0.62f, h * 0.64f, w * 0.84f, h * 0.74f)
             }
             drawPath(slope, primaryColor, style = strokeP)
-            // Stepped frequency energy bars & dot (Cyan)
-            drawLine(secondaryColor, Offset(w * 0.24f, h * 0.46f), Offset(w * 0.46f, h * 0.46f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            drawLine(secondaryColor, Offset(w * 0.44f, h * 0.60f), Offset(w * 0.68f, h * 0.60f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            drawCircle(secondaryColor, radius = strokeWidth * 0.85f, center = Offset(w * 0.84f, h * 0.74f))
+            // Stepped frequency energy bars expanding
+            val stepW1 = lerp(w * 0.10f, w * 0.22f, morphProgress)
+            val stepW2 = lerp(w * 0.12f, w * 0.24f, morphProgress)
+            drawLine(secondaryColor, Offset(w * 0.24f, h * 0.46f), Offset(w * 0.24f + stepW1, h * 0.46f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.44f, h * 0.60f), Offset(w * 0.44f + stepW2, h * 0.60f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+            drawCircle(secondaryColor, radius = strokeWidth * lerp(0.60f, 0.85f, morphProgress), center = Offset(w * 0.84f, h * 0.74f))
         }
 
         "city" -> {
-            // 3 Bauhaus staggered skyline towers: Outer towers White, Center high tower Cyan
-            val h1 = h * 0.36f
-            val h2 = h * 0.62f
-            val h3 = h * 0.24f
+            // 3 Bauhaus staggered skyline towers: expanding upward from base
+            val growth = lerp(0.70f, 1.0f, morphProgress)
+            val h1 = h * 0.36f * growth
+            val h2 = h * 0.62f * growth
+            val h3 = h * 0.24f * growth
             val base = h * 0.82f
             drawRect(primaryColor, Offset(w * 0.18f, base - h1), Size(w * 0.18f, h1), style = strokeP)
             drawRect(secondaryColor, Offset(w * 0.42f, base - h2), Size(w * 0.18f, h2), style = strokeS)
             drawRect(primaryColor, Offset(w * 0.66f, base - h3), Size(w * 0.18f, h3), style = strokeP)
             drawLine(primaryColor, Offset(w * 0.10f, base), Offset(w * 0.90f, base), strokeWidth = strokeWidth, cap = StrokeCap.Round)
-            drawCircle(secondaryColor, radius = strokeWidth * 0.75f, center = Offset(w * 0.51f, base - h2 - h * 0.08f))
+            drawCircle(secondaryColor, radius = strokeWidth * lerp(0.50f, 0.75f, morphProgress), center = Offset(w * 0.51f, base - h2 - h * 0.08f))
         }
 
         "brown_noise" -> {
-            // Heavyweight foundation bar (White)
+            // Heavyweight foundation bar
             val baseLine = h * 0.76f
             drawLine(primaryColor, Offset(w * 0.14f, baseLine), Offset(w * 0.86f, baseLine), strokeWidth = strokeWidth * 1.8f, cap = StrokeCap.Round)
-            // Slow low-frequency deep sine wave (Cyan)
+            // Slow low-frequency deep sine wave undulating
+            val deepAmp = lerp(0.55f, 1.0f, morphProgress)
             val deepWave = Path().apply {
                 moveTo(w * 0.14f, h * 0.36f)
-                cubicTo(w * 0.32f, h * 0.16f, w * 0.50f, h * 0.56f, w * 0.68f, h * 0.36f)
-                cubicTo(w * 0.76f, h * 0.28f, w * 0.82f, h * 0.40f, w * 0.86f, h * 0.36f)
+                cubicTo(w * 0.32f, h * 0.36f - (h * 0.20f * deepAmp), w * 0.50f, h * 0.36f + (h * 0.20f * deepAmp), w * 0.68f, h * 0.36f)
+                cubicTo(w * 0.76f, h * 0.36f - (h * 0.08f * deepAmp), w * 0.82f, h * 0.36f + (h * 0.04f * deepAmp), w * 0.86f, h * 0.36f)
             }
             drawPath(deepWave, secondaryColor, style = strokeS)
-            drawCircle(secondaryColor, radius = strokeWidth * 1.1f, center = Offset(w * 0.50f, h * 0.54f))
+            drawCircle(secondaryColor, radius = strokeWidth * lerp(0.70f, 1.1f, morphProgress), center = Offset(w * 0.50f, h * 0.54f))
         }
 
         else -> {
             // Master / Headphone acoustic symbol: Headband White, Harmonic arc & center dot Cyan
-            // Headphone arc (White)
             drawArc(
                 color = primaryColor,
                 startAngle = 180f,
@@ -425,20 +506,19 @@ private fun DrawScope.drawBauhausSymbol(
                 size = Size(w * 0.60f, h * 0.60f),
                 style = strokeP
             )
-            // Left & Right earcups (White)
             drawLine(primaryColor, Offset(w * 0.20f, h * 0.48f), Offset(w * 0.20f, h * 0.74f), strokeWidth = strokeWidth * 1.4f, cap = StrokeCap.Round)
             drawLine(primaryColor, Offset(w * 0.80f, h * 0.48f), Offset(w * 0.80f, h * 0.74f), strokeWidth = strokeWidth * 1.4f, cap = StrokeCap.Round)
-            // Central harmonic ripple arc (Cyan)
+            val rippleScale = lerp(0.65f, 1.0f, morphProgress)
             drawArc(
                 color = secondaryColor,
                 startAngle = 30f,
                 sweepAngle = 120f,
                 useCenter = false,
-                topLeft = Offset(w * 0.34f, h * 0.48f),
-                size = Size(w * 0.32f, h * 0.24f),
+                topLeft = Offset(w * (0.50f - 0.16f * rippleScale), h * 0.48f),
+                size = Size(w * 0.32f * rippleScale, h * 0.24f * rippleScale),
                 style = thinStrokeS
             )
-            drawCircle(secondaryColor, radius = strokeWidth * 0.8f, center = Offset(w * 0.50f, h * 0.54f))
+            drawCircle(secondaryColor, radius = strokeWidth * lerp(0.60f, 0.80f, morphProgress), center = Offset(w * 0.50f, h * 0.54f))
         }
     }
 }

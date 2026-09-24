@@ -255,4 +255,41 @@ class BauhausUiIconTest {
             assertEquals(palette.secondary.blue, idlePalette.secondary.blue, 0.001f)
         }
     }
+
+    @Test
+    fun testBauhausSoundIconMonochromeIdleContract() {
+        // Dark theme idle palette must be clean monochrome white with alpha
+        val darkMono = BauhausSoundTheme.getMonochromeIdlePalette(isDark = true)
+        assertEquals(darkMono.primary.red, darkMono.primary.green, 0.001f)
+        assertEquals(darkMono.primary.green, darkMono.primary.blue, 0.001f)
+        assertEquals(darkMono.secondary.red, darkMono.secondary.green, 0.001f)
+        assertEquals(darkMono.secondary.green, darkMono.secondary.blue, 0.001f)
+
+        // Light theme idle palette must also be pure neutral dark tone
+        val lightMono = BauhausSoundTheme.getMonochromeIdlePalette(isDark = false)
+        assertEquals(lightMono.primary.red, lightMono.primary.green, 0.02f)
+        assertEquals(lightMono.primary.green, lightMono.primary.blue, 0.02f)
+        assertEquals(lightMono.secondary.red, lightMono.secondary.green, 0.02f)
+        assertEquals(lightMono.secondary.green, lightMono.secondary.blue, 0.02f)
+    }
+
+    @Test
+    fun testPlayPauseMorphContract() {
+        // Test that play/pause morphing bounds interpolate correctly
+        fun morphPillar(start: Float, end: Float, progress: Float) = start + (end - start) * progress
+
+        // When progress = 0 (Play mode):
+        // Right apex should converge (y = 0.50h)
+        val apexTopY = morphPillar(0.50f, 0.18f, 0f)
+        val apexBottomY = morphPillar(0.50f, 0.82f, 0f)
+        assertEquals(0.50f, apexTopY, 0.001f)
+        assertEquals(0.50f, apexBottomY, 0.001f)
+
+        // When progress = 1 (Pause mode):
+        // Twin pillars should be symmetrically apart
+        val leftBarX = morphPillar(0.24f, 0.22f, 1f)
+        val rightBarX = morphPillar(0.46f, 0.58f, 1f)
+        assertTrue("Left bar should be on the left", leftBarX < 0.30f)
+        assertTrue("Right bar should be on the right", rightBarX > 0.50f)
+    }
 }

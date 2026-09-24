@@ -594,16 +594,35 @@ fun HomeScreen(
                                 val categoryColor = category.getThemeColor()
                                 val isDark = SaltTheme.configs.isDarkTheme
                                 val contentColor = category.getContentColor(isDark)
+
+                                val chipBgColor = if (isSelected) {
+                                    categoryColor.copy(alpha = 0.16f)
+                                } else {
+                                    SaltTheme.colors.subBackground
+                                }
+                                val chipBorderColor = if (isSelected) {
+                                    categoryColor.copy(alpha = 0.55f)
+                                } else {
+                                    SaltTheme.colors.text.copy(alpha = 0.08f)
+                                }
+                                val chipTextColor = if (isSelected) {
+                                    contentColor
+                                } else {
+                                    SaltTheme.colors.text.copy(alpha = 0.65f)
+                                }
+                                val chipIconColor = if (isSelected) {
+                                    contentColor
+                                } else {
+                                    SaltTheme.colors.text.copy(alpha = 0.45f)
+                                }
+
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(
-                                            if (isSelected) categoryColor.copy(alpha = 0.16f)
-                                            else categoryColor.copy(alpha = 0.06f)
-                                        )
+                                        .background(chipBgColor)
                                         .border(
                                             width = 1.dp,
-                                            color = if (isSelected) categoryColor.copy(alpha = 0.55f) else categoryColor.copy(alpha = 0.18f),
+                                            color = chipBorderColor,
                                             shape = RoundedCornerShape(12.dp)
                                         )
                                         .clickable {
@@ -628,16 +647,16 @@ fun HomeScreen(
                                         }
                                         BauhausSoundIcon(
                                             trackId = categoryIconId,
-                                            isPlaying = true,
+                                            isPlaying = isSelected,
                                             modifier = Modifier.size(13.dp),
-                                            tint = contentColor
+                                            tint = chipIconColor
                                         )
                                         Text(
                                             text = category.title,
                                             style = SaltTheme.textStyles.sub,
                                             fontSize = 12.sp,
                                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                            color = contentColor
+                                            color = chipTextColor
                                         )
                                     }
                                 }

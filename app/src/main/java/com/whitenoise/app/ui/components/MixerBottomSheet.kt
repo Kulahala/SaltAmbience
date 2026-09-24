@@ -355,8 +355,8 @@ fun MixerBottomSheet(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    BauhausUiIcon(
-                                        symbol = if (isMasterPlaying) BauhausUiSymbol.Pause else BauhausUiSymbol.Play,
+                                    BauhausPlayPauseMorphIcon(
+                                        isPlaying = isMasterPlaying,
                                         modifier = Modifier.size(14.dp),
                                         tint = playContentColor
                                     )
