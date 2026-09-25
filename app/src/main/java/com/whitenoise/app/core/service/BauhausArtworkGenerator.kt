@@ -174,6 +174,51 @@ object BauhausArtworkGenerator {
                 secondaryColor = Color.parseColor("#6D4C41"), // 大地泥土暖褐
                 glowColor = Color.parseColor("#286D4C41")
             )
+            "green_noise" -> ArtworkColors(
+                primaryColor = Color.WHITE,
+                secondaryColor = Color.parseColor("#10B981"),
+                glowColor = Color.parseColor("#2510B981")
+            )
+            "rain_car_roof" -> ArtworkColors(
+                primaryColor = Color.parseColor("#B0BEC5"),
+                secondaryColor = Color.parseColor("#38BDF8"),
+                glowColor = Color.parseColor("#2538BDF8")
+            )
+            "rain_umbrella" -> ArtworkColors(
+                primaryColor = Color.parseColor("#CFD8DC"),
+                secondaryColor = Color.parseColor("#0288D1"),
+                glowColor = Color.parseColor("#250288D1")
+            )
+            "cat_purr" -> ArtworkColors(
+                primaryColor = Color.parseColor("#EFEBE9"),
+                secondaryColor = Color.parseColor("#FF8A65"),
+                glowColor = Color.parseColor("#25FF8A65")
+            )
+            "singing_bowl" -> ArtworkColors(
+                primaryColor = Color.parseColor("#FFE082"),
+                secondaryColor = Color.parseColor("#BA68C8"),
+                glowColor = Color.parseColor("#25BA68C8")
+            )
+            "walk_snow" -> ArtworkColors(
+                primaryColor = Color.parseColor("#ECEFF1"),
+                secondaryColor = Color.parseColor("#80DEEA"),
+                glowColor = Color.parseColor("#2580DEEA")
+            )
+            "airplane" -> ArtworkColors(
+                primaryColor = Color.parseColor("#ECEFF1"),
+                secondaryColor = Color.parseColor("#00B0FF"),
+                glowColor = Color.parseColor("#2500B0FF")
+            )
+            "paper" -> ArtworkColors(
+                primaryColor = Color.parseColor("#FFF8E1"),
+                secondaryColor = Color.parseColor("#FFB300"),
+                glowColor = Color.parseColor("#25FFB300")
+            )
+            "vinyl" -> ArtworkColors(
+                primaryColor = Color.parseColor("#CFD8DC"),
+                secondaryColor = Color.parseColor("#FF5252"),
+                glowColor = Color.parseColor("#25FF5252")
+            )
             else -> ArtworkColors(
                 primaryColor = Color.WHITE,
                 secondaryColor = Color.parseColor("#19B2A6"), // 海盐冰青

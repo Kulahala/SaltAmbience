@@ -132,6 +132,38 @@ object BauhausSoundTheme {
                 primary = lightPrimary,
                 secondary = Color(0xFF10B981) // 森林翡翠绿
             )
+            "rain_car_roof" -> SoundIconPalette(
+                primary = if (isDark) Color(0xFFB0BEC5) else Color(0xFF546E7A), // 车顶铁青钢灰
+                secondary = Color(0xFF38BDF8) // 撞击水滴天青
+            )
+            "rain_umbrella" -> SoundIconPalette(
+                primary = if (isDark) Color(0xFFCFD8DC) else Color(0xFF455A64), // 伞面墨绿/青灰
+                secondary = Color(0xFF0288D1) // 滑落清亮湛蓝
+            )
+            "cat_purr" -> SoundIconPalette(
+                primary = if (isDark) Color(0xFFEFEBE9) else Color(0xFF8D6E63), // 暖绒毛色
+                secondary = Color(0xFFFF8A65) // 慢波呼噜暖粉橘
+            )
+            "singing_bowl" -> SoundIconPalette(
+                primary = if (isDark) Color(0xFFFFE082) else Color(0xFFF59E0B), // 颂钵黄铜金
+                secondary = Color(0xFFBA68C8) // 冥想空灵紫
+            )
+            "walk_snow" -> SoundIconPalette(
+                primary = if (isDark) Color(0xFFECEFF1) else Color(0xFF455A64), // 冰雪银灰
+                secondary = Color(0xFF80DEEA) // 冰晶微光淡蓝
+            )
+            "airplane" -> SoundIconPalette(
+                primary = if (isDark) Color(0xFFECEFF1) else Color(0xFF37474F), // 机身冷银
+                secondary = Color(0xFF00B0FF) // 天空巡航晴蓝
+            )
+            "paper" -> SoundIconPalette(
+                primary = if (isDark) Color(0xFFFFF8E1) else Color(0xFF5D4037), // 纸页象牙白/暖深褐
+                secondary = Color(0xFFFFB300) // 翻页折角琥珀金
+            )
+            "vinyl" -> SoundIconPalette(
+                primary = if (isDark) Color(0xFFCFD8DC) else Color(0xFF263238), // 黑胶冷炭黑/白
+                secondary = Color(0xFFFF5252) // 唱片圆芯复古暖红
+            )
             else -> SoundIconPalette(
                 primary = lightPrimary,
                 secondary = Color(0xFF19B2A6) // 椒盐海盐冰青
@@ -651,6 +683,236 @@ private fun DrawScope.drawBauhausSymbol(
             }
             // Energy peak dot
             drawCircle(secondaryColor, radius = strokeWidth * 0.75f, center = Offset(w * 0.50f, baseLine - h * 0.62f * lerp(0.60f, 1.0f, morphProgress) - strokeWidth))
+        }
+
+        "rain_car_roof" -> {
+            // Bauhaus car roof contour + impacting raindrops and splash droplets
+            val roofPath = Path().apply {
+                moveTo(w * 0.15f, h * 0.58f)
+                cubicTo(w * 0.30f, h * 0.44f, w * 0.70f, h * 0.44f, w * 0.85f, h * 0.58f)
+            }
+            drawPath(roofPath, primaryColor, style = strokeP)
+            // 2 angled incoming rain streaks
+            val streakShift = lerp(h * 0.08f, 0f, morphProgress)
+            val drop1End = Offset(w * 0.38f, h * 0.48f)
+            val drop1Start = Offset(w * 0.46f, h * 0.22f + streakShift)
+            drawLine(secondaryColor, drop1Start, drop1End, strokeWidth = strokeWidth * 0.85f, cap = StrokeCap.Round)
+
+            val drop2End = Offset(w * 0.62f, h * 0.48f)
+            val drop2Start = Offset(w * 0.70f, h * 0.22f + streakShift)
+            drawLine(secondaryColor, drop2Start, drop2End, strokeWidth = strokeWidth * 0.85f, cap = StrokeCap.Round)
+
+            // Bouncing splash bead leaping up
+            val splashY = lerp(h * 0.44f, h * 0.34f, morphProgress)
+            drawCircle(secondaryColor, radius = strokeWidth * lerp(0.55f, 0.80f, morphProgress), center = Offset(w * 0.34f, splashY))
+            drawCircle(secondaryColor, radius = strokeWidth * lerp(0.50f, 0.70f, morphProgress), center = Offset(w * 0.66f, splashY + h * 0.04f))
+        }
+
+        "rain_umbrella" -> {
+            // Vaulted umbrella canopy arc + central shaft + dripping edge droplets
+            val canopySweep = lerp(160f, 180f, morphProgress)
+            val canopyStart = -90f - canopySweep / 2f
+            drawArc(
+                color = primaryColor,
+                startAngle = canopyStart,
+                sweepAngle = canopySweep,
+                useCenter = false,
+                topLeft = Offset(w * 0.16f, h * 0.24f),
+                size = Size(w * 0.68f, h * 0.48f),
+                style = strokeP
+            )
+            // Vertical umbrella handle shaft & curved hook
+            val shaftBottom = lerp(h * 0.72f, h * 0.82f, morphProgress)
+            drawLine(primaryColor, Offset(w * 0.50f, h * 0.24f), Offset(w * 0.50f, shaftBottom), strokeWidth = strokeWidth * 0.90f, cap = StrokeCap.Round)
+            drawArc(
+                color = primaryColor,
+                startAngle = 0f,
+                sweepAngle = 180f,
+                useCenter = false,
+                topLeft = Offset(w * 0.42f, shaftBottom - h * 0.08f),
+                size = Size(w * 0.16f, h * 0.12f),
+                style = thinStrokeS
+            )
+            // Dripping edge droplets falling downward
+            val dripY = lerp(h * 0.52f, h * 0.68f, morphProgress)
+            drawCircle(secondaryColor, radius = strokeWidth * 0.70f, center = Offset(w * 0.18f, dripY))
+            drawCircle(secondaryColor, radius = strokeWidth * 0.70f, center = Offset(w * 0.82f, dripY))
+        }
+
+        "cat_purr" -> {
+            // Geometric cat silhouette ears and chin + resonant purr soundwave arcs
+            val earPath = Path().apply {
+                moveTo(w * 0.20f, h * 0.52f)
+                lineTo(w * 0.30f, h * 0.24f)
+                lineTo(w * 0.44f, h * 0.40f)
+                lineTo(w * 0.56f, h * 0.40f)
+                lineTo(w * 0.70f, h * 0.24f)
+                lineTo(w * 0.80f, h * 0.52f)
+            }
+            drawPath(earPath, primaryColor, style = strokeP)
+            // Resonant purr vibration wave arcs pulsing outward from chest
+            val purrScale = lerp(0.70f, 1.0f, morphProgress)
+            val w1 = w * 0.36f * purrScale
+            val w2 = w * 0.54f * purrScale
+            drawArc(
+                color = secondaryColor,
+                startAngle = 20f,
+                sweepAngle = 140f,
+                useCenter = false,
+                topLeft = Offset(w * 0.50f - w1 * 0.5f, h * 0.52f),
+                size = Size(w1, h * 0.18f * purrScale),
+                style = thinStrokeS
+            )
+            drawArc(
+                color = secondaryColor,
+                startAngle = 25f,
+                sweepAngle = 130f,
+                useCenter = false,
+                topLeft = Offset(w * 0.50f - w2 * 0.5f, h * 0.62f),
+                size = Size(w2, h * 0.22f * purrScale),
+                style = strokeS
+            )
+            drawCircle(secondaryColor, radius = strokeWidth * 0.75f, center = Offset(w * 0.50f, h * 0.48f))
+        }
+
+        "singing_bowl" -> {
+            // Semi-circular meditation singing bowl basin + rising concentric acoustic aura
+            val basinPath = Path().apply {
+                moveTo(w * 0.18f, h * 0.52f)
+                lineTo(w * 0.82f, h * 0.52f)
+                cubicTo(w * 0.82f, h * 0.86f, w * 0.18f, h * 0.86f, w * 0.18f, h * 0.52f)
+            }
+            drawPath(basinPath, primaryColor, style = strokeP)
+            // Rim lip horizontal line
+            drawLine(primaryColor, Offset(w * 0.14f, h * 0.52f), Offset(w * 0.86f, h * 0.52f), strokeWidth = strokeWidth * 1.1f, cap = StrokeCap.Round)
+            // Concentric meditation resonance rings lifting upward
+            val ringLift = lerp(h * 0.06f, 0f, morphProgress)
+            val auraW1 = w * 0.36f * lerp(0.75f, 1.0f, morphProgress)
+            val auraW2 = w * 0.54f * lerp(0.80f, 1.0f, morphProgress)
+            drawArc(
+                color = secondaryColor,
+                startAngle = 200f,
+                sweepAngle = 140f,
+                useCenter = false,
+                topLeft = Offset(w * 0.50f - auraW1 * 0.5f, h * 0.32f - ringLift),
+                size = Size(auraW1, h * 0.20f),
+                style = thinStrokeS
+            )
+            drawArc(
+                color = secondaryColor,
+                startAngle = 210f,
+                sweepAngle = 120f,
+                useCenter = false,
+                topLeft = Offset(w * 0.50f - auraW2 * 0.5f, h * 0.18f - ringLift),
+                size = Size(auraW2, h * 0.22f),
+                style = strokeS
+            )
+            // Resonant harmonic point hovering above bowl
+            drawCircle(secondaryColor, radius = strokeWidth * lerp(0.65f, 0.90f, morphProgress), center = Offset(w * 0.50f, h * 0.40f - ringLift))
+        }
+
+        "walk_snow" -> {
+            // Winter snowbank undulation baseline + staggered footprint capsules + ice crystals
+            val snowGround = Path().apply {
+                moveTo(w * 0.12f, h * 0.74f)
+                cubicTo(w * 0.36f, h * 0.68f, w * 0.64f, h * 0.78f, w * 0.88f, h * 0.72f)
+            }
+            drawPath(snowGround, primaryColor, style = strokeP)
+            // Left footprint (staggered slightly lower)
+            val fpW = w * 0.14f
+            val fpH = h * 0.24f
+            val fCorner = CornerRadius(fpW * 0.5f, fpW * 0.5f)
+            drawRoundRect(
+                color = secondaryColor,
+                topLeft = Offset(w * 0.30f, h * 0.40f),
+                size = Size(fpW, fpH),
+                cornerRadius = fCorner,
+                style = strokeS
+            )
+            // Right footprint (staggered forward and lifting)
+            val rightStepY = lerp(h * 0.24f, h * 0.20f, morphProgress)
+            drawRoundRect(
+                color = primaryColor,
+                topLeft = Offset(w * 0.56f, rightStepY),
+                size = Size(fpW, fpH),
+                cornerRadius = fCorner,
+                style = strokeP
+            )
+            // Flurry ice crystals/sparkles
+            drawCircle(secondaryColor, radius = strokeWidth * 0.65f, center = Offset(w * 0.22f, h * 0.30f))
+            drawCircle(secondaryColor, radius = strokeWidth * 0.55f, center = Offset(w * 0.78f, h * 0.38f))
+        }
+
+        "airplane" -> {
+            // Bauhaus aerodynamic aircraft cross + trailing atmospheric jet streamlines
+            // Vertical fuselage line
+            val noseY = lerp(h * 0.18f, h * 0.14f, morphProgress)
+            val tailY = h * 0.82f
+            drawLine(primaryColor, Offset(w * 0.50f, noseY), Offset(w * 0.50f, tailY), strokeWidth = strokeWidth * 1.2f, cap = StrokeCap.Round)
+            // Main swept wings horizontal bar
+            val wingSpan = lerp(w * 0.32f, w * 0.38f, morphProgress)
+            val wingY = h * 0.42f
+            drawLine(primaryColor, Offset(w * 0.50f - wingSpan, wingY), Offset(w * 0.50f + wingSpan, wingY), strokeWidth = strokeWidth * 1.2f, cap = StrokeCap.Round)
+            // Horizontal tail fin
+            val tailSpan = w * 0.18f
+            drawLine(primaryColor, Offset(w * 0.50f - tailSpan, h * 0.76f), Offset(w * 0.50f + tailSpan, h * 0.76f), strokeWidth = strokeWidth * 0.90f, cap = StrokeCap.Round)
+            // Twin engine cruising jet streams
+            val jetLen = lerp(h * 0.12f, h * 0.22f, morphProgress)
+            drawLine(secondaryColor, Offset(w * 0.32f, wingY + h * 0.04f), Offset(w * 0.32f, wingY + h * 0.04f + jetLen), strokeWidth = strokeWidth * 0.80f, cap = StrokeCap.Round)
+            drawLine(secondaryColor, Offset(w * 0.68f, wingY + h * 0.04f), Offset(w * 0.68f, wingY + h * 0.04f + jetLen), strokeWidth = strokeWidth * 0.80f, cap = StrokeCap.Round)
+            // Cabin navigation beacon
+            drawCircle(secondaryColor, radius = strokeWidth * 0.70f, center = Offset(w * 0.50f, noseY))
+        }
+
+        "paper" -> {
+            // Book page rectangle + folded top-right corner + text lines
+            val pX = w * 0.24f
+            val pY = h * 0.18f
+            val pW = w * 0.52f
+            val pH = h * 0.64f
+            val foldSize = w * 0.18f
+            // Main page perimeter path with folded corner
+            val pagePath = Path().apply {
+                moveTo(pX, pY)
+                lineTo(pX + pW - foldSize, pY)
+                lineTo(pX + pW, pY + foldSize)
+                lineTo(pX + pW, pY + pH)
+                lineTo(pX, pY + pH)
+                close()
+            }
+            drawPath(pagePath, primaryColor, style = strokeP)
+            // Fold flap triangle
+            val foldFlap = Path().apply {
+                moveTo(pX + pW - foldSize, pY)
+                lineTo(pX + pW - foldSize, pY + foldSize)
+                lineTo(pX + pW, pY + foldSize)
+                close()
+            }
+            drawPath(foldFlap, secondaryColor, style = strokeS)
+            // 2 Horizontal text line vectors
+            val textExtend = lerp(0.80f, 1.0f, morphProgress)
+            drawLine(primaryColor, Offset(pX + w * 0.08f, pY + h * 0.32f), Offset(pX + w * 0.08f + (pW - w * 0.16f) * textExtend, pY + h * 0.32f), strokeWidth = strokeWidth * 0.75f, cap = StrokeCap.Round)
+            drawLine(primaryColor, Offset(pX + w * 0.08f, pY + h * 0.46f), Offset(pX + w * 0.08f + (pW - w * 0.22f) * textExtend, pY + h * 0.46f), strokeWidth = strokeWidth * 0.75f, cap = StrokeCap.Round)
+        }
+
+        "vinyl" -> {
+            // Concentric vinyl turntable grooves + central label spindle + tonearm stylus
+            val discRadius = w * 0.38f
+            // Outer vinyl groove circle
+            drawCircle(primaryColor, radius = discRadius, center = center, style = strokeP)
+            // Inner audio track groove
+            val innerRadius = discRadius * lerp(0.68f, 0.72f, morphProgress)
+            drawCircle(primaryColor, radius = innerRadius, center = center, style = thinStrokeS)
+            // Center spindle label disc
+            drawCircle(secondaryColor, radius = discRadius * 0.30f, center = center)
+            drawCircle(if (isPlaying) Color.Black else primaryColor, radius = strokeWidth * 0.50f, center = center)
+            // Tonearm angled pivot & stylus arm tracing the groove
+            val armAngle = lerp(-25f, -10f, morphProgress)
+            val armPivot = Offset(w * 0.88f, h * 0.15f)
+            val armTipX = center.x + (innerRadius * 0.85f) * Math.cos(Math.toRadians(armAngle.toDouble())).toFloat()
+            val armTipY = center.y + (innerRadius * 0.85f) * Math.sin(Math.toRadians(armAngle.toDouble())).toFloat()
+            drawLine(secondaryColor, armPivot, Offset(armTipX, armTipY), strokeWidth = strokeWidth * 0.90f, cap = StrokeCap.Round)
+            drawCircle(secondaryColor, radius = strokeWidth * 0.70f, center = armPivot)
         }
 
         else -> {

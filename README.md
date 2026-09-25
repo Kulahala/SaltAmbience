@@ -19,7 +19,7 @@
 
 ### 2. 多轨混音与音频设计
 - **卡片长按即调音**：无需进入二级菜单，长按正在播放的卡片 220ms 触发坚实微震，直接左右滑动即可精细调节单轨音量，右上角百分比气泡实时缩放反馈，松手即锁存。
-- **22 款无缝自然音**：涵盖雨水、林风、篝火、海浪、风扇、键盘、钟表及科学绿噪等，音频均已做采样级交叉淡化无缝循环处理。
+- **30 款无缝自然音**：涵盖雨水、林风、篝火、海浪、风扇、键盘、钟表、车顶雨声、伞面雨声、猫咪呼噜、颂钵、雪地漫步、客机、纸张、黑胶及科学绿噪等，音频均已做采样级交叉淡化无缝循环处理。
 - **防循环疲劳**：起播时带有微小的时间戳随机偏移，并施加 ±2% 的自然微速差重采样，避免长时播放产生明显的机械循环感。
 - **多轨独立音量**：基于 Media3 ExoPlayer 实例池，每路音轨独立调节音量和静音，走系统 PCM 混音。
 - **平滑淡出休眠**：休眠倒计时结束前几分钟采用平滑曲线淡出至静音，避免突然停播爆音。
@@ -54,7 +54,7 @@
 
 ## 音源授权
 
-全量 22 款自然音源来自 [Blanket](https://github.com/rafaelmardojai/blanket)、[Moodist](https://github.com/remvze/moodist)、Wikimedia Commons 及 Freesound 等开源与公有领域贡献。
+全量 30 款自然音源来自 [Blanket](https://github.com/rafaelmardojai/blanket)、[Moodist](https://github.com/remvze/moodist)、Wikimedia Commons 及 Freesound 等开源与公有领域贡献。
 
 详细的作者署名、原音频链接及 CC / Pixabay 许可条款见 [SOUNDS_LICENSING.md](SOUNDS_LICENSING.md)。
 

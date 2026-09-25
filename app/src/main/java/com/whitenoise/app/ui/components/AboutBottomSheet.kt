@@ -145,7 +145,7 @@ fun AboutBottomSheet(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "本项目音效资产源自 Rafael Mardojai 的开源项目 Blanket、Moodist 及社区公共领域贡献，全部经过采样级无缝交叉淡化循环处理（全量 22 款音效）：\n\n" +
+                        text = "本项目音效资产源自 Rafael Mardojai 的开源项目 Blanket、Moodist 及社区公共领域贡献，全部经过采样级无缝交叉淡化循环处理（全量 30 款音效）：\n\n" +
                                 "• 细雨 (Rain) - alex36917 (CC BY 4.0)\n" +
                                 "• 雷雨 (Storm) - Digifish music (CC BY 3.0)\n" +
                                 "• 林风 (Wind) - felix.blume (CC0 1.0)\n" +
@@ -167,7 +167,15 @@ fun AboutBottomSheet(
                                 "• 风铃 (Wind Chimes) - Moodist / MAZE (Pixabay / CC0)\n" +
                                 "• 雨打屋檐 (Rain Roof) - Moodist / MAZE (Pixabay / CC0)\n" +
                                 "• 深海水声 (Underwater) - Moodist / MAZE (Pixabay / CC0)\n" +
-                                "• 科学绿噪 (Green Noise) - SaltAmbience (CC0 1.0 自研算法)\n\n" +
+                                "• 科学绿噪 (Green Noise) - SaltAmbience (CC0 1.0 自研算法)\n" +
+                                "• 车顶雨声 (Rain on Car Roof) - Moodist / MAZE (Pixabay / CC0)\n" +
+                                "• 伞面雨声 (Rain on Umbrella) - Moodist / MAZE (Pixabay / CC0)\n" +
+                                "• 猫咪呼噜 (Cat Purr) - Moodist / MAZE (Pixabay / CC0)\n" +
+                                "• 颂钵冥想 (Singing Bowl) - Moodist / MAZE (Pixabay / CC0)\n" +
+                                "• 雪地漫步 (Walk in Snow) - Moodist / MAZE (Pixabay / CC0)\n" +
+                                "• 客机巡航 (Airplane Cabin) - Moodist / MAZE (Pixabay / CC0)\n" +
+                                "• 纸张翻动 (Paper Turning) - Moodist / MAZE (Pixabay / CC0)\n" +
+                                "• 黑胶唱片 (Vinyl Record) - Moodist / MAZE (Pixabay / CC0)\n\n" +
                                 "完整许可条款已归档至 SOUNDS_LICENSING.md。\n\n" +
                                 "致敬与致谢：\n" +
                                 "• 感谢 Moriafly 开源贡献的 SaltUI 椒盐美学设计规范\n" +

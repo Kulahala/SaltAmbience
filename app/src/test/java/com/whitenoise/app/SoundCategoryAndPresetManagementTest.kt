@@ -18,11 +18,11 @@ class SoundCategoryAndPresetManagementTest {
     @Test
     fun testSoundRepositoryTotalTracksAndBrownNoise() {
         val tracks = SoundRepository.ALL_TRACKS
-        assertEquals("Total tracks should be exactly 22", 22, tracks.size)
+        assertEquals("Total tracks should be exactly 30", 30, tracks.size)
 
         // Ensure all track IDs are unique
         val uniqueIds = tracks.map { it.id }.toSet()
-        assertEquals("All track IDs must be unique", 22, uniqueIds.size)
+        assertEquals("All track IDs must be unique", 30, uniqueIds.size)
 
         // Verify all tracks have valid metadata and .ogg extension
         for (track in tracks) {
@@ -39,17 +39,45 @@ class SoundCategoryAndPresetManagementTest {
         assertEquals("棕色噪音", brownNoise!!.name)
         assertEquals("brown_noise.ogg", brownNoise.assetFileName)
         assertEquals(SoundCategory.NOISE, brownNoise.category)
+
+        // Verify newly added tracks exist
+        val catPurr = SoundRepository.getTrackById("cat_purr")
+        assertNotNull("cat_purr should exist in repository", catPurr)
+        assertEquals("猫咪呼噜", catPurr!!.name)
+        assertEquals(SoundCategory.NATURE, catPurr.category)
+
+        val rainCarRoof = SoundRepository.getTrackById("rain_car_roof")
+        assertNotNull("rain_car_roof should exist in repository", rainCarRoof)
+        assertEquals("车顶雨声", rainCarRoof!!.name)
+        assertEquals(SoundCategory.RAIN, rainCarRoof.category)
+
+        val vinyl = SoundRepository.getTrackById("vinyl")
+        assertNotNull("vinyl should exist in repository", vinyl)
+        assertEquals("黑胶唱片", vinyl!!.name)
+        assertEquals(SoundCategory.LIFE, vinyl.category)
     }
 
     @Test
     fun testSoundCategoryMappingCoverage() {
         // 1. Category definitions check
-        assertEquals(setOf("rain", "storm", "stream", "waves", "boat", "rain_roof", "underwater"), SoundCategory.RAIN.trackIds)
-        assertEquals(setOf("wind", "fireplace", "birds", "summer_night", "wind_chimes"), SoundCategory.NATURE.trackIds)
-        assertEquals(setOf("coffee_shop", "train", "city", "fan", "clock", "keyboard"), SoundCategory.LIFE.trackIds)
-        assertEquals(setOf("white_noise", "pink_noise", "brown_noise", "green_noise"), SoundCategory.NOISE.trackIds)
+        assertEquals(
+            setOf("rain", "storm", "stream", "waves", "boat", "rain_roof", "underwater", "rain_car_roof", "rain_umbrella"),
+            SoundCategory.RAIN.trackIds
+        )
+        assertEquals(
+            setOf("wind", "fireplace", "birds", "summer_night", "wind_chimes", "cat_purr", "singing_bowl", "walk_snow"),
+            SoundCategory.NATURE.trackIds
+        )
+        assertEquals(
+            setOf("coffee_shop", "train", "city", "fan", "clock", "keyboard", "airplane", "paper", "vinyl"),
+            SoundCategory.LIFE.trackIds
+        )
+        assertEquals(
+            setOf("white_noise", "pink_noise", "brown_noise", "green_noise"),
+            SoundCategory.NOISE.trackIds
+        )
 
-        // 2. All 22 tracks must belong to exactly one non-ALL category
+        // 2. All 30 tracks must belong to exactly one non-ALL category
         val nonAllCategories = listOf(
             SoundCategory.RAIN,
             SoundCategory.NATURE,

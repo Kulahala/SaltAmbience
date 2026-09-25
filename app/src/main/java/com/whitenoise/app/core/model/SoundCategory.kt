@@ -13,15 +13,15 @@ enum class SoundCategory(
     ),
     RAIN(
         title = "雨水",
-        trackIds = setOf("rain", "storm", "stream", "waves", "boat", "rain_roof", "underwater")
+        trackIds = setOf("rain", "storm", "stream", "waves", "boat", "rain_roof", "underwater", "rain_car_roof", "rain_umbrella")
     ),
     NATURE(
         title = "自然",
-        trackIds = setOf("wind", "fireplace", "birds", "summer_night", "wind_chimes")
+        trackIds = setOf("wind", "fireplace", "birds", "summer_night", "wind_chimes", "cat_purr", "singing_bowl", "walk_snow")
     ),
     LIFE(
         title = "生活",
-        trackIds = setOf("coffee_shop", "train", "city", "fan", "clock", "keyboard")
+        trackIds = setOf("coffee_shop", "train", "city", "fan", "clock", "keyboard", "airplane", "paper", "vinyl")
     ),
     NOISE(
         title = "纯噪",

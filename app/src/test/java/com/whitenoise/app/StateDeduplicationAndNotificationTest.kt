@@ -375,9 +375,9 @@ class StateDeduplicationAndNotificationTest {
     }
 
     @Test
-    fun testAllTwentyTwoTracksHaveCorrespondingNameResolution() {
+    fun testAllThirtyTracksHaveCorrespondingNameResolution() {
         val tracks = SoundRepository.ALL_TRACKS
-        assertEquals(22, tracks.size)
+        assertEquals(30, tracks.size)
 
         for (track in tracks) {
             val resolvedName = SoundRepository.ALL_TRACKS.find { it.id == track.id }?.name
@@ -403,9 +403,9 @@ class StateDeduplicationAndNotificationTest {
     }
 
     @Test
-    fun testAllTwentyTwoTracksHaveDistinctSkeuomorphicPalettes() {
+    fun testAllThirtyTracksHaveDistinctSkeuomorphicPalettes() {
         val tracks = SoundRepository.ALL_TRACKS
-        assertEquals(22, tracks.size)
+        assertEquals(30, tracks.size)
 
         // Verify each track returns non-null valid colors
         for (track in tracks) {
@@ -439,5 +439,18 @@ class StateDeduplicationAndNotificationTest {
         val summerNight = BauhausSoundTheme.getPalette("summer_night", isDark = true)
         assertEquals(androidx.compose.ui.graphics.Color(0xFFFFF59D), summerNight.primary)
         assertEquals(androidx.compose.ui.graphics.Color(0xFF7E57C2), summerNight.secondary)
+
+        // Cat purr must be warm peach/orange
+        val catPurr = BauhausSoundTheme.getPalette("cat_purr", isDark = true)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFFFF8A65), catPurr.secondary)
+
+        // Singing bowl must be golden brass and meditation purple
+        val singingBowl = BauhausSoundTheme.getPalette("singing_bowl", isDark = true)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFFFFE082), singingBowl.primary)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFFBA68C8), singingBowl.secondary)
+
+        // Vinyl must have vintage red label
+        val vinyl = BauhausSoundTheme.getPalette("vinyl", isDark = true)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFFFF5252), vinyl.secondary)
     }
 }

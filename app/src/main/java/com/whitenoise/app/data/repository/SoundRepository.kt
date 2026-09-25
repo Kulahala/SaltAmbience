@@ -157,6 +157,62 @@ object SoundRepository {
             subtitle = "聚焦自然中频的心理学慢波",
             assetFileName = "green_noise.ogg",
             volume = 0.5f
+        ),
+        SoundTrack(
+            id = "rain_car_roof",
+            name = "车顶雨声",
+            subtitle = "雨滴打在车顶天窗的静谧庇护感",
+            assetFileName = "rain_car_roof.ogg",
+            volume = 0.5f
+        ),
+        SoundTrack(
+            id = "rain_umbrella",
+            name = "伞面雨声",
+            subtitle = "漫步雨中伞下回荡的清脆水滴",
+            assetFileName = "rain_umbrella.ogg",
+            volume = 0.5f
+        ),
+        SoundTrack(
+            id = "cat_purr",
+            name = "猫咪呼噜",
+            subtitle = "怀抱猫咪温热沉稳的慢波共鸣",
+            assetFileName = "cat_purr.ogg",
+            volume = 0.55f
+        ),
+        SoundTrack(
+            id = "singing_bowl",
+            name = "颂钵冥想",
+            subtitle = "空灵绵长荡涤心神的身心共振",
+            assetFileName = "singing_bowl.ogg",
+            volume = 0.5f
+        ),
+        SoundTrack(
+            id = "walk_snow",
+            name = "雪地漫步",
+            subtitle = "双脚踩在松软厚雪上的沙沙声",
+            assetFileName = "walk_snow.ogg",
+            volume = 0.5f
+        ),
+        SoundTrack(
+            id = "airplane",
+            name = "客机巡航",
+            subtitle = "万米高空机舱引擎深沉规律轰鸣",
+            assetFileName = "airplane.ogg",
+            volume = 0.45f
+        ),
+        SoundTrack(
+            id = "paper",
+            name = "纸张翻动",
+            subtitle = "书房专注研读的纸页摩擦轻响",
+            assetFileName = "paper.ogg",
+            volume = 0.5f
+        ),
+        SoundTrack(
+            id = "vinyl",
+            name = "黑胶唱片",
+            subtitle = "唱针划过唱盘的温暖爆豆与底噪",
+            assetFileName = "vinyl.ogg",
+            volume = 0.45f
         )
     )
 

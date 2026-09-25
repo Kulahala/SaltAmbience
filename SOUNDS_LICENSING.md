@@ -11,7 +11,7 @@ All raw audio recordings have undergone sample-accurate equal-energy cross-fade 
 
 ---
 
-## Audio Track Attribution Matrix (全量 22 款音效授权清单)
+## Audio Track Attribution Matrix (全量 30 款音效授权清单)
 
 | Sound Track | Asset File | Original Source / Link | Original Author | Loop Editor* | License Deed |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -37,13 +37,21 @@ All raw audio recordings have undergone sample-accurate equal-energy cross-fade 
 | **雨打屋檐 (Rain Roof)** | `rain_roof.ogg` | [remvze/moodist / rain-on-window](https://github.com/remvze/moodist) | Moodist / MAZE | SaltAmbience | [Pixabay / CC0](https://pixabay.com/service/license-summary/) |
 | **深海水声 (Underwater)** | `underwater.ogg` | [remvze/moodist / underwater](https://github.com/remvze/moodist) | Moodist / MAZE | SaltAmbience | [Pixabay / CC0](https://pixabay.com/service/license-summary/) |
 | **科学绿噪 (Green Noise)** | `green_noise.ogg` | [SaltAmbience / 500Hz Spectral Curve](https://github.com/Kulahala/SaltAmbience) | SaltAmbience | SaltAmbience | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| **车顶雨声 (Rain on Car Roof)** | `rain_car_roof.ogg` | [remvze/moodist / rain-on-car-roof](https://github.com/remvze/moodist) | Moodist / MAZE | SaltAmbience | [Pixabay / CC0](https://pixabay.com/service/license-summary/) |
+| **伞面雨声 (Rain on Umbrella)** | `rain_umbrella.ogg` | [remvze/moodist / rain-on-umbrella](https://github.com/remvze/moodist) | Moodist / MAZE | SaltAmbience | [Pixabay / CC0](https://pixabay.com/service/license-summary/) |
+| **猫咪呼噜 (Cat Purr)** | `cat_purr.ogg` | [remvze/moodist / cat-purring](https://github.com/remvze/moodist) | Moodist / MAZE | SaltAmbience | [Pixabay / CC0](https://pixabay.com/service/license-summary/) |
+| **颂钵冥想 (Singing Bowl)** | `singing_bowl.ogg` | [remvze/moodist / singing-bowl](https://github.com/remvze/moodist) | Moodist / MAZE | SaltAmbience | [Pixabay / CC0](https://pixabay.com/service/license-summary/) |
+| **雪地漫步 (Walk in Snow)** | `walk_snow.ogg` | [remvze/moodist / walk-in-snow](https://github.com/remvze/moodist) | Moodist / MAZE | SaltAmbience | [Pixabay / CC0](https://pixabay.com/service/license-summary/) |
+| **客机巡航 (Airplane Cabin)** | `airplane.ogg` | [remvze/moodist / airplane](https://github.com/remvze/moodist) | Moodist / MAZE | SaltAmbience | [Pixabay / CC0](https://pixabay.com/service/license-summary/) |
+| **纸张翻动 (Paper Turning)** | `paper.ogg` | [remvze/moodist / paper](https://github.com/remvze/moodist) | Moodist / MAZE | SaltAmbience | [Pixabay / CC0](https://pixabay.com/service/license-summary/) |
+| **黑胶唱片 (Vinyl Record)** | `vinyl.ogg` | [remvze/moodist / vinyl-effect](https://github.com/remvze/moodist) | Moodist / MAZE | SaltAmbience | [Pixabay / CC0](https://pixabay.com/service/license-summary/) |
 
 ---
 
 ## Important Compliance Notices (关键合规声明)
 
 ### 1. Pixabay Media Terms (关于 Pixabay 来源音频)
-Audio tracks derived from [Moodist](https://github.com/remvze/moodist) (`fan.ogg`, `clock.ogg`, `keyboard.ogg`, `wind_chimes.ogg`, `rain_roof.ogg`, `underwater.ogg`) were curated from Pixabay / CC0 contributors. Under the [Pixabay License](https://pixabay.com/service/license-summary/):
+Audio tracks derived from [Moodist](https://github.com/remvze/moodist) (`fan.ogg`, `clock.ogg`, `keyboard.ogg`, `wind_chimes.ogg`, `rain_roof.ogg`, `underwater.ogg`, `rain_car_roof.ogg`, `rain_umbrella.ogg`, `cat_purr.ogg`, `singing_bowl.ogg`, `walk_snow.ogg`, `airplane.ogg`, `paper.ogg`, `vinyl.ogg`) were curated from Pixabay / CC0 contributors. Under the [Pixabay License](https://pixabay.com/service/license-summary/):
 - These sound recordings are free to use and distribute as integrated, functional components of the SaltAmbience application.
 - **Stand-alone Redistribution Restriction**: These audio files may **NOT** be extracted, resold, or redistributed standalone as a raw sound library, sound effects pack, or wallpaper/media bundle.
 

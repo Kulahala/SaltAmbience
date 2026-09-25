@@ -28,13 +28,15 @@ object LoopFatigueHelper {
     const val MIN_DURATION_FOR_OFFSET_MS = 1_000L
 
     /**
-     * Exact durations of the 22 bundled local OGG assets in milliseconds.
+     * Exact durations of the 30 bundled local OGG assets in milliseconds.
      * Measured from Vorbis stream granule positions.
      */
     val ASSET_DURATIONS_MS: Map<String, Long> = mapOf(
+        "airplane" to 60_030L,
         "birds" to 129_805L,
         "boat" to 41_561L,
         "brown_noise" to 10_000L,
+        "cat_purr" to 38_660L,
         "city" to 24_650L,
         "clock" to 14_440L,
         "coffee_shop" to 16_663L,
@@ -42,14 +44,20 @@ object LoopFatigueHelper {
         "fireplace" to 25_538L,
         "green_noise" to 28_500L,
         "keyboard" to 10_650L,
+        "paper" to 17_210L,
         "pink_noise" to 9_959L,
         "rain" to 124_578L,
+        "rain_car_roof" to 10_020L,
         "rain_roof" to 31_640L,
+        "rain_umbrella" to 26_550L,
+        "singing_bowl" to 49_080L,
         "storm" to 25_664L,
         "stream" to 145_529L,
         "summer_night" to 49_321L,
         "train" to 7_240L,
         "underwater" to 41_750L,
+        "vinyl" to 65_900L,
+        "walk_snow" to 36_670L,
         "waves" to 118_034L,
         "white_noise" to 20_016L,
         "wind" to 14_840L,

@@ -437,7 +437,7 @@ fun SettingsBottomSheet(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "查看 22 款音源授权、第三方开源库与项目主页",
+                                text = "查看 30 款音源授权、第三方开源库与项目主页",
                                 style = SaltTheme.textStyles.sub,
                                 fontSize = 11.sp,
                                 color = SaltTheme.colors.text.copy(alpha = 0.60f)

@@ -88,9 +88,9 @@ class LoopFatigueAvoidanceTest {
     }
 
     @Test
-    fun testAllTwentyTwoAssetsHaveValidPresetDurationsAndOffsets() {
+    fun testAllThirtyAssetsHaveValidPresetDurationsAndOffsets() {
         val tracks = SoundRepository.ALL_TRACKS
-        assertEquals(22, tracks.size)
+        assertEquals(30, tracks.size)
 
         for (track in tracks) {
             val duration = LoopFatigueHelper.ASSET_DURATIONS_MS[track.id]
