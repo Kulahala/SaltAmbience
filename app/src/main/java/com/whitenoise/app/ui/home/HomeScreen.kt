@@ -30,16 +30,22 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -245,11 +251,47 @@ fun HomeScreen(
             val topBarBorderColor = if (isDark) Color.White.copy(alpha = 0.08f) else SaltTheme.colors.text.copy(alpha = 0.06f)
             val headerBgColor = SaltTheme.colors.background
 
+            val swipeThresholdPx = with(density) { 40.dp.toPx() }
+            var totalDragOffset by remember { mutableFloatStateOf(0f) }
+            val categoryDraggableState = rememberDraggableState { delta ->
+                totalDragOffset += delta
+            }
+
+            val categoryScrollState = rememberScrollState()
+            LaunchedEffect(selectedCategory) {
+                val categoryIndex = SoundCategory.entries.indexOf(selectedCategory)
+                val itemApproxWidthPx = with(density) { 72.dp.toPx().toInt() }
+                val targetScroll = (categoryIndex * itemApproxWidthPx - with(density) { 32.dp.toPx().toInt() }).coerceAtLeast(0)
+                categoryScrollState.animateScrollTo(targetScroll)
+            }
+
             // Adaptive Bento Grid as Main Scroll Container (Multi-device responsive: 2 columns on phone, 3-4 on tablet/landscape)
             LazyVerticalGrid(
                 state = gridState,
                 columns = GridCells.Adaptive(minSize = 160.dp),
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .draggable(
+                        state = categoryDraggableState,
+                        orientation = Orientation.Horizontal,
+                        onDragStarted = {
+                            totalDragOffset = 0f
+                        },
+                        onDragStopped = { velocity ->
+                            val targetCategory = CategoryNavigationHelper.resolveTargetCategory(
+                                current = selectedCategory,
+                                totalDragOffsetPx = totalDragOffset,
+                                thresholdPx = swipeThresholdPx,
+                                velocity = velocity,
+                                velocityThreshold = 800f
+                            )
+                            if (targetCategory != selectedCategory) {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                selectedCategory = targetCategory
+                            }
+                            totalDragOffset = 0f
+                        }
+                    ),
                 contentPadding = PaddingValues(
                     start = 16.dp,
                     end = 16.dp,
@@ -386,7 +428,7 @@ fun HomeScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState())
+                                .horizontalScroll(categoryScrollState)
                                 .padding(horizontal = 2.dp, vertical = 2.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
@@ -396,34 +438,57 @@ fun HomeScreen(
                                 val isDark = SaltTheme.configs.isDarkTheme
                                 val contentColor = category.getContentColor(isDark)
 
-                                val chipBgColor = if (isSelected) {
+                                val targetBgColor = if (isSelected) {
                                     categoryColor.copy(alpha = 0.16f)
                                 } else {
                                     SaltTheme.colors.subBackground
                                 }
-                                val chipBorderColor = if (isSelected) {
+                                val animatedBgColor by animateColorAsState(
+                                    targetValue = targetBgColor,
+                                    animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
+                                    label = "chip_bg_${category.name}"
+                                )
+
+                                val targetBorderColor = if (isSelected) {
                                     categoryColor.copy(alpha = 0.55f)
                                 } else {
                                     SaltTheme.colors.text.copy(alpha = 0.08f)
                                 }
-                                val chipTextColor = if (isSelected) {
+                                val animatedBorderColor by animateColorAsState(
+                                    targetValue = targetBorderColor,
+                                    animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
+                                    label = "chip_border_${category.name}"
+                                )
+
+                                val targetTextColor = if (isSelected) {
                                     contentColor
                                 } else {
                                     SaltTheme.colors.text.copy(alpha = 0.65f)
                                 }
-                                val chipIconColor = if (isSelected) {
+                                val animatedTextColor by animateColorAsState(
+                                    targetValue = targetTextColor,
+                                    animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
+                                    label = "chip_text_${category.name}"
+                                )
+
+                                val targetIconColor = if (isSelected) {
                                     contentColor
                                 } else {
                                     SaltTheme.colors.text.copy(alpha = 0.45f)
                                 }
+                                val animatedIconColor by animateColorAsState(
+                                    targetValue = targetIconColor,
+                                    animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
+                                    label = "chip_icon_${category.name}"
+                                )
 
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(chipBgColor)
+                                        .background(animatedBgColor)
                                         .border(
                                             width = 1.dp,
-                                            color = chipBorderColor,
+                                            color = animatedBorderColor,
                                             shape = RoundedCornerShape(12.dp)
                                         )
                                         .clickable {
@@ -450,14 +515,14 @@ fun HomeScreen(
                                             trackId = categoryIconId,
                                             isPlaying = isSelected,
                                             modifier = Modifier.size(13.dp),
-                                            tint = chipIconColor
+                                            tint = animatedIconColor
                                         )
                                         Text(
                                             text = category.title,
                                             style = SaltTheme.textStyles.sub,
                                             fontSize = 12.sp,
                                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                            color = chipTextColor
+                                            color = animatedTextColor
                                         )
                                     }
                                 }
@@ -479,6 +544,9 @@ fun HomeScreen(
                         onTogglePlay = {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             viewModel.toggleTrackPlay(track.id)
+                        },
+                        onVolumeChange = { volume ->
+                            viewModel.setTrackVolume(track.id, volume)
                         },
                         modifier = Modifier.animateItem(
                             fadeInSpec = tween(durationMillis = 180),
