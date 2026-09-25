@@ -479,7 +479,15 @@ fun HomeScreen(
                         onTogglePlay = {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             viewModel.toggleTrackPlay(track.id)
-                        }
+                        },
+                        modifier = Modifier.animateItem(
+                            fadeInSpec = tween(durationMillis = 180),
+                            placementSpec = spring(
+                                dampingRatio = 0.82f,
+                                stiffness = 420f
+                            ),
+                            fadeOutSpec = tween(durationMillis = 150)
+                        )
                     )
                 }
             }

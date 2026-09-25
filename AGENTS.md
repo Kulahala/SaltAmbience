@@ -128,6 +128,9 @@ app/src/main/java/com/whitenoise/app/
 - **零网络权限与安全直达更新契约 (Zero Internet Permission & Safe Update Intent Contract)**：
   - 应用清单坚守零 `INTERNET` 权限原则，全功能 100% 离线运行；
   - 设置中心版本信息升级为可交互卡片，通过安全 Intent 调起系统外部浏览器直达 GitHub Releases (`/releases/latest`)，兼顾用户版本更新获取与极致的离线隐私安全口碑。
+- **音效矩阵网格卡片平滑物理重排契约 (Grid Filter Animation Contract)**：
+  - 分类切换（全部/雨水/自然/生活/纯噪）杜绝生硬硬切，基于 Compose 1.7+ `LazyGridItemScope.animateItem` 原生布局管道驱动；
+  - 离场卡片执行 150ms 敏捷淡出，留存卡片由 `spring(dampingRatio = 0.82f, stiffness = 420f)` 驱动约 200ms 内磁吸平滑重排，新进场卡片执行 180ms 优雅淡入，兼顾连续视觉动线与零性能冗余。
 
 ### 3.4 状态持久化契约
 - 使用轻量 **Jetpack DataStore Preferences** 记录用户退出前的音轨音量状态与自定义场景预设；
@@ -172,6 +175,7 @@ app/src/main/java/com/whitenoise/app/
 | **Stage 22** | 仓库公开合规性整改、分层多重许可与签名体系安全解耦 (v1.9.1-compliance) | **[x] 已达成** | 补齐根目录分层 MIT LICENSE (包含媒体音频独立排除例外)；重构 SOUNDS_LICENSING.md 补齐 CC 官方 URL 及 Pixabay 独立分发免责；README 补充 Moriafly/SaltPlayer 致敬免责及零权限隐私特性；端内关于抽屉增加 GitHub 主页直达；从 Git 解耦 keystore 并配置环境变量/优雅降级；72 项单测全绿，Debug/Release 构建全绿。 |
 | **Stage 23** | 工业级位图+纯色Adaptive重构根治应用信息默认播放器、发布 v2.0.0 正式版 (v2.0.0) | **[x] 已达成** | 剖析 HyperOS 手机管家等跨进程 loadIcon 时对纯 Vector AdaptiveIcon 栅格化失败降级为系统默认播放三角机理；落地原生纯色背景 (@color/ic_launcher_background: #11151F) 与全密度透明琴弦前景物理位图 (ic_launcher_foreground.png)；补齐 mdpi~xxxhdpi 全密度整图；升级 v2.0.0 (versionCode 22)；实机在澎湃OS应用管理与桌面双重验证全绿；72 项单测与 Release 构建全绿。 |
 | **Stage 24** | 主流系统防杀保活指引、包豪斯品牌几何矢量重绘与免联网直达更新 (v2.1.0) | **[x] 已达成** | 落地 `KeepAliveGuideBottomSheet` 覆盖小米/华为/OPPO/vivo/原生 5 大系统默认折叠保活手风琴；自绘 5 款纯几何包豪斯品牌矢量图标（小米 Squircle 橙底反白 mi、华为八瓣扇形花冠、OPPO 双 O 独立椭圆、vivo 实体速度 V、Android 官方小机器人）；设置抽屉新增防杀指引微胶囊；版本信息升级为可交互卡片，安全 Intent 调起浏览器直达 GitHub Releases (`/releases/latest`)，坚守 0 网络权限；76 项单测与 Release 构建 100% 全绿。 |
+| **Stage 25** | 分类切换网格卡片平滑物理重排与进退场动效 (v2.1.1) | **[x] 已达成** | 基于 Compose 1.7+ `LazyGridItemScope.animateItem` 落地网格卡片磁吸物理重排动效；150ms 敏捷退场淡出 + 0.82 阻尼比高刚度物理弹簧位移 + 180ms 进场淡入；升级 versionCode 24, versionName 2.1.1；76 项单测与 Release 签名构建全绿。 |
 
 ---
 
