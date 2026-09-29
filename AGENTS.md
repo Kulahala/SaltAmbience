@@ -93,66 +93,44 @@ app/src/main/java/com/whitenoise/app/
 - **集中式音频焦点 (AudioFocus)**：各子 ExoPlayer 必须设置 `handleAudioFocus = false`，禁止各自争抢焦点；由引擎统一监听 `AudioManager` 焦点事件（来电暂停、短通知 Ducking 整体主音量）。播放结束完整释放资源。
 - **锁屏与通知栏包豪斯动态封面与原生倒计时**：基于 `Canvas` 纯数学几何动态生成 512×512 黑胶声学大封面注入 `NotificationCompat.Builder.setLargeIcon` 与 `MediaMetadata.artworkData`，小图标统一为矢量单色 `ic_launcher_monochrome`，内置 LRU 缓存并按当前主题声渲染专属 Ambient Glow 氛围光与拟物色彩；休眠定时开启时由系统原生 `setUsesChronometer(true)` + `setChronometerCountDown(true)` 硬件级秒级倒数，杜绝重复唤醒 CPU。
 
-### 3.3 椒盐美学 UI 规范 (`SaltUI`)
+### 3.3 椒盐美学 UI 与包豪斯设计系统契约 (`SaltUI`)
+
+#### 3.3.1 视觉分层与色彩基准契约 (Design System Tokens & Surface Contract)
 - **视觉风格**：清爽克制、低饱和度、大圆角卡片、清晰的分组布局。
-- **全站视觉分层与线框基线契约 (Design System Tokens & Surface Contract)**：
+- **全站视觉分层与线框基线铁律**：
   - **Level 0（主视口底色）**：必须使用 `SaltTheme.colors.background`（浅色为纯白 `#FAFAFA`，深色为 `#121212`），严禁在根容器滥用 `subBackground` 导致全局发灰；
-  - **Level 1（卡片与容器）**：统一平整纯色（浅色为浅灰 `#F3F4F6`，深色为玄武岩冷炭黑 `#1B1D24`），配合大圆角（`14.dp`~`20.dp`）；**彻底废除浅色模式下散乱的拟物微凸与弥散阴影**，保障全站 Bento 网格严整平顺；
+  - **Level 1（卡片与容器）**：统一平整纯色（浅色为浅灰 `#F3F4F6`，深色为玄武岩冷炭黑 `#1B1D24`），配合大圆角（`14.dp`~`20.dp`）；彻底废除浅色模式下散乱的拟物微凸与弥散阴影，保障全站 Bento 网格严整平顺；
   - **Level 2（操作胶囊与芯片）**：统一正圆（`CircleShape`）或大圆角（`12.dp`~`14.dp`），内边距紧凑统一（水平 `10.dp`、垂直 `6.dp`），文字标签强制加挂 `maxLines = 1, softWrap = false`，严禁折行；
-  - **全局 1.dp 柔光微描边铁律 (Universal 1.dp Subtle Stroke Contract)**：
+  - **全局 1.dp 柔光微描边铁律**：
     - **未激活/静止态容器与胶囊**（场景预设卡片、音效卡片、顶栏双胶囊、统计抽屉三大容器卡片）：统一强制配备 `1.dp` 柔光微描边（深色模式 `Color.White.copy(0.08f)`、浅色模式 `Color.Black.copy(0.06f)`），胶囊按键可提升至 `0.12f / 0.08f`；杜绝浅色下无界发白、深色下 OLED 融墨发虚；
     - **激活/高亮态跃迁**：平滑过渡加粗至 `1.5.dp` 高亮强调描边（`SaltTheme.colors.highlight` 或分类主题自然语义色）并注入 `10%`~`16%` 柔光底色。
-- **全站 100% 纯 Canvas 几何矢量与零 Emoji 铁律 (Zero Emoji Bauhaus Vector Contract)**：
-  - 全站播控、功能操作、主题切换、关闭勾选、月牙符号（`BauhausMoonIcon`）与空状态图腾（`BauhausEmptyStatsTotem`）全面由纯 Canvas 点线面几何接管；
-  - 严禁引入任何系统 Emoji（如 `🌙`）与 Unicode 字符 Hack；空状态大卡片杜绝直接放大 13dp 小功能图标，统一采用 56dp+ 沉浸声学共鸣与安睡图腾；
-  - **包豪斯欧几里得双圆差集月牙与几何微星契约**：月牙符号（`BauhausMoonIcon`）严禁使用手捏单薄贝塞尔软弧（防止在微小尺寸下萎缩成左括号 `(`）；强制采用严谨的欧几里得双圆几何差集（`PathOperation.Difference`，厚度 38% 饱满月腹与尖锐两角），并在怀抱中点缀 4 芒几何菱形微星（点面呼应），尺寸统一 13.dp。
-- **包豪斯声学极简矢量符号与拟物色彩语义**：全站由纯几何点、线、面构成的 `BauhausSoundIcon` 接管；未激活时呈现 48% 柔光呼吸微色（`toIdlePalette(0.48f)`），激活时映射真实自然声学意象（溪流上白下水蓝、篝火烈焰橙红+火星金黄、雷雨高能电光黄+暴雨白、林风苍翠绿、夏夜月牙金+静谧夜紫、海浪深海蔚蓝、粉噪柔粉、棕噪大地暖褐等）并跃升至 100% 高饱和双色高光；底栏播放条做减法移除重复混音按钮，右侧独占动态倒计时胶囊。
-- **全站 UI 核心系统图标包豪斯矢量化与常驻色彩契约 (`BauhausUiIcon`)**：全站播控（Play/Pause）、控制中心清空（Clear）、主题模式（ThemeSystem/Light/Dark）、定时胶囊（Timer）、添加/恢复（Add/Restore）、弹窗关闭与勾选（Close/Check）全面接管；接入专属 `BauhausUiTheme` 常驻双色语义，严禁全局强制染灰；控制中心停止按钮精准定名为「清空混音」，杜绝交互误导。
-- **包豪斯声学生命力觉醒与非线性形态形变契约 (Bauhaus Acoustic Morphing Contract)**：
-  - **矩阵素描与高光反差**：音效矩阵未激活音标与未选中分类胶囊常驻纯粹的素描黑白灰阶（Monochrome Idle），全局其他系统图标（Timer/Clear/Theme 等）保持专属常驻语义色彩；音效激活或分类选中时平滑跃升至 100% 拟物自然双色；
-  - **速率变奏物理弹簧与生命觉醒**：音效点亮时由非线性变奏弹簧 `spring(dampingRatio = 0.58f, stiffness = 320f)` 驱动微缩放呼吸与 15 款音效几何形态专属展开插值（雨丝拉长滑落、闪电劈裂激射、风浪流动、溪流跃浪、火星升腾、声谱条跳跃等），赋予激活瞬间的有机生命力；
-  - **播控无缝几何形态形变 (`BauhausPlayPauseMorphIcon`)**：底栏与控制中心播放/暂停按钮告别硬切，基于弹性物理弹簧驱动三角形（Play 锋利汇聚）与对称双矩形柱（Pause 垂直挺立）之间的实时无缝分裂与聚合插值。
-- **顶部分类导航微光胶囊契约**：分类芯片（全部/雨水/自然/生活/纯噪）未选中时常驻中性素描灰阶，选中时跃迁至专属自然语义色（16% 微光背景与 55% 强调边框）；支持浅色模式高对比度深色阶映射（`getContentColor(isDark)`），强光直射清晰可辨。
-- **文字阶梯规范**：主标题/正文使用 `text`，次级信息使用 `text.copy(alpha = 0.65f)`，失焦提示使用 `text.copy(alpha = 0.40f)`；严禁在卡片上直接绘制 `subText` 造成灰底灰字。
 - **展示态与控制态色彩分立契约 (Showcase vs Control State Semantic Dichotomy)**：
   - **控制态组件（Matrix Control）**：主页 Bento 音效卡片严格由播放状态 `isPlaying` 驱动，未激活呈现素描黑白灰阶（Monochrome Idle），激活平滑跃升自然色彩；
   - **展示态/荣誉资产组件（Showcase / Honor Asset）**：伴眠统计排行榜、混音清单、预设音轨列表等非直接控制矩阵，代表用户已经体验或陪伴的声音资产，**强制常驻 100% 拟物自然双色高光（`isPlaying = true` 或 Showcase 模式）**，严禁误套用未播放灰阶失去声学识别度；
   - **音效专属拟物个性色彩流光条契约**：排行榜相对进度条与首位序号高光严禁简单套用单一分类色（防止同分类同色撞车与单调），必须统一调用 `getTrackIndividualColor(trackId)` 映射至该音效自身最具辨识度的包豪斯拟物色彩（如雷雨闪电金黄、细雨天青蓝、溪流湛蓝、林风苍翠绿、篝火烈焰红橙、黑胶复古暖红等），赋予每个声音生命力。
+- **顶部分类导航微光胶囊契约**：分类芯片（全部/雨水/自然/生活/纯噪）未选中时常驻中性素描灰阶，选中时跃迁至专属自然语义色（16% 微光背景与 55% 强调边框）；支持浅色模式高对比度深色阶映射（`getContentColor(isDark)`），强光直射清晰可辨。
 - **浅色模式色彩对比度加深铁律 (Light-Mode Contrast Accessibility Contract)**：
   - 严禁在浅色模式下直接将未加深的原始 `themeColor`（如天青蓝 `#38BDF8`、苍翠绿 `#34D399`、柔粉 `#F472B6`）用作细字体或 1.dp 细描边（强光下发飘发白，对比度不足 2.5:1）；
   - 必须显式区分：背景微光填充使用 `themeColor.copy(alpha = 0.10f~0.16f)`；文字及高对比度边框必须强制调用 `category.getContentColor(isDark)` 自动映射至深色阶（如天青映射为 `#0284C7`，嫩绿映射为 `#059669`，粉色映射为 `#DB2777`），确保完全符合 WCAG AA 对比度标准。
-- **系统无障碍大字号与长文本防挤压防御契约 (Accessibility Font Scaling & Ellipsis Defense Contract)**：
-  - 水平排列容器（`Row`）中存在动态文本时，主标题/文本容器必须显式声明 `Modifier.weight(1f, fill = false)`；
-  - 所有非段落展示的单行标签/标题必须硬性声明 `maxLines = 1, overflow = TextOverflow.Ellipsis, softWrap = false`，严禁折行或撑破容器；
-  - 右侧并排操作键或徽章必须设定最小保护尺寸（如关闭键固定 32dp）并保持 `Spacer(width = 8.dp)` 物理防撞避让。
-- **触觉反馈分级分层契约 (Haptic Feedback Tier Contract)**：
-  - **Level 1 轻量操作微震 (`TextHandleMove`)**：音效点按开关、分类胶囊切换、顶栏双胶囊点击、抽屉正圆关闭键；
-  - **Level 2 状态咬合微震 (`LongPress`)**：卡片长按静止 220ms 激活调音模式、音量滑块推至 0% 或 100% 极值阻尼；
-  - **Level 3 警示与破坏性二次确认 (`LongPress`)**：二次防误触抽屉中的“确认清空混音”或“确认重置伴眠统计”。
-- **空状态沉浸声学图腾规范 (Empty State & Visual Totem Contract)**：
-  - 全站空状态（无混音、无统计记录、无自定义预设）严禁粗暴放大已有微图标；
-  - 必须统一采用 56dp+ 纯 Canvas 包豪斯专属声学与空间图腾（如 `BauhausEmptyStatsTotem`），居中配以 15sp 加粗主标题（85% alpha）和 12sp 引导副标（50% alpha），间距保持 10dp~12dp，维持极简留白的艺术张力与沉浸感。
-- **动效与虚化契约**：
-  - **二级抽屉**：统一使用 `SaltBottomSheet`，进场采用细腻物理弹簧 `spring(dampingRatio = 0.82f, stiffness = 380f)`，退场采用敏捷加速淡出；
-  - **原生背景高斯虚化 (Backdrop Blur)**：抽屉展开时主屏背景平滑失焦至 `14.dp`（Android 12+ 硬件加速，低版本平滑降级），彻底剔除造成掉帧与视觉突兀的多余缩放内凹。
-- **大屏自适应网格契约**：
-  - 音效矩阵采用 `GridCells.Adaptive(minSize = 160.dp)`；
-  - 所有头部横幅与分类栏统一采用 `GridItemSpan(maxLineSpan)` 全宽跨度，自适应手机 2 列、大折叠屏/平板 3~4 列。
-- **包豪斯折叠吸顶与防叠字纯实色悬浮舱契约 (Collapsible Sticky Header & Anti-Bleed Floating Dock Contract)**：
-  - **大标题动态平滑折叠**：网格向上滚动时，可折叠大标题与场景方案行（90.dp）随网格滚动距离 1:1 动态收缩淡出至 0.dp，两相联动丝滑无突变；
-  - **预设横滑栏永远稳固吸顶**：下部预设横滑栏（固定 54.dp）永远吸附在状态栏正下方（`statusBarsPadding()`），不设负 offset、不做外部截断，无论滚动到多深随时横滑切换混音；
-  - **预设操作单点归一与官方库收纳**：主屏预设横滑栏做极致减法，彻底移除低频冗余的“恢复默认”胶囊，仅保留 `[方案卡片] ... [+ 存为预设] [📥 导入]`；将默认预设找回、单项恢复与官方方案库深度收纳进“导入”弹窗，已存在方案轻触提示“无需重复添加”，误删方案轻触即刻单项找回；
-  - **纯实色防叠字悬浮舱**：顶栏与底栏播放条全面采用 100% 纯实色（`SaltTheme.colors.background` 与 `Color(0xFF1E2026)`），搭配 1.dp 精致边缘微描边与柔和阴影，彻底摒弃不稳定的外部 alpha 模糊库，杜绝字体重叠透底与崩溃闪退。
+- **文字阶梯规范**：主标题/正文使用 `text`，次级信息使用 `text.copy(alpha = 0.65f)`，失焦提示使用 `text.copy(alpha = 0.40f)`；严禁在卡片上直接绘制 `subText` 造成灰底灰字。
+
+#### 3.3.2 全站包豪斯矢量符号与图腾契约 (Bauhaus Vector & Iconography Contract)
+- **全站 100% 纯 Canvas 几何矢量与零 Emoji 铁律 (Zero Emoji Bauhaus Vector Contract)**：
+  - 全站播控、功能操作、主题切换、关闭勾选、月牙符号（`BauhausMoonIcon`）与空状态图腾（`BauhausEmptyStatsTotem`）全面由纯 Canvas 点线面几何接管；
+  - 严禁引入任何系统 Emoji（如 `🌙`）与 Unicode 字符 Hack；空状态大卡片杜绝直接放大 13dp 小功能图标，统一采用 56dp+ 沉浸声学共鸣与安睡图腾；
+  - **包豪斯欧几里得双圆差集月牙与几何微星契约**：月牙符号（`BauhausMoonIcon`）严禁使用手捏单薄贝塞尔软弧（防止在微小尺寸下萎缩成左括号 `(`）；强制采用严谨的欧几里得双圆几何差集（`PathOperation.Difference`，厚度 38% 饱满月腹与尖锐两角），并在怀抱中点缀 4 芒几何菱形微星（点面呼应），尺寸统一 13.dp。
+- **包豪斯声学极简矢量符号与拟物色彩语义 (`BauhausSoundIcon`)**：全站 30 款音效由纯几何点、线、面构成的 `BauhausSoundIcon` 接管；未激活时呈现 48% 柔光呼吸微色（`toIdlePalette(0.48f)`），激活时映射真实自然声学意象（溪流上白下水蓝、篝火烈焰橙红+火星金黄、雷雨高能电光黄+暴雨白、林风苍翠绿、夏夜月牙金+静谧夜紫、海浪深海蔚蓝、粉噪柔粉、棕噪大地暖褐等）并跃升至 100% 高饱和双色高光；底栏播放条做减法移除重复混音按钮，右侧独占动态倒计时胶囊。
+- **全站 UI 核心系统图标包豪斯矢量化与常驻色彩契约 (`BauhausUiIcon`)**：全站播控（Play/Pause）、控制中心清空（Clear）、主题模式（ThemeSystem/Light/Dark）、定时胶囊（Timer）、添加/恢复（Add/Restore）、设置（Settings）、弹窗关闭与勾选（Close/Check）全面接管；接入专属 `BauhausUiTheme` 常驻双色语义，严禁全局强制染灰；控制中心停止按钮精准定名为「清空混音」，杜绝交互误导。
+- **空状态沉浸声学图腾规范 (Empty State & Visual Totem Contract)**：全站空状态（无混音、无统计记录、无自定义预设）严禁粗暴放大已有微图标；必须统一采用 56dp+ 纯 Canvas 包豪斯专属声学与空间图腾（如 `BauhausEmptyStatsTotem`），居中配以 15sp 加粗主标题（85% alpha）和 12sp 引导副标（50% alpha），间距保持 10dp~12dp，维持极简留白的艺术张力与沉浸感。
 - **应用图标与全密度位图契约 (Adaptive & Legacy Icon Contract)**：
   - 落地 Android 8.0+ 官方自适应矢量图标「包豪斯声学 · 琴弦点线面」(D-14) 为主图标（`res/drawable/` + `res/mipmap-anydpi-v26/`），配套 `ic_launcher_monochrome.xml` 支持 Android 13+ 壁纸动态取色；归档 D-16 备选；
   - 严格配备 mdpi/hdpi/xhdpi/xxhdpi/xxxhdpi 全密度 1080p 超采样抗锯齿 PNG 标准位图（`ic_launcher.png` 与 `ic_launcher_round.png`），保障 OEM 系统设置【应用信息】、多任务栈预览与传统启动器完美渲染，杜绝降级为系统默认播放器白三角。
-- **主流系统保活手风琴与包豪斯品牌矢量契约 (Keep-Alive Accordion & Brand Symbols Contract)**：
-  - 落地二级防杀抽屉 (`KeepAliveGuideBottomSheet`)，顶置通用核心三板斧（多任务加锁、电池无限制、允许自启动）；
-  - 5 大主流系统（小米/华为/OPPO/vivo/原生）采用默认折叠手风琴，折叠三角由 `spring(dampingRatio = 0.75f, stiffness = 380f)` 驱动 0° 到 90° 平滑旋转，内容由 `expandVertically() + fadeIn()` 弹性展开；
-  - 品牌图标彻底规避商业商标侵权，采用纯 Canvas 点线面包豪斯重绘（小米实心 Squircle 橙底反白 mi、华为八瓣扇形花冠、OPPO 独立双 O 椭圆、vivo 实体速度 V、Android 官方开源小机器人）。
-- **零网络权限与安全直达更新契约 (Zero Internet Permission & Safe Update Intent Contract)**：
-  - 应用清单坚守零 `INTERNET` 权限原则，全功能 100% 离线运行；
-  - 设置中心版本信息升级为可交互卡片，通过安全 Intent 调起系统外部浏览器直达 GitHub Releases (`/releases/latest`)，兼顾用户版本更新获取与极致的离线隐私安全口碑。
+
+#### 3.3.3 动态物理与手势交互契约 (Dynamic Physics & Gesture Navigation Contract)
+- **包豪斯声学生命力觉醒与非线性形态形变契约 (Bauhaus Acoustic Morphing Contract)**：
+  - **矩阵素描与高光反差**：音效矩阵未激活音标与未选中分类胶囊常驻纯粹的素描黑白灰阶（Monochrome Idle），全局其他系统图标（Timer/Clear/Theme 等）保持专属常驻语义色彩；音效激活或分类选中时平滑跃升至 100% 拟物自然双色；
+  - **速率变奏物理弹簧与生命觉醒**：音效点亮时由非线性变奏弹簧 `spring(dampingRatio = 0.58f, stiffness = 320f)` 驱动微缩放呼吸与各音效几何形态专属展开插值（雨丝拉长滑落、闪电劈裂激射、风浪流动、溪流跃浪、火星升腾、声谱条跳跃等），赋予激活瞬间的有机生命力；
+  - **播控无缝几何形态形变 (`BauhausPlayPauseMorphIcon`)**：底栏与控制中心播放/暂停按钮告别硬切，基于弹性物理弹簧驱动三角形（Play 锋利汇聚）与对称双矩形柱（Pause 垂直挺立）之间的实时无缝分裂与聚合插值。
 - **音效矩阵网格卡片平滑物理重排契约 (Grid Filter Animation Contract)**：
   - 分类切换（全部/雨水/自然/生活/纯噪）杜绝生硬硬切，基于 Compose 1.7+ `LazyGridItemScope.animateItem` 原生布局管道驱动；
   - 离场卡片执行 150ms 敏捷淡出，留存卡片由 `spring(dampingRatio = 0.82f, stiffness = 420f)` 驱动约 200ms 内磁吸平滑重排，新进场卡片执行 180ms 优雅淡入，兼顾连续视觉动线与零性能冗余。
@@ -161,6 +139,17 @@ app/src/main/java/com/whitenoise/app/
   - **卡片长按调音**：`SoundTileCard` 采用底层 `awaitEachGesture` 精密手势状态机，220ms 内轻点秒关、快速划走放行外层滚动，长按静止 220ms 触发 `LongPress` 坚实咬合微震，独占消费事件并进入调音模式；
   - **相对位移左右调音**：卡片全宽行程对应 100% 调节，实时响应音频引擎并通过 ViewModel 的 `debounce(500L)` 安全持久化；
   - **双重视觉与触觉反馈**：右上角胶囊放大 1.18×、卡片微下沉 0.97×；边界触底轻震阻尼，松手微震落锁平滑弹回原位（遵循极简克制，移除多余底边条）。
+- **包豪斯折叠吸顶与防叠字纯实色悬浮舱契约 (Collapsible Sticky Header & Anti-Bleed Floating Dock Contract)**：
+  - **大标题动态平滑折叠**：网格向上滚动时，可折叠大标题与场景方案行（90.dp）随网格滚动距离 1:1 动态收缩淡出至 0.dp，两相联动丝滑无突变；
+  - **预设横滑栏永远稳固吸顶**：下部预设横滑栏（固定 54.dp）永远吸附在状态栏正下方（`statusBarsPadding()`），不设负 offset、不做外部截断，无论滚动到多深随时横滑切换混音；
+  - **预设操作单点归一与官方库收纳**：主屏预设横滑栏做极致减法，彻底移除低频冗余的“恢复默认”胶囊，仅保留 `[方案卡片] ... [+ 存为预设] [📥 导入]`；将默认预设找回、单项恢复与官方方案库深度收纳进“导入”弹窗，已存在方案轻触提示“无需重复添加”，误删方案轻触即刻单项找回；
+  - **纯实色防叠字悬浮舱**：顶栏与底栏播放条全面采用 100% 纯实色（`SaltTheme.colors.background` 与 `Color(0xFF1E2026)`），搭配 1.dp 精致边缘微描边与柔和阴影，彻底摒弃不稳定的外部 alpha 模糊库，杜绝字体重叠透底与崩溃闪退。
+- **大屏自适应网格与动效虚化契约**：
+  - 音效矩阵采用 `GridCells.Adaptive(minSize = 160.dp)`；所有头部横幅与分类栏统一采用 `GridItemSpan(maxLineSpan)` 全宽跨度，自适应手机 2 列、大折叠屏/平板 3~4 列；
+  - 二级抽屉统一使用 `SaltBottomSheet`，进场采用细腻物理弹簧 `spring(dampingRatio = 0.82f, stiffness = 380f)`，退场采用敏捷加速淡出；
+  - 抽屉展开时主屏背景平滑失焦至 `14.dp` 原生高斯模糊（Android 12+ 硬件加速，低版本平滑降级），彻底剔除造成掉帧与视觉突兀的多余缩放内凹。
+
+#### 3.3.4 关键容器防护、无障碍与系统交互契约 (Container Defense, Accessibility & System Contract)
 - **混音滑块磨砂防护悬浮舱契约 (Frosted Icon Island Capsule Contract)**：
   - 混音抽屉 (`MixerBottomSheet`) 中垂直胶囊滑块 (`VerticalCapsuleSlider`) 全量接入该音效的专属自然拟物色彩作为充盈液体；
   - 底部包豪斯矢量图标设立 34.dp 正圆微岛屿悬浮舱：液面未漫过（`animatedFill < 0.16f`）使用默认透明背景；液面漫过（`animatedFill >= 0.16f`）自动切换为半透明深色磨砂底衬（`Color.Black.copy(0.32f)`）与 `0.5.dp` 柔光微描边（`Color.White.copy(0.18f)`），彻底隔绝高饱和度背景光（如雷雨闪电黄、林风纯绿），消除同色融化吃掉图标线条隐患，并与顶部百分比胶囊形成上下对称包豪斯秩序。
@@ -168,6 +157,21 @@ app/src/main/java/com/whitenoise/app/
   - 预设方案卡片紧随名称展示 5.dp 专属拟物色彩实心微点（`PresetSoundDnaDots`）；
   - 严格落地硬性封顶截断（Hard Clamp）：轨道数 $\le 4$ 时渲染 2~4 颗微点；轨道数 $> 4$ 时严格截断为前 3 颗微点 + 极简 `+N` 溢出角标，横向总占宽死死锁定在 22dp~35dp 以内；
   - 配合标题 `maxLines = 1, overflow = TextOverflow.Ellipsis` 双重防御，严禁任何因组合音效过多而拉长卡片或撑破横滑栏的视觉破窗。
+- **系统无障碍大字号与长文本防挤压防御契约 (Accessibility Font Scaling & Ellipsis Defense Contract)**：
+  - 水平排列容器（`Row`）中存在动态文本时，主标题/文本容器必须显式声明 `Modifier.weight(1f, fill = false)`；
+  - 所有非段落展示的单行标签/标题必须硬性声明 `maxLines = 1, overflow = TextOverflow.Ellipsis, softWrap = false`，严禁折行或撑破容器；
+  - 右侧并排操作键或徽章必须设定最小保护尺寸（如关闭键固定 32dp）并保持 `Spacer(width = 8.dp)` 物理防撞避让。
+- **触觉反馈分级分层契约 (Haptic Feedback Tier Contract)**：
+  - **Level 1 轻量操作微震 (`TextHandleMove`)**：音效点按开关、分类胶囊切换、顶栏双胶囊点击、抽屉正圆关闭键；
+  - **Level 2 状态咬合微震 (`LongPress`)**：卡片长按静止 220ms 激活调音模式、音量滑块推至 0% 或 100% 极值阻尼；
+  - **Level 3 警示与破坏性二次确认 (`LongPress`)**：二次防误触抽屉中的“确认清空混音”或“确认重置伴眠统计”。
+- **主流系统保活手风琴与包豪斯品牌矢量契约 (Keep-Alive Accordion & Brand Symbols Contract)**：
+  - 落地二级防杀抽屉 (`KeepAliveGuideBottomSheet`)，顶置通用核心三板斧（多任务加锁、电池无限制、允许自启动）；
+  - 5 大主流系统（小米/华为/OPPO/vivo/原生）采用默认折叠手风琴，折叠三角由 `spring(dampingRatio = 0.75f, stiffness = 380f)` 驱动 0° 到 90° 平滑旋转，内容由 `expandVertically() + fadeIn()` 弹性展开；
+  - 品牌图标彻底规避商业商标侵权，采用纯 Canvas 点线面包豪斯重绘（小米实心 Squircle 橙底反白 mi、华为八瓣扇形花冠、OPPO 独立双 O 椭圆、vivo 实体速度 V、Android 官方开源小机器人）。
+- **零网络权限与安全直达更新契约 (Zero Internet Permission & Safe Update Intent Contract)**：
+  - 应用清单坚守零 `INTERNET` 权限原则，全功能 100% 离线运行；
+  - 设置中心版本信息升级为可交互卡片，通过安全 Intent 调起系统外部浏览器直达 GitHub Releases (`/releases/latest`)，兼顾用户版本更新获取与极致的离线隐私安全口碑。
 
 ### 3.4 状态持久化契约
 - 使用轻量 **Jetpack DataStore Preferences** 记录用户退出前的音轨音量状态与自定义场景预设；
@@ -186,40 +190,23 @@ app/src/main/java/com/whitenoise/app/
 
 ## 4. 阶段演进总账 (Stage Ledger)
 
-### 4.1 历史基线归档 (Stages 1-7 Baseline Archive)
+### 4.1 历史基线归档 (Stages 1-23 Baseline Archive: v1.0.0 ~ v2.0.0)
 
-> **注**：Stage 1 至 Stage 7 历次迭代已全面通过验证并固化为项目基础设施，合并不赘述过程：
+> **注**：Stage 1 至 Stage 23 历次迭代已全面通过验证并固化为项目基础设施（包含底层音视频管线、SaltUI 体系、包豪斯矢量化、位图 Adaptive 图标重构与 v2.0.0 正式发布），紧凑归档如下：
 
-- **Stage 1 (脚手架基线)**：打通 Gradle 8.9 + Kotlin 2.0.21 + SaltUI 3.x 依赖，解决 `minCompileSdk=37` 与 Windows 短路径语法兼容，生成空壳 APK。
-- **Stage 2 (引擎与服务)**：落地 `AudioMixerEngine`（ExoPlayer 多轨并发池、集中音频焦点、平滑对数淡出）与 `WhiteNoiseMediaService`（前台保活、常驻媒体通知卡片）。
-- **Stage 3 (SaltUI 界面)**：打通 `HomeScreen`、`SoundCard`、`BottomPlayerBar`、`MainViewModel` 状态流。
-- **Stage 4 (资产与预设)**：接入 Blanket 8 款无缝自然音 OGG，打通 DataStore 记忆混音与预设状态，修复首次订阅状态覆写竞态 Bug。
-- **Stage 5 (验收与收官)**：通过 10 项核心单测，构建完整全量 APK，初始化 Git 仓库。
-- **Stage 6 (P0 核心修复)**：阻断通知每秒重复推流（`distinctUntilChanged`）与休眠无效计算；修复暂停文案与音频焦点释放，22 项单测全绿。
-- **Stage 7 (P1 抽屉重塑)**：全站弹窗统一为大圆角底部抽屉规范（`SaltBottomSheet`）并接入下拉拖拽手势；解决输入法软键盘挤压，25 项单测全绿。
+- **Stage 1-5 (脚手架基线与首版发包 v1.0.0)**：打通 Gradle 8.9 + Kotlin 2.0.21 + SaltUI 3.x；落地 `AudioMixerEngine`（ExoPlayer 多轨并发池、集中音频焦点、平滑对数淡出）与 `WhiteNoiseMediaService` 前台保活；打通 Blanket 8 款自然音与 DataStore 状态记忆；完成 10 项单测并构建首版 APK。
+- **Stage 6-9 (前台通知治理、抽屉重塑与大屏自适应 v1.6.1)**：阻断通知每秒重复推流；全站弹窗统一为大圆角 `SaltBottomSheet`；引入 CC0 慢波助眠「棕色噪音」与 5 维胶囊过滤芯片；首发自适应网格 `GridCells.Adaptive(160.dp)` 配合原生高斯模糊。
+- **Stage 10-15 (锁屏黑胶、包豪斯矢量体系与声学生命力觉醒 v1.7.5)**：彻底消除粗糙白三角与 Emoji，锁屏/通知动态渲染 512×512 包豪斯黑胶声学大封面；15 款自然音由 `BauhausSoundIcon` 点线面接管；ExoPlayer 50ms 瞬发缓冲与防循环疲劳微动态；系统核心图标由 `BauhausUiIcon` 接管；实现非线性变奏弹簧与 Play/Pause 形态形变。
+- **Stage 16-18 (折叠吸顶、纯实色悬浮舱与极简架构瘦身 v1.7.8)**：大标题随手势折叠，预设栏吸顶；方案库导入与单项恢复闭环；彻底剔除 Material3、media3-ui、espresso 净瘦身 600 行；预设卡片接入 `animateColorAsState` 与 `TextHandleMove` 微震。
+- **Stage 19-21 (设置中心、音效扩充至 22 款与交互收敛 v1.9.1)**：落地 Bento 分组设置抽屉与物理开关 `SaltSwitch`（后台保活、屏幕常亮）；扩充 7 款自然音至 22 款并配置等能量交叉淡化无缝循环；收敛关于抽屉与包豪斯微光细胶囊滚动条。
+- **Stage 22-23 (开源合规、工业级位图+Adaptive重构与发布 v2.0.0 正式版)**：补齐分层 MIT LICENSE 与 SOUNDS_LICENSING.md；剖析跨进程 loadIcon 栅格化降级白三角机理，落地原生纯色背景 (@color/ic_launcher_background: #11151F) + 全密度透明琴弦位图 + mdpi~xxxhdpi 全密度整图；发布 v2.0.0 (versionCode 22)。
 
 ---
 
-### 4.2 最新演进记录 (Active Stages)
+### 4.2 最新演进记录 (Active Stages: v2.1.0 ~ v2.4.0)
 
 | 阶段 | 交付核心目标 | 状态 | 关键交付与验证标准 |
 | :--- | :--- | :---: | :--- |
-| **Stage 8** | 音效分类导航、棕噪扩充与预设全自由管理 (v1.6.0) | **[x] 已达成** | 自定义预设置顶与最新倒序排列；默认预设支持软删除与一键“↺ 恢复默认”；引入 CC0 慢波助眠「棕色噪音」扩充至 15 款音源；音效矩阵 5 维胶囊过滤芯片；33 项单测 100% 全绿。 |
-| **Stage 9** | 视觉交互闭环、图标重塑与大屏自适应 (v1.6.1) | **[x] 已达成** | 落地包豪斯自适应图标 (D-14) 与 Android 13+ 动态取色；实色悬浮舱防叠字（130.dp 安全避让）；顶栏手势自然滚动；抽屉物理弹簧动效与玄武岩冷炭黑；移除多余缩放内凹并保留 14.dp 原生高斯模糊；顶栏极简减法（左上角微版本号触感入口）；全站多设备自适应 `GridCells.Adaptive(160.dp)` 配合 `GridItemSpan(maxLineSpan)`；33 项单测全绿。 |
-| **Stage 10** | 锁屏通知包豪斯黑胶封面、声学极简矢量符号、低延迟瞬发引擎与防循环疲劳声学动态 (v1.7.0) | **[x] 已达成** | 彻底消除锁屏通知粗糙白三角，动态渲染注入 512x512 包豪斯黑胶声学艺术大封面与微小单色图标；15 款自然音全站废弃拟物 Emoji，由包豪斯声学极简矢量符号 (`BauhausSoundIcon`) 统一驱动；ExoPlayer 定制 50ms 缓冲策略 + 0ms 乐观响应 + 串行异步音频焦点治理消除体感半秒延迟；落地方案 A（起播随机时间戳偏置）与方案 B（±2% 自然微速差重采样），彻底消除长时播放循环疲劳；48 项单测 100% 全绿。 |
-| **Stage 11** | 定时器闪退根治、拟物语义专属配色、播控条精简与系统原生倒计时联动 (v1.7.1) | **[x] 已达成** | 根除 `String.format` 字符百分号插值崩溃，抽取纯 Kotlin 安全倒计时工具；15 款音标与锁屏黑胶封面全量落地拟物语义配色（篝火烈焰红橙+金星、雷雨电光黄、林风苍翠绿等）；播控条移除冗余混音按钮并落地实时倒计时高亮胶囊；通知栏与锁屏接入 Android 原生 `Chronometer` 硬件级秒级倒计时；52 项单测 100% 全绿。 |
-| **Stage 12** | LoadControl 独立实例工厂根治跨轨哑音、通知单轨直显与分钟级跳变驱动 (v1.7.2) | **[x] 已达成** | 彻底根除 Media3 DefaultLoadControl 单线程亲和性断言导致的并发哑音，采用工厂构建独立实例；通知副文本单轨直显音效名并消除锁屏截断折叠；通知栏精准分钟级跳变更新；56 项单测 100% 全绿。 |
-| **Stage 13** | 控制中心文案重塑为「清空混音」、全站 UI 核心系统图标包豪斯矢量化 (v1.7.3) | **[x] 已达成** | 控制中心按钮彻底消除歧义重塑为「清空混音」与 Play/Pause；全站上线统一的 `BauhausUiIcon` 纯几何 Canvas 矢量体系（Play、Pause、Clear、ThemeSystem、ThemeLight、ThemeDark、Close、Check、Timer、Add、Restore、Import 等 12 类符号），彻底消除粗糙的系统 Emoji 与 Unicode 字符 Hack；63 项单测 100% 全绿。 |
-| **Stage 14** | 包豪斯常驻语义色彩体系、呼吸微色 (Tinted Idle) 与分类自然微光芯片 (v1.7.4) | **[x] 已达成** | 彻底告别黑白线框灰暗感；UI 矢量图标全面接入专属常驻双色；顶部分类胶囊常驻自然原色与微光底色；15 款音效卡片落地 48% 呼吸微色；66 项单测 100% 全绿。 |
-| **Stage 15** | 音效矩阵黑白回归、非线性变奏声学 Morphing 与播控形态切换 (v1.7.5) | **[x] 已达成** | 音效矩阵与分类芯片恢复未激活素描黑白灰阶、激活平滑跃升自然色彩；15 款音效落地非线性变奏物理弹簧 `spring` 驱动的呼吸与形态展开动画；实现 Play/Pause 纯几何实时无缝分裂与聚拢形态形变组件 (`BauhausPlayPauseMorphIcon`)；68 项单测 100% 全绿。 |
-| **Stage 16** | 顶栏折叠吸顶、纯实色悬浮舱与方案库导入闭环 (v1.7.6) | **[x] 已达成** | 彻底根除外部 alpha 模糊库闪退与负 offset 截断 bug；大标题随手势 1:1 动态收缩折叠；预设横滑栏（固定 54.dp）永远稳固吸顶；主屏移除冗余“恢复默认”，将其与官方方案库深度收纳进导入弹窗（支持已存在提示与单项/全量找回）；顶栏与播控条落地 100% 纯实色防叠字悬浮舱；全站 69 项单测 100% 全绿。 |
-| **Stage 17** | Ponytail 极简架构瘦身、剥离 Material3/Media3-UI 与抽屉容器收敛 (v1.7.7) | **[x] 已达成** | 彻底剔除 `material3`、`media3-ui`、`espresso` 等 4 个非必要依赖；自研轻量 `SaltHorizontalSlider` 替代 Material3 Slider；收敛 `MixerBottomSheet` 与 `SleepTimerBottomSheet` 到统一 `SaltBottomSheet`；净消减逾 600 行代码，全站测试与打包 100% 全绿。 |
-| **Stage 18** | 预设卡片平滑过渡、核心操作触感微震与抽屉关闭按钮正圆统一 (v1.7.8) | **[x] 已达成** | 预设方案卡片接入 `animateColorAsState` 平滑渐变消除硬切跳变；音效开关/预设应用/播控补齐 `TextHandleMove` 轻触微震；5 个抽屉右上角关闭按钮统一为 32dp 正圆并保留控制中心“完成”；单测与 Release 构建 100% 全绿。 |
-| **Stage 19** | 设置中心抽屉 (SettingsBottomSheet)、后台播放保活与屏幕常亮控制 (v1.8.0) | **[x] 已达成** | 落地包豪斯齿轮矢量图标 (`BauhausUiSymbol.Settings`) 与高光调色；自研纯 Compose 阻尼物理弹簧跑道开关 (`SaltSwitch`) 配备 `TextHandleMove` 微震；Bento 分组设置抽屉（后台播放保活开关、常亮看护开关、内嵌三段式外观模式胶囊、开源致谢与重置方案入口）；`HomeScreen` 联动 Activity Window Flag 与 Lifecycle ON_STOP 暂停；72 项单测与 Release 构建 100% 全绿。 |
-| **Stage 20** | 音效生态全量扩充至 22 款、声学无缝工坊与专属包豪斯矢量符号 (v1.9.0) | **[x] 已达成** | 扩充电风扇、钟表、机械键盘、风铃、雨打屋檐、深海水声、科学绿噪等 7 款无缝音源（全站扩充至 22 款自然音）；Python + FFmpeg 7.1 实现采样级等能量交叉淡化无缝循环；手绘 7 款专属包豪斯极简矢量符号 (`BauhausSoundIcon`) 与自然语义调色；更新防疲劳时间戳偏置库；72 项单测全绿，Release 打包全绿。 |
-| **Stage 21** | 交互入口去冗余、设置抽屉收敛与致谢包豪斯胶囊滚动条 (v1.9.1) | **[x] 已达成** | 砍掉左上角 Brand 标题隐式点击暗门，收敛至右上角设置；砍掉设置中重复盲目的重置预设，交由方案库闭环；开源致谢副标更新为 22 款；关于抽屉加入 340dp 高度约束与纯原生包豪斯微光细胶囊滚动条；72 项单测全绿，Release 打包全绿。 |
-| **Stage 22** | 仓库公开合规性整改、分层多重许可与签名体系安全解耦 (v1.9.1-compliance) | **[x] 已达成** | 补齐根目录分层 MIT LICENSE (包含媒体音频独立排除例外)；重构 SOUNDS_LICENSING.md 补齐 CC 官方 URL 及 Pixabay 独立分发免责；README 补充 Moriafly/SaltPlayer 致敬免责及零权限隐私特性；端内关于抽屉增加 GitHub 主页直达；从 Git 解耦 keystore 并配置环境变量/优雅降级；72 项单测全绿，Debug/Release 构建全绿。 |
-| **Stage 23** | 工业级位图+纯色Adaptive重构根治应用信息默认播放器、发布 v2.0.0 正式版 (v2.0.0) | **[x] 已达成** | 剖析 HyperOS 手机管家等跨进程 loadIcon 时对纯 Vector AdaptiveIcon 栅格化失败降级为系统默认播放三角机理；落地原生纯色背景 (@color/ic_launcher_background: #11151F) 与全密度透明琴弦前景物理位图 (ic_launcher_foreground.png)；补齐 mdpi~xxxhdpi 全密度整图；升级 v2.0.0 (versionCode 22)；实机在澎湃OS应用管理与桌面双重验证全绿；72 项单测与 Release 构建全绿。 |
 | **Stage 24** | 主流系统防杀保活指引、包豪斯品牌几何矢量重绘与免联网直达更新 (v2.1.0) | **[x] 已达成** | 落地 `KeepAliveGuideBottomSheet` 覆盖小米/华为/OPPO/vivo/原生 5 大系统默认折叠保活手风琴；自绘 5 款纯几何包豪斯品牌矢量图标（小米 Squircle 橙底反白 mi、华为八瓣扇形花冠、OPPO 双 O 独立椭圆、vivo 实体速度 V、Android 官方小机器人）；设置抽屉新增防杀指引微胶囊；版本信息升级为可交互卡片，安全 Intent 调起浏览器直达 GitHub Releases (`/releases/latest`)，坚守 0 网络权限；76 项单测与 Release 构建 100% 全绿。 |
 | **Stage 25** | 分类切换网格卡片平滑物理重排与进退场动效 (v2.1.1) | **[x] 已达成** | 基于 Compose 1.7+ `LazyGridItemScope.animateItem` 落地网格卡片磁吸物理重排动效；150ms 敏捷退场淡出 + 0.82 阻尼比高刚度物理弹簧位移 + 180ms 进场淡入；升级 versionCode 24, versionName 2.1.1；76 项单测与 Release 签名构建全绿。 |
 | **Stage 26** | 单手轻扫切分类、胶囊柔光呼吸与卡片长按左右滑动调音 (v2.2.0) | **[x] 已达成** | 主网格单手中下部左右轻扫切换分类；分类胶囊 180ms 柔光呼吸渐变与自动滚动视口；卡片长按 220ms 咬合微震并左右拖动调音（胶囊放大 1.18×、卡片下沉 0.97×，极简纯净无多余横条）；92 项单测全绿，Release 打包全绿。 |
