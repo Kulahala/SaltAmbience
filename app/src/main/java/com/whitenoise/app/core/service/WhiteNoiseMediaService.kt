@@ -28,12 +28,14 @@ import com.whitenoise.app.R
 import com.whitenoise.app.core.audio.AudioMixerEngine
 import com.whitenoise.app.core.audio.VolumeCalculator
 import com.whitenoise.app.core.model.PlaybackState
+import com.whitenoise.app.data.datastore.PreferencesManager
 import com.whitenoise.app.data.repository.SoundRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
@@ -124,6 +126,15 @@ class WhiteNoiseMediaService : MediaSessionService() {
     lateinit var audioEngine: AudioMixerEngine
         private set
 
+    lateinit var statsTracker: PlaybackStatsTracker
+        private set
+
+    fun resetStatsTracker() {
+        if (::statsTracker.isInitialized) {
+            statsTracker.resetMemoryCounters()
+        }
+    }
+
     private var coordinatorExoPlayer: ExoPlayer? = null
     private var mediaSession: MediaSession? = null
 
@@ -144,6 +155,9 @@ class WhiteNoiseMediaService : MediaSessionService() {
         Log.i(TAG, "WhiteNoiseMediaService onCreate")
         instance = this
         audioEngine = AudioMixerEngine.getInstance(applicationContext)
+
+        val prefs = PreferencesManager(applicationContext)
+        statsTracker = PlaybackStatsTracker(prefs, serviceScope)
 
         createNotificationChannel()
         setupMediaSession()
@@ -275,6 +289,24 @@ class WhiteNoiseMediaService : MediaSessionService() {
                         }
                     }
                 }
+        }
+
+        // Companion statistics tracking: updates statsTracker with current master play & active track IDs
+        serviceScope.launch {
+            combine(
+                audioEngine.playbackState,
+                audioEngine.tracksState
+            ) { playbackState, tracksState ->
+                val isPlaying = playbackState.isMasterPlaying
+                val activeIds = tracksState
+                    .filter { it.isPlaying && !it.isMuted && it.volume > 0.001f }
+                    .map { it.id }
+                    .toSet()
+                Pair(isPlaying, activeIds)
+            }.distinctUntilChanged()
+            .collectLatest { (isPlaying, activeIds) ->
+                statsTracker.updatePlaybackStatus(isPlaying, activeIds)
+            }
         }
     }
 
@@ -435,6 +467,9 @@ class WhiteNoiseMediaService : MediaSessionService() {
     override fun onDestroy() {
         Log.i(TAG, "WhiteNoiseMediaService onDestroy")
         instance = null
+        if (::statsTracker.isInitialized) {
+            statsTracker.flushToDiskAsync()
+        }
         unregisterNoisyReceiver()
         serviceScope.cancel()
 

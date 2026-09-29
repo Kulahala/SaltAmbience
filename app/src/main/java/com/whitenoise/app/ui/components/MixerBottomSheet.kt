@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -104,7 +105,9 @@ fun MixerBottomSheet(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Column 1: Master Volume Capsule
+            val isDark = SaltTheme.configs.isDarkTheme
+
+            // Column 1: Master Volume Capsule (System unified highlight)
             VerticalCapsuleSlider(
                 value = masterVolume,
                 onValueChange = onMasterVolumeChange,
@@ -113,15 +116,16 @@ fun MixerBottomSheet(
                 activeColor = SaltTheme.colors.highlight
             )
 
-            // Subsequent Columns: ONLY currently active playing sound tracks
+            // Subsequent Columns: ONLY currently active playing sound tracks (Dedicated acoustic signature color)
             activeTracks.forEach { track ->
+                val trackColor = remember(track.id, isDark) { getTrackIndividualColor(track.id, isDark) }
                 VerticalCapsuleSlider(
                     value = if (track.isMuted) 0f else track.volume,
                     onValueChange = { onTrackVolumeChange(track.id, it) },
                     title = track.name,
                     trackId = track.id,
                     isMuted = track.isMuted,
-                    activeColor = SaltTheme.colors.highlight,
+                    activeColor = trackColor,
                     onIconClick = { onToggleTrackMute(track.id) }
                 )
             }

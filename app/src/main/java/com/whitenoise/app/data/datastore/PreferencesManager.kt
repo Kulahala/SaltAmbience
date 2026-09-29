@@ -6,9 +6,11 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.whitenoise.app.core.model.PlaybackStats
 import com.whitenoise.app.core.model.Preset
 import com.whitenoise.app.core.model.SoundTrack
 import com.whitenoise.app.data.repository.SoundRepository
@@ -35,6 +37,11 @@ class PreferencesManager(private val context: Context) {
         private val KEY_DELETED_DEFAULT_PRESETS = stringSetPreferencesKey("deleted_default_preset_ids")
         private val KEY_KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on")
         private val KEY_BACKGROUND_PLAYBACK_ENABLED = booleanPreferencesKey("background_playback_enabled")
+
+        // Playback Statistics Keys
+        private val KEY_STATS_TOTAL_SECONDS = longPreferencesKey("stats_total_playback_seconds")
+        private val KEY_STATS_TRACK_SECONDS = stringPreferencesKey("stats_track_playback_seconds_json")
+        private val KEY_STATS_FIRST_TIMESTAMP = longPreferencesKey("stats_first_record_timestamp")
     }
 
     val keepScreenOnFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -176,4 +183,77 @@ class PreferencesManager(private val context: Context) {
             preferences[KEY_ACTIVE_TRACKS_STATE] = json.encodeToString(stateMap)
         }
     }
+
+    /**
+     * Observable flow of aggregated playback statistics.
+     */
+    val playbackStatsFlow: Flow<PlaybackStats> = context.dataStore.data.map { preferences ->
+        val total = preferences[KEY_STATS_TOTAL_SECONDS] ?: 0L
+        val firstTimestamp = preferences[KEY_STATS_FIRST_TIMESTAMP] ?: 0L
+        val rawTrackJson = preferences[KEY_STATS_TRACK_SECONDS] ?: ""
+        val trackMap: Map<String, Long> = if (rawTrackJson.isBlank()) {
+            emptyMap()
+        } else {
+            try {
+                json.decodeFromString<Map<String, Long>>(rawTrackJson)
+            } catch (e: Exception) {
+                emptyMap()
+            }
+        }
+        PlaybackStats(
+            totalSeconds = total,
+            trackSeconds = trackMap,
+            firstRecordTimestamp = firstTimestamp
+        )
+    }
+
+    /**
+     * Atomically increments cumulative playback statistics with buffered deltas.
+     */
+    suspend fun commitPlaybackDelta(
+        totalDeltaSeconds: Long,
+        trackDeltaSeconds: Map<String, Long>
+    ) {
+        if (totalDeltaSeconds <= 0L && trackDeltaSeconds.isEmpty()) return
+        val now = System.currentTimeMillis()
+        context.dataStore.edit { preferences ->
+            val currentTotal = preferences[KEY_STATS_TOTAL_SECONDS] ?: 0L
+            preferences[KEY_STATS_TOTAL_SECONDS] = currentTotal + totalDeltaSeconds
+
+            val currentFirstTimestamp = preferences[KEY_STATS_FIRST_TIMESTAMP] ?: 0L
+            if (currentFirstTimestamp == 0L) {
+                preferences[KEY_STATS_FIRST_TIMESTAMP] = now
+            }
+
+            val rawTrackJson = preferences[KEY_STATS_TRACK_SECONDS] ?: ""
+            val currentMap: MutableMap<String, Long> = if (rawTrackJson.isBlank()) {
+                mutableMapOf()
+            } else {
+                try {
+                    json.decodeFromString<Map<String, Long>>(rawTrackJson).toMutableMap()
+                } catch (e: Exception) {
+                    mutableMapOf()
+                }
+            }
+
+            for ((id, delta) in trackDeltaSeconds) {
+                if (delta > 0L) {
+                    currentMap[id] = (currentMap[id] ?: 0L) + delta
+                }
+            }
+            preferences[KEY_STATS_TRACK_SECONDS] = json.encodeToString(currentMap)
+        }
+    }
+
+    /**
+     * Resets all playback statistics back to zero.
+     */
+    suspend fun resetPlaybackStats() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(KEY_STATS_TOTAL_SECONDS)
+            preferences.remove(KEY_STATS_TRACK_SECONDS)
+            preferences.remove(KEY_STATS_FIRST_TIMESTAMP)
+        }
+    }
 }
+

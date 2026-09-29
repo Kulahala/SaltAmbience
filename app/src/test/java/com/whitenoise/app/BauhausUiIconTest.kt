@@ -22,7 +22,7 @@ class BauhausUiIconTest {
     @Test
     fun testAllBauhausUiSymbolsDefined() {
         val symbols = BauhausUiSymbol.entries
-        assertEquals(14, symbols.size)
+        assertEquals(15, symbols.size)
 
         val expectedNames = listOf(
             "Play",
@@ -38,7 +38,8 @@ class BauhausUiIconTest {
             "Restore",
             "Import",
             "Settings",
-            "Warning"
+            "Warning",
+            "Statistics"
         )
         for (name in expectedNames) {
             assertTrue("Expected symbol $name in BauhausUiSymbol entries", symbols.any { it.name == name })

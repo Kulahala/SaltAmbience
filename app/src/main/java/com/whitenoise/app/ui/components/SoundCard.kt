@@ -91,10 +91,11 @@ fun SoundTileCard(
         label = "tile_bg"
     )
 
+    val unselectedBorderColor = if (SaltTheme.configs.isDarkTheme) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
     val targetBorderColor = if (track.isPlaying) {
         SaltTheme.colors.highlight
     } else {
-        SaltTheme.colors.subBackground
+        unselectedBorderColor
     }
     val animatedBorderColor by animateColorAsState(
         targetValue = targetBorderColor,

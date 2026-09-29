@@ -84,6 +84,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _showSettingsDialog = MutableStateFlow(false)
     val showSettingsDialog: StateFlow<Boolean> = _showSettingsDialog.asStateFlow()
 
+    private val _showStatsDialog = MutableStateFlow(false)
+    val showStatsDialog: StateFlow<Boolean> = _showStatsDialog.asStateFlow()
+
+    private val _showResetStatsConfirmDialog = MutableStateFlow(false)
+    val showResetStatsConfirmDialog: StateFlow<Boolean> = _showResetStatsConfirmDialog.asStateFlow()
+
+    val playbackStats: StateFlow<com.whitenoise.app.core.model.PlaybackStats> = preferencesManager.playbackStatsFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = com.whitenoise.app.core.model.PlaybackStats()
+    )
+
     val keepScreenOn: StateFlow<Boolean> = preferencesManager.keepScreenOnFlow.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
@@ -301,6 +313,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setShowSettingsDialog(show: Boolean) {
         _showSettingsDialog.value = show
+    }
+
+    fun setShowStatsDialog(show: Boolean) {
+        _showStatsDialog.value = show
+    }
+
+    fun setShowResetStatsConfirmDialog(show: Boolean) {
+        _showResetStatsConfirmDialog.value = show
+    }
+
+    fun resetPlaybackStats() {
+        viewModelScope.launch {
+            WhiteNoiseMediaService.instance?.resetStatsTracker()
+            preferencesManager.resetPlaybackStats()
+            _showResetStatsConfirmDialog.value = false
+            _toastMessage.emit("已清空播放统计数据")
+        }
     }
 
     fun setKeepScreenOn(enabled: Boolean) {

@@ -61,6 +61,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import android.os.Build
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.moriafly.salt.ui.SaltTheme
@@ -86,6 +87,7 @@ import com.whitenoise.app.ui.components.AboutBottomSheet
 import com.whitenoise.app.ui.components.BauhausSoundIcon
 import com.whitenoise.app.ui.components.BauhausUiIcon
 import com.whitenoise.app.ui.components.BauhausUiSymbol
+import com.whitenoise.app.ui.components.PresetSoundDnaDots
 import com.whitenoise.app.ui.components.getContentColor
 import com.whitenoise.app.ui.components.getThemeColor
 import com.whitenoise.app.ui.components.toBauhausSymbol
@@ -93,6 +95,8 @@ import com.whitenoise.app.ui.components.BottomPlayerBar
 import com.whitenoise.app.ui.components.DeletePresetConfirmBottomSheet
 import com.whitenoise.app.ui.components.ImportPresetBottomSheet
 import com.whitenoise.app.ui.components.MixerBottomSheet
+import com.whitenoise.app.ui.components.PlaybackStatsBottomSheet
+import com.whitenoise.app.ui.components.ResetStatsConfirmBottomSheet
 import com.whitenoise.app.ui.components.SavePresetBottomSheet
 import com.whitenoise.app.ui.components.SettingsBottomSheet
 import com.whitenoise.app.ui.components.SleepTimerBottomSheet
@@ -135,6 +139,9 @@ fun HomeScreen(
     val showThemeDialog by viewModel.showThemeDialog.collectAsState()
     val showImportDialog by viewModel.showImportDialog.collectAsState()
     val showSettingsDialog by viewModel.showSettingsDialog.collectAsState()
+    val playbackStats by viewModel.playbackStats.collectAsState()
+    val showStatsDialog by viewModel.showStatsDialog.collectAsState()
+    val showResetStatsConfirmDialog by viewModel.showResetStatsConfirmDialog.collectAsState()
     val keepScreenOn by viewModel.keepScreenOn.collectAsState()
     val backgroundPlaybackEnabled by viewModel.backgroundPlaybackEnabled.collectAsState()
     val detectedPayload by viewModel.clipboardDetectedPayload.collectAsState()
@@ -201,7 +208,8 @@ fun HomeScreen(
     val activeTracks = remember(tracks) { tracks.filter { it.isPlaying } }
 
     val isAnySheetOpen = showMixerSheet || showSleepDialog || showAboutDialog ||
-        showSavePresetDialog || showThemeDialog || showImportDialog || showSettingsDialog || (presetPendingDelete != null)
+        showSavePresetDialog || showThemeDialog || showImportDialog || showSettingsDialog ||
+        showStatsDialog || showResetStatsConfirmDialog || (presetPendingDelete != null)
 
     // Smooth backdrop blur (14.dp provides elegant legibility reduction without excessive GPU convolution overhead)
     val animatedBlurRadius by animateDpAsState(
@@ -588,7 +596,7 @@ fun HomeScreen(
                             .clipToBounds()
                             .alpha((1f - collapseFraction * 1.5f).coerceIn(0f, 1f))
                     ) {
-                        // Part 1: Brand Header with subtle version badge & Theme Switcher (Height: 54.dp)
+                        // Part 1: Brand Header & Compact Pill Buttons (Height: 54.dp)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -599,66 +607,96 @@ fun HomeScreen(
                         ) {
                             Column(
                                 modifier = Modifier
-                                    .padding(horizontal = 4.dp, vertical = 2.dp)
+                                    .weight(1f, fill = false)
+                                    .padding(vertical = 2.dp)
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Text(
-                                        text = "SaltAmbience",
-                                        style = SaltTheme.textStyles.largeTitle,
-                                        color = SaltTheme.colors.text
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(SaltTheme.colors.subBackground)
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                                    ) {
-                                        Text(
-                                            text = "v$versionName",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = SaltTheme.colors.text.copy(alpha = 0.65f)
-                                        )
-                                    }
-                                }
+                                Text(
+                                    text = "SaltAmbience",
+                                    style = SaltTheme.textStyles.largeTitle,
+                                    color = SaltTheme.colors.text,
+                                    maxLines = 1
+                                )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = "椒盐美学 · 多轨自然声混音",
                                     style = SaltTheme.textStyles.sub,
-                                    color = SaltTheme.colors.text.copy(alpha = 0.65f)
+                                    color = SaltTheme.colors.text.copy(alpha = 0.65f),
+                                    maxLines = 1
                                 )
                             }
 
-                            // Top Right: Compact Settings Button
-                            Box(
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .background(SaltTheme.colors.subBackground)
-                                    .clickable {
-                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        viewModel.setShowSettingsDialog(true)
-                                    }
-                                    .padding(horizontal = 12.dp, vertical = 7.dp),
-                                contentAlignment = Alignment.Center
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            // Top Right: Compact Statistics & Settings Pill Buttons
+                            val pillBorderColor = if (SaltTheme.configs.isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f)
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                // Statistics Pill Button
+                                Box(
+                                    modifier = Modifier
+                                        .clip(CircleShape)
+                                        .background(SaltTheme.colors.subBackground)
+                                        .border(1.dp, pillBorderColor, CircleShape)
+                                        .clickable {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            viewModel.setShowStatsDialog(true)
+                                        }
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    BauhausUiIcon(
-                                        symbol = BauhausUiSymbol.Settings,
-                                        modifier = Modifier.size(13.dp)
-                                    )
-                                    Text(
-                                        text = "设置",
-                                        style = SaltTheme.textStyles.sub,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = SaltTheme.colors.text.copy(alpha = 0.75f)
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                    ) {
+                                        BauhausUiIcon(
+                                            symbol = BauhausUiSymbol.Statistics,
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                        Text(
+                                            text = "统计",
+                                            style = SaltTheme.textStyles.sub,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = SaltTheme.colors.text.copy(alpha = 0.75f),
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
+                                    }
+                                }
+
+                                // Settings Pill Button
+                                Box(
+                                    modifier = Modifier
+                                        .clip(CircleShape)
+                                        .background(SaltTheme.colors.subBackground)
+                                        .border(1.dp, pillBorderColor, CircleShape)
+                                        .clickable {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            viewModel.setShowSettingsDialog(true)
+                                        }
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                    ) {
+                                        BauhausUiIcon(
+                                            symbol = BauhausUiSymbol.Settings,
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                        Text(
+                                            text = "设置",
+                                            style = SaltTheme.textStyles.sub,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = SaltTheme.colors.text.copy(alpha = 0.75f),
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -692,12 +730,20 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    val isDarkTheme = SaltTheme.configs.isDarkTheme
+                    val unselectedBorderColor = if (isDarkTheme) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
+
                     presets.forEach { preset ->
                         val isPresetActive = remember(preset, activeTracksMap) { preset.matchesTracks(activeTracksMap) }
                         val animatedBorderColor by animateColorAsState(
-                            targetValue = if (isPresetActive) SaltTheme.colors.highlight else Color.Transparent,
+                            targetValue = if (isPresetActive) SaltTheme.colors.highlight else unselectedBorderColor,
                             animationSpec = tween(150),
                             label = "preset_border"
+                        )
+                        val animatedBorderWidth by animateDpAsState(
+                            targetValue = if (isPresetActive) 1.5.dp else 1.dp,
+                            animationSpec = tween(150),
+                            label = "preset_border_width"
                         )
                         val animatedBgColor by animateColorAsState(
                             targetValue = if (isPresetActive) SaltTheme.colors.highlight.copy(alpha = 0.10f) else SaltTheme.colors.subBackground,
@@ -708,7 +754,7 @@ fun HomeScreen(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(14.dp))
                                 .border(
-                                    width = 1.5.dp,
+                                    width = animatedBorderWidth,
                                     color = animatedBorderColor,
                                     shape = RoundedCornerShape(14.dp)
                                 )
@@ -727,18 +773,35 @@ fun HomeScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Column {
-                                    Text(
-                                        text = preset.name,
-                                        style = SaltTheme.textStyles.main,
-                                        fontWeight = if (isPresetActive) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isPresetActive) SaltTheme.colors.highlight else SaltTheme.colors.text
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Text(
+                                            text = preset.name,
+                                            style = SaltTheme.textStyles.main,
+                                            fontWeight = if (isPresetActive) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isPresetActive) SaltTheme.colors.highlight else SaltTheme.colors.text,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+
+                                        // Sound DNA Dots (Strictly clamped to max 4 micro-dots, zero layout expansion)
+                                        val trackIds = remember(preset) { preset.trackVolumes.keys.toList() }
+                                        PresetSoundDnaDots(
+                                            trackIds = trackIds,
+                                            isDark = isDarkTheme
+                                        )
+                                    }
+
                                     if (preset.description.isNotBlank()) {
                                         Text(
                                             text = preset.description,
                                             style = SaltTheme.textStyles.sub,
                                             fontSize = 11.sp,
-                                            color = if (isPresetActive) SaltTheme.colors.highlight.copy(alpha = 0.85f) else SaltTheme.colors.text.copy(alpha = 0.65f)
+                                            color = if (isPresetActive) SaltTheme.colors.highlight.copy(alpha = 0.85f) else SaltTheme.colors.text.copy(alpha = 0.65f),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
                                         )
                                     }
                                 }
@@ -766,6 +829,11 @@ fun HomeScreen(
                         modifier = Modifier
                             .clip(RoundedCornerShape(14.dp))
                             .background(SaltTheme.colors.highlight.copy(alpha = 0.12f))
+                            .border(
+                                width = 1.dp,
+                                color = SaltTheme.colors.highlight.copy(alpha = 0.30f),
+                                shape = RoundedCornerShape(14.dp)
+                            )
                             .clickable { viewModel.setShowSavePresetDialog(true) }
                             .padding(horizontal = 14.dp, vertical = 8.dp),
                         contentAlignment = Alignment.Center
@@ -795,7 +863,7 @@ fun HomeScreen(
                             .background(SaltTheme.colors.subBackground)
                             .border(
                                 width = 1.dp,
-                                color = SaltTheme.colors.text.copy(alpha = 0.12f),
+                                color = unselectedBorderColor,
                                 shape = RoundedCornerShape(14.dp)
                             )
                             .clickable { viewModel.setShowImportDialog(true) }
@@ -929,6 +997,19 @@ fun HomeScreen(
             preset = presetPendingDelete,
             onConfirm = { preset -> viewModel.deletePreset(preset.id) },
             onDismiss = { presetPendingDelete = null }
+        )
+
+        PlaybackStatsBottomSheet(
+            isVisible = showStatsDialog,
+            onDismiss = { viewModel.setShowStatsDialog(false) },
+            stats = playbackStats,
+            onRequestReset = { viewModel.setShowResetStatsConfirmDialog(true) }
+        )
+
+        ResetStatsConfirmBottomSheet(
+            isVisible = showResetStatsConfirmDialog,
+            onDismiss = { viewModel.setShowResetStatsConfirmDialog(false) },
+            onConfirmReset = { viewModel.resetPlaybackStats() }
         )
     }
 }

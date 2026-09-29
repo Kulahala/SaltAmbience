@@ -37,7 +37,8 @@ enum class BauhausUiSymbol {
     Restore,
     Import,
     Settings,
-    Warning
+    Warning,
+    Statistics
 }
 
 /**
@@ -114,6 +115,10 @@ object BauhausUiTheme {
         BauhausUiSymbol.Warning -> BauhausUiPalette(
             primary = if (isDark) Color(0xFFFBBF24) else Color(0xFFD97706), // 琥珀暖金
             secondary = if (isDark) Color(0xFFFDE68A) else Color(0xFFF59E0B) // 亮黄
+        )
+        BauhausUiSymbol.Statistics -> BauhausUiPalette(
+            primary = if (isDark) Color(0xFF818CF8) else Color(0xFF4F46E5), // 靛蓝紫
+            secondary = Color(0xFF38BDF8) // 天青微光
         )
     }
 }
@@ -554,6 +559,49 @@ private fun DrawScope.drawBauhausUiSymbol(
                 color = secondaryColor,
                 radius = strokeWidth * 0.75f,
                 center = Offset(w * 0.50f, h * 0.70f)
+            )
+        }
+
+        BauhausUiSymbol.Statistics -> {
+            // 包豪斯极简声谱柱状图 + 悬浮共鸣光点 (3 条圆角柱：左短、中长、右中，底座轻基线)
+            val baseLineY = h * 0.82f
+            drawLine(
+                color = primaryColor.copy(alpha = 0.40f),
+                start = Offset(w * 0.12f, baseLineY),
+                end = Offset(w * 0.88f, baseLineY),
+                strokeWidth = strokeWidth * 0.70f,
+                cap = StrokeCap.Round
+            )
+            // Pillar 1 (Left: height 0.32h)
+            val barWidth = strokeWidth * 1.30f
+            drawLine(
+                color = primaryColor,
+                start = Offset(w * 0.26f, baseLineY),
+                end = Offset(w * 0.26f, h * 0.50f),
+                strokeWidth = barWidth,
+                cap = StrokeCap.Round
+            )
+            // Pillar 2 (Center: height 0.56h, secondary color)
+            drawLine(
+                color = secondaryColor,
+                start = Offset(w * 0.50f, baseLineY),
+                end = Offset(w * 0.50f, h * 0.26f),
+                strokeWidth = barWidth,
+                cap = StrokeCap.Round
+            )
+            // Pillar 3 (Right: height 0.42h)
+            drawLine(
+                color = primaryColor,
+                start = Offset(w * 0.74f, baseLineY),
+                end = Offset(w * 0.74f, h * 0.40f),
+                strokeWidth = barWidth,
+                cap = StrokeCap.Round
+            )
+            // Floating acoustic node over center/right pillar
+            drawCircle(
+                color = secondaryColor,
+                radius = strokeWidth * 0.65f,
+                center = Offset(w * 0.50f, h * 0.16f)
             )
         }
     }

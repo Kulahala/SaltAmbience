@@ -209,11 +209,27 @@ fun VerticalCapsuleSlider(
                 )
             }
 
-            // Bottom: Sound Emoji / Master Headphone Icon
+            // Bottom: Sound Emoji / Master Headphone Icon (Protected with frosted Island Badge)
+            val isFilledOverIcon = animatedFill >= 0.16f
+
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 12.dp)
+                    .padding(bottom = 10.dp)
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isFilledOverIcon) {
+                            Color.Black.copy(alpha = 0.32f)
+                        } else {
+                            SaltTheme.colors.background
+                        }
+                    )
+                    .border(
+                        width = 0.5.dp,
+                        color = if (isFilledOverIcon) Color.White.copy(alpha = 0.18f) else SaltTheme.colors.text.copy(alpha = 0.08f),
+                        shape = CircleShape
+                    )
                     .then(
                         if (onIconClick != null) {
                             Modifier.clickable(
@@ -229,7 +245,7 @@ fun VerticalCapsuleSlider(
                     trackId = iconTrackId,
                     isPlaying = if (trackId != null) !isMuted && effectiveValue > 0f else true,
                     modifier = Modifier
-                        .size(24.dp)
+                        .size(20.dp)
                         .then(if (isMuted) Modifier.alpha(0.4f) else Modifier)
                 )
             }
